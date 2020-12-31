@@ -1,0 +1,215 @@
+# ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
+# Copyright 2021 Jochen Schmähling
+# ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
+#  Python Module for communication with viControl heatings using the serial Optolink interface
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program. If not, see <http://www.gnu.org/licenses/>.
+# ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
+
+
+class ViDataException(Exception):
+    def __init__(self,msg):
+        super().__init__(msg)
+
+class viData(bytearray):
+    # implements representations of viControl data types
+    # erzeugen eines Datentypes über benannte Klasse -> setze code und codiere Parameter als bytes
+
+    # konstruktor __init__ accepts byte-encoded input or real data
+    # method __value__ returns the decoded value (str,int,fixed-point,...)
+    # method __fromraw__ initializes the object with raw byte data
+    # methon __fromvalue__ initalizes the object with a typed value
+
+    unitset = {
+        'CT': {'unit_de': 'CycleTime', 'type': 'timer', 'signed': False, 'read_value_transform': 'non'},        # vito unit: CT
+        'ES': {'unit_de': 'ErrorState', 'type': 'list', 'signed': False, 'read_value_transform': 'non'},        # vito unit: ES
+        'IU2': {'unit_de': 'INT unsigned 2', 'type': 'integer', 'signed': False, 'read_value_transform': '2'},        # vito unit: UT1U, PR1
+        'IU10': {'unit_de': 'INT unsigned 10', 'type': 'integer', 'signed': False, 'read_value_transform': '10'},        # vito unit:
+        'IU3600': {'unit_de': 'INT unsigned 3600', 'type': 'integer', 'signed': False, 'read_value_transform': '3600'},        # vito unit: CS
+        'IUBOOL': {'unit_de': 'INT unsigned bool', 'type': 'integer', 'signed': False, 'read_value_transform': 'bool'},        # vito unit:
+        'IUINT': {'unit_de': 'INT unsigned int', 'type': 'integer', 'signed': False, 'read_value_transform': 'int'},        # vito unit:
+        'IS2': {'unit_de': 'INT signed 2', 'type': 'integer', 'signed': True, 'read_value_transform': '2'},        # vito unit: UT1, PR
+        'IS100': {'unit_de': 'INT signed 100', 'type': 'integer', 'signed': True, 'read_value_transform': '100'},        # vito unit:
+        'IS1000': {'unit_de': 'INT signed 1000', 'type': 'integer', 'signed': True, 'read_value_transform': '1000'},        # vito unit:
+        'ISNON': {'unit_de': 'INT signed non', 'type': 'integer', 'signed': True, 'read_value_transform': 'non'},        # vito unit:
+        'RT': {'unit_de': 'ReturnStatus', 'type': 'list', 'signed': False, 'read_value_transform': 'non'},        # vito unit: ST, RT
+        'SC': {'unit_de': 'SystemScheme', 'type': 'list', 'signed': False, 'read_value_transform': 'non'},  # vito unit:
+        'SN': {'unit_de': 'Sachnummer', 'type': 'serial', 'signed': False, 'read_value_transform': 'non'},  # vito unit:
+        'SR': {'unit_de': 'SetReturnStatus', 'type': 'list', 'signed': False, 'read_value_transform': 'non'},        # vito unit:
+        'TI': {'unit_de': 'SystemTime', 'type': 'datetime', 'signed': False, 'read_value_transform': 'non'},        # vito unit: TI
+        'DA': {'unit_de': 'Date', 'type': 'date', 'signed': False, 'read_value_transform': 'non'},  # vito unit:
+    }
+
+    def __init__(self,value):
+        # to be overridden by subclass. subclass __init__ shall set default value for value and handle any extra parameters
+        super().__init__()
+        if type(value) == bytes or type(value) == bytearray:
+            # choose the way of initialization
+            self.__fromraw__(value)
+        else:
+            self.__fromtype__(value)
+
+    def __fromraw__(self,value):
+        #fill using byte values
+        super().extend(value)
+        self.len=len(value)
+
+    def __fromtype__(self,value):
+        # fill using type and value
+        # empty declaration, must be overridden by subclass
+        raise NotImplementedError
+
+    @property
+    def value(self):
+        # empty declaration, must be overriden by subclass
+        # returns value converted from raw data
+        raise NotImplementedError
+
+
+def viDataFactory(type,*args):
+    # select data type object based on type
+    # args are passed as such to the constructor of the function
+    datatype_object={'BT':viDataBT, 'DT':viDataDT,'IS10':viDataIS10,'IUNON':viDataIUNON}
+    if type in datatype_object.keys():
+        return datatype_object[type](*args)
+    else:
+        #if unit type is not implemented
+        raise ViDataException(f'Unit {type} not known')
+
+
+# ----------------------------------------
+# Below are the class definitions for each unit
+
+class viDataBT(viData):
+    unit={'code':'BT','unit_de': 'Betriebsart'}
+    # operating mode codes are hex numbers
+    #FIXME: direkte Angabe im Format 0x03 würde die Konversion sparen
+    operatingmodes = {
+        0x00: 'Abschaltbetrieb',
+        0x01: 'Warmwasser',
+        0x02: 'Heizen und Warmwasser',
+        0x03: 'undefiniert',
+        0x04: 'dauernd reduziert',
+        0x05: 'dauernd normal',
+        0x06: 'normal Abschalt',
+        0x07: 'nur kühlen'
+    }
+
+    def __init__(self,value=b'\x03'):
+        # sets operating mode (hex) based on string opmode
+        # if opmode is skipped defaults to 'undefiniert'
+        super().__init__(value)
+
+    def __fromtype__(self,value):
+        opmode=value
+        if opmode in self.operatingmodes.values():
+            opcode=next(key for key, value in self.operatingmodes.items() if value==opmode)
+            super().extend(opcode.to_bytes(1,'big'))
+        else:
+            raise ViDataException(f'Unknown operating mode {opmode}. Options are {self.operatingmodes.values()}')
+
+    def __fromraw__(self,value):
+        # set raw value directly
+        if int.from_bytes(value, 'big') in self.operatingmodes.keys():
+            super().extend(value)
+        else:
+            raise ViDataException(f'Unknown operating mode {value.hex()}')
+
+    @property
+    def value(self):
+        return self.operatingmodes[int.from_bytes(self,'big')]
+
+class viDataDT(viData):
+    # device types
+    unit= {'unit_de': 'DeviceType', 'code':'DT'}  # vito unit: DT
+    devicetypes = {
+        0x2098: 'V200KW2, Protokoll: KW2',
+        0x2053: 'GWG_VBEM, Protokoll: GWG',
+        0x20CB: 'VScotHO1, Protokoll: P300',
+        0x2094: 'V200KW1, Protokoll: KW2',
+        0x209F: 'V200KO1B, Protokoll: P300, KW2',
+        0x204D: 'V200WO1C, Protokoll: P300',
+        0x20B8: 'V333MW1, Protokoll: ',
+        0x20A0: 'V100GC1, Protokoll: ',
+        0x20C2: 'VDensHO1, Protokoll: ',
+        0x20A4: 'V200GW1, Protokoll: ',
+        0x20C8: 'VPlusHO1, Protokoll: ',
+        0x2046: 'V200WO1,VBC700, Protokoll: ',
+        0x2047: 'V200WO1,VBC700, Protokoll: ',
+        0x2049: 'V200WO1,VBC700, Protokoll: ',
+        0x2032: 'VBC550, Protokoll: ',
+        0x2033: 'VBC550, Protokoll: ',
+        0x0000:'unknown'
+    }
+
+    def __init__(self, value=b'\x00\x00'):
+        # sets device name (hex code). Either give value as bytearray/bytes or as device name string
+        # usually this class would be initialized without arguments
+        super().__init__(value)
+
+    def __fromraw__(self,value):
+        # set raw value directly
+        if int.from_bytes(value, 'big') in self.devicetypes.keys():
+            super().extend(value)
+        else:
+            raise ViDataException(f'Unknown device code {value.hex()}')
+
+    def __fromtype__(self,value):
+        # devicename given as string
+        devicename = value
+        if devicename in self.devicetypes.values():
+            devcode = next(key for key, value in self.devicetypes.items() if value == devicename)
+            super().extend(devcode.to_bytes(2, 'big'))
+        else:
+            raise ViDataException(f'Unknown device name {devicename}')
+
+    @property
+    def value(self):
+        # return device type as string
+        return self.devicetypes[int.from_bytes(self,'big')]
+
+class viDataIS10(viData):
+    #IS10 - signed fixed-point integer, 1 decimal
+    unit= {'code':'IS10','unit_de': 'INT signed 10'}
+
+    def __init__(self, value=b'\x00\x00', len=2):
+        #sets int representation based on input value
+        self.len=len  #length in bytes
+        super().__init__(value)
+
+    def __fromtype__(self,value):
+        #fixed-point number given
+        #FIXME reference to self.len is a side effect, better pass as parameter but how?
+        super().extend(int(value * 10).to_bytes(self.len,'little',signed=True))
+
+    @property
+    def value(self):
+        return int.from_bytes(self,'little',signed=True)/10
+
+class viDataIUNON(viData):
+    #IUNON - unsigned int
+    unit={'code':'IUNON','unit_de': 'INT unsigned non'},        # vito unit: UTI, CO
+
+    def __init__(self, value=b'\x00\x00',len=2):
+        #sets int representation based on input value
+        self.len=len  #length in bytes
+        super().__init__(value)
+
+    def __fromtype__(self,value):
+        #fixed-point number given
+        super().extend(int(value).to_bytes(self.len,'little',signed=False))
+
+    @property
+    def value(self):
+        return int.from_bytes(self,'little',signed=False)
