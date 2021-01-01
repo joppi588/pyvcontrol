@@ -19,7 +19,7 @@
 
 
 import unittest
-import viData as v
+from pyvcontrol import viData as v
 
 class viDataTestCaseBT(unittest.TestCase):
     def test_BT04Empty(self):
@@ -38,13 +38,13 @@ class viDataTestCaseBT(unittest.TestCase):
 
     def test_BT666Empty(self):
         #test call with non-existent mode
-        with self.assertRaises(v.ViDataException):
+        with self.assertRaises(v.viDataException):
             v.viDataFactory('BT',b'\x66\x66')
 
 
     def test_BTfoobar(self):
         #test call with non-existent mode
-        with self.assertRaises(v.ViDataException):
+        with self.assertRaises(v.viDataException):
             v.viDataFactory('BT', 'foobar')
 
 class viDataTestCaseDT(unittest.TestCase):

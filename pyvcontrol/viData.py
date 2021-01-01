@@ -18,7 +18,7 @@
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
 
-class ViDataException(Exception):
+class viDataException(Exception):
     def __init__(self,msg):
         super().__init__(msg)
 
@@ -43,7 +43,6 @@ class viData(bytearray):
         'IS100': {'unit_de': 'INT signed 100', 'type': 'integer', 'signed': True, 'read_value_transform': '100'},        # vito unit:
         'IS1000': {'unit_de': 'INT signed 1000', 'type': 'integer', 'signed': True, 'read_value_transform': '1000'},        # vito unit:
         'ISNON': {'unit_de': 'INT signed non', 'type': 'integer', 'signed': True, 'read_value_transform': 'non'},        # vito unit:
-        'RT': {'unit_de': 'ReturnStatus', 'type': 'list', 'signed': False, 'read_value_transform': 'non'},        # vito unit: ST, RT
         'SC': {'unit_de': 'SystemScheme', 'type': 'list', 'signed': False, 'read_value_transform': 'non'},  # vito unit:
         'SN': {'unit_de': 'Sachnummer', 'type': 'serial', 'signed': False, 'read_value_transform': 'non'},  # vito unit:
         'SR': {'unit_de': 'SetReturnStatus', 'type': 'list', 'signed': False, 'read_value_transform': 'non'},        # vito unit:
@@ -80,12 +79,12 @@ class viData(bytearray):
 def viDataFactory(type,*args):
     # select data type object based on type
     # args are passed as such to the constructor of the function
-    datatype_object={'BT':viDataBT, 'DT':viDataDT,'IS10':viDataIS10,'IUNON':viDataIUNON}
+    datatype_object={'BT':viDataBT, 'DT':viDataDT,'IS10':viDataIS10,'IUNON':viDataIUNON,'RT':viDataRT}
     if type in datatype_object.keys():
         return datatype_object[type](*args)
     else:
         #if unit type is not implemented
-        raise ViDataException(f'Unit {type} not known')
+        raise viDataException(f'Unit {type} not known')
 
 
 # ----------------------------------------
@@ -94,7 +93,6 @@ def viDataFactory(type,*args):
 class viDataBT(viData):
     unit={'code':'BT','unit_de': 'Betriebsart'}
     # operating mode codes are hex numbers
-    #FIXME: direkte Angabe im Format 0x03 würde die Konversion sparen
     operatingmodes = {
         0x00: 'Abschaltbetrieb',
         0x01: 'Warmwasser',
@@ -111,20 +109,19 @@ class viDataBT(viData):
         # if opmode is skipped defaults to 'undefiniert'
         super().__init__(value)
 
-    def __fromtype__(self,value):
-        opmode=value
+    def __fromtype__(self,opmode):
         if opmode in self.operatingmodes.values():
             opcode=next(key for key, value in self.operatingmodes.items() if value==opmode)
             super().extend(opcode.to_bytes(1,'big'))
         else:
-            raise ViDataException(f'Unknown operating mode {opmode}. Options are {self.operatingmodes.values()}')
+            raise viDataException(f'Unknown operating mode {opmode}. Options are {self.operatingmodes.values()}')
 
     def __fromraw__(self,value):
         # set raw value directly
         if int.from_bytes(value, 'big') in self.operatingmodes.keys():
             super().extend(value)
         else:
-            raise ViDataException(f'Unknown operating mode {value.hex()}')
+            raise viDataException(f'Unknown operating mode {value.hex()}')
 
     @property
     def value(self):
@@ -163,16 +160,15 @@ class viDataDT(viData):
         if int.from_bytes(value, 'big') in self.devicetypes.keys():
             super().extend(value)
         else:
-            raise ViDataException(f'Unknown device code {value.hex()}')
+            raise viDataException(f'Unknown device code {value.hex()}')
 
-    def __fromtype__(self,value):
+    def __fromtype__(self,devicename):
         # devicename given as string
-        devicename = value
         if devicename in self.devicetypes.values():
             devcode = next(key for key, value in self.devicetypes.items() if value == devicename)
             super().extend(devcode.to_bytes(2, 'big'))
         else:
-            raise ViDataException(f'Unknown device name {devicename}')
+            raise viDataException(f'Unknown device name {devicename}')
 
     @property
     def value(self):
@@ -213,3 +209,35 @@ class viDataIUNON(viData):
     @property
     def value(self):
         return int.from_bytes(self,'little',signed=False)
+
+class viDataRT(viData):
+    unit={'code':'RT','unit_de': 'ReturnStatus'}
+    # operating mode codes are hex numbers
+    returnstatus = {
+        0x00: '0',
+        0x01: '1',
+        0x03: '2',
+    }
+
+    def __init__(self,value=b'\x00'):
+        # sets operating mode (hex) based on string opmode
+        # if opmode is skipped defaults to 'undefiniert'
+        super().__init__(value)
+
+    def __fromtype__(self,status):
+        if status in self.returnstatus.values():
+            opcode=next(key for key, value in self.returnstatus.items() if value==status)
+            super().extend(opcode.to_bytes(1,'big'))
+        else:
+            raise viDataException(f'Unknown return status {status}. Options are {self.returnstatus.values()}')
+
+    def __fromraw__(self,value):
+        # set raw value directly
+        if int.from_bytes(value, 'big') in self.returnstatus.keys():
+            super().extend(value)
+        else:
+            raise viDataException(f'Unknown return status {value.hex()}')
+
+    @property
+    def value(self):
+        return self.returnstatus[int.from_bytes(self,'big')]

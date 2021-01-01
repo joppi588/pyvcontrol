@@ -1,5 +1,5 @@
 import unittest
-import viCommand as v
+from pyvcontrol import viCommand as v
 
 class testViCommand(unittest.TestCase):
     def test_vicmdfrombytes(self):

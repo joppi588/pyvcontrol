@@ -19,10 +19,8 @@
 
 
 import unittest
-import viControl as v
-import viCommand as c
-import viData as d
-from viTelegram import viTelegramException
+from pyvcontrol import viControl as v, viCommand as c, viData as d
+from pyvcontrol.viTelegram import viTelegramException
 
 
 class testviTelegram(unittest.TestCase):

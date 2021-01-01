@@ -17,20 +17,7 @@
 #  along with this program. If not, see <http://www.gnu.org/licenses/>.
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
-# Neuentwicklung basierend auf SmartHomeNG Plugin von M.Wenzel
-# Motivation:
-# - unabhängiges Python-Modul ohne vcontrold verwenden zu müssen
-# - Fingerübung zur sauberen Python-Programmierung
-#    + Objektorientiert / modular
-#    + gut lesbar: kurze Funktionen
-#    + Python design patterns,...
-# - Unit-Tests für alle Klassen
-# Einschränkungen:
-# - Die Parameter (z.B. Kommandodefinitionen) sind jetzt Teil der Klassen und nicht mehr zentral abgelegt.
-#   Nachteil ist die geringere Anwenderfreundlichkeit - Konfigurationen sollten nicht Teil des Codes sein
-#   (Allerdings sind die vcontrold-XMLs auch nicht sonderlich gut wartbar)
-#   Vorteil ist dass Code und Daten jetzt nahe beieinander sind (objektorientierte Programmierung)
-# - nur V200WO1C/P300 implementiert. Erweiterung über eine weitere class factory einfach möglich, denke ich
+
 
 import viCommand as c
 import logging
