@@ -77,13 +77,13 @@ class viControl:
         # define subfunctions
         def __reset():
             #send reset proto viCommand
-            self.vs.send(c.viProtocmd('Reset_Command'))
-            logging.debug('Send reset command {}'.format(c.viProtocmd('Reset_Command')))
+            self.vs.send(viProtocmd('Reset_Command'))
+            logging.debug('Send reset command {}'.format(viProtocmd('Reset_Command')))
 
         def __sync():
             # Schnittstelle ist zurückgesetzt und wartet auf Daten; Antwort b'\x05' = Warten auf Initialisierungsstring oder Antwort b'\x06' = Schnittstelle initialisiert
-            self.vs.send(c.viProtocmd('Sync_Command'))
-            logging.debug('Send sync command {}'.format(c.viProtocmd('Sync_Command')))
+            self.vs.send(viProtocmd('Sync_Command'))
+            logging.debug('Send sync command {}'.format(viProtocmd('Sync_Command')))
 
         def __read_one_byte():
             readbyte = self.vs.read(1)
@@ -94,7 +94,7 @@ class viControl:
         for ii in range(0, 10):
             readbyte = __read_one_byte()
             logging.debug('Init Communication to viControl....')
-            if readbyte == c.viProtocmd('Acknowledge'):
+            if readbyte == viProtocmd('Acknowledge'):
                 # Schnittstelle hat auf den Initialisierungsstring mit OK geantwortet. Die Abfrage von Werten kann beginnen. Diese Funktion meldet hierzu True zurück.
                 self.isSync = True
                 break
