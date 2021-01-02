@@ -1,10 +1,10 @@
 import unittest
 import logging
-from pyvcontrol import viControl as v
+from pyvcontrol.viControl import viControl
 
 class MyTestCase(unittest.TestCase):
     def test_readsequence(self):
-        vo = v.viControl()
+        vo = viControl()
         vo.initComm()
 
         vd = vo.execReadCmd('Aussentemperatur')
