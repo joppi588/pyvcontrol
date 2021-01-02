@@ -16,6 +16,8 @@ class MyTestCase(unittest.TestCase):
         vd = vo.execReadCmd('Anlagentyp')
         print(f'Anlagentyp: {vd.value}')
 
+        vd = vo.execReadCmd('WWeinmal')
+        print(f'Warmwasser einmalig: {vd.value}')
 
 if __name__ == '__main__':
     logging.basicConfig(filename='testVDirekt.log', filemode='w', level=logging.DEBUG)

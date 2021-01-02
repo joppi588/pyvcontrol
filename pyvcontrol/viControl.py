@@ -19,12 +19,12 @@
 
 
 
-import viCommand as c
+from pyvcontrol.viCommand import viCommand,controlset,viProtocmd
+from pyvcontrol.viTelegram import viTelegram
+from pyvcontrol.viData import viDataFactory
 import logging
 import serial
 from threading import Lock
-from viTelegram import viTelegram
-from viData import viDataFactory
 import time
 
 class viControlException(Exception):
@@ -35,7 +35,7 @@ class viControl:
 # class to connect to viControl heating directly via Optolink
 # only supports WO1C with protocol P300
     def __init__(self):
-        self.vs=vSerial(c.controlset,'/dev/ttyUSB0')
+        self.vs=vSerial(controlset,'/dev/ttyUSB0')
         self.vs.connect()
         self.isSync = False
 
@@ -45,7 +45,7 @@ class viControl:
 
     def execReadCmd(self,cmdname):
         # sends a read command and gets the response.
-        vc = c.viCommand(cmdname)           # create command
+        vc = viCommand(cmdname)           # create command
         vt = viTelegram(vc, 'read')  # create read Telegram
 
         logging.debug(f'Send telegram {vt.hex()}')
@@ -54,7 +54,7 @@ class viControl:
         # Check if sending was successfull
         ack=self.vs.read(1)
         logging.debug(f'Received  {ack.hex()}')
-        if ack!=c.viProtocmd('Acknowledge'):
+        if ack!=viProtocmd('Acknowledge'):
             raise viControlException(f'Expected acknoledge byte, received {ack}')
 
         # Receive response and evaluate data
@@ -98,10 +98,10 @@ class viControl:
                 # Schnittstelle hat auf den Initialisierungsstring mit OK geantwortet. Die Abfrage von Werten kann beginnen. Diese Funktion meldet hierzu True zurück.
                 self.isSync = True
                 break
-            elif readbyte == c.viProtocmd('Not_initiated'):
+            elif readbyte == viProtocmd('Not_initiated'):
                 # Send sync command
                 __sync()
-            elif readbyte==c.viProtocmd('Init_Error'):
+            elif readbyte==viProtocmd('Init_Error'):
                 logging.error(f'The interface has reported an error (\x15), loop increment {ii}')
                 self.isSync=False
                 __reset()

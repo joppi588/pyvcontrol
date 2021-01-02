@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='pyvcontrol',
-      version='0.1a',
+      version='0.1a0',
       description='Communication with Viessmann heating via Optolink interface',
       url='http://github.com/',
       author='Jochen Schmaehling',
