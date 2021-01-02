@@ -123,7 +123,7 @@ commandset = {
     # Wärmeenergie für WW-Bereitung der letzten 12 Monate (kWh)
     'ElektroWW12M': {'addr': '1670', 'len': 4, 'unit': 'IU10', 'set': False},
     # elektr. Energie für WW-Bereitung der letzten 12 Monate (kWh)
-    'WWeinmal':{'addr':'xxxx','len':1,'unit':'OO','set':True}
+    'WWeinmal':{'addr':'B020','len':1,'unit':'OO','set':True}
 }
 
 
