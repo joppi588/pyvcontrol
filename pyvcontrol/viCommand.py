@@ -123,6 +123,7 @@ commandset = {
     # Wärmeenergie für WW-Bereitung der letzten 12 Monate (kWh)
     'ElektroWW12M': {'addr': '1670', 'len': 4, 'unit': 'IU10', 'set': False},
     # elektr. Energie für WW-Bereitung der letzten 12 Monate (kWh)
+    'WWeinmal':{'addr':'xxxx','len':1,'unit':'OO','set':True}
 }
 
 
@@ -278,14 +279,6 @@ systemschemes = {
     '02': 'HK + WW',
     '04': 'HK + WW',
     '05': 'HK + WW'
-}
-
-returnstatus = {
-    '00': '0',
-    '01': '1',
-    '03': '2',
-    'AA': 'NOT OK',
-    # At least for device 20CB the heating circuit pump returns status 03 when it's on and the heating runs in in night mode
 }
 
 setreturnstatus = {

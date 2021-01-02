@@ -79,7 +79,7 @@ class viData(bytearray):
 def viDataFactory(type,*args):
     # select data type object based on type
     # args are passed as such to the constructor of the function
-    datatype_object={'BT':viDataBT, 'DT':viDataDT,'IS10':viDataIS10,'IUNON':viDataIUNON,'RT':viDataRT}
+    datatype_object={'BT':viDataBT, 'DT':viDataDT,'IS10':viDataIS10,'IUNON':viDataIUNON,'RT':viDataRT,'OO':viDataOO}
     if type in datatype_object.keys():
         return datatype_object[type](*args)
     else:
@@ -217,8 +217,8 @@ class viDataRT(viData):
         0x00: '0',
         0x01: '1',
         0x03: '2',
+        0xAA: 'Not OK'
     }
-
     def __init__(self,value=b'\x00'):
         # sets operating mode (hex) based on string opmode
         # if opmode is skipped defaults to 'undefiniert'
@@ -241,3 +241,35 @@ class viDataRT(viData):
     @property
     def value(self):
         return self.returnstatus[int.from_bytes(self,'big')]
+
+class viDataOO(viData):
+    unit={'code':'OO','unit_de': 'OnOff'}
+    # operating mode codes are hex numbers
+    OnOff = {
+        0x00: 'On',
+        0x01: 'Manual',
+        0x02: 'Off',
+    }
+    def __init__(self,value=b'\x02'):
+        # sets operating mode (hex) based on string opmode
+        # if value is skipped defaults to 'off'
+        super().__init__(value)
+
+    def __fromtype__(self,onoff):
+        if onoff in self.OnOff.values():
+            opcode=next(key for key, value in self.OnOff.items() if value == onoff)
+            super().extend(opcode.to_bytes(1,'big'))
+        else:
+            raise viDataException(f'Unknown value {onoff}. Options are {self.OnOff.values()}')
+
+    def __fromraw__(self,value):
+        # set raw value directly
+        if int.from_bytes(value, 'big') in self.OnOff.keys():
+            super().extend(value)
+        else:
+            raise viDataException(f'Unknown value {value.hex()}')
+
+    @property
+    def value(self):
+        return self.OnOff[int.from_bytes(self, 'big')]
+

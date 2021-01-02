@@ -62,7 +62,7 @@ class viDataTestCaseDT(unittest.TestCase):
 
 class viDataTestCaseIS10(unittest.TestCase):
     def test_IS10(self):
-        dIS10=v.viDataFactory('IS10',10.15,2)
+        dIS10=v.viDataFactory('IS10',10.15)
         self.assertEqual(dIS10.value, 10.1)
 
     def test_IS10raw(self):
@@ -71,7 +71,7 @@ class viDataTestCaseIS10(unittest.TestCase):
 
     def test_IS10minus(self):
         f=-9.856
-        dIS10=v.viDataFactory('IS10',f,2)
+        dIS10=v.viDataFactory('IS10',f)
         print(f'Hex representation of {f} is {dIS10.hex()}')
         self.assertEqual(dIS10.value, -9.8)
 
@@ -80,13 +80,24 @@ class viDataTestCaseIS10(unittest.TestCase):
 class viDataTestCaseIUNON(unittest.TestCase):
     def test_IUNON(self):
         f=415
-        dIUNON=v.viDataFactory('IUNON',f,2)
+        dIUNON=v.viDataFactory('IUNON',f)
         print(f'Hex representation of {f} is {dIUNON.hex()}')
         self.assertEqual(dIUNON.value, f)
 
     def test_IUNONraw(self):
         dIUNON=v.viDataFactory('IUNON',b'\x9f\x01')
         self.assertEqual(dIUNON.value, 415)
+
+class viDataTestCaseOO(unittest.TestCase):
+    def test_OO(self):
+        f='On'
+        dOO=v.viDataFactory('OO',f)
+        print(f'Hex representation of {f} is {dOO.hex()}')
+        self.assertEqual(dOO.value, f)
+
+    def test_OOraw(self):
+        dOO=v.viDataFactory('OO',b'\x02')
+        self.assertEqual(dOO.value, 'Off')
 
 
 if __name__ == '__main__':
