@@ -20,6 +20,7 @@ Motivation:
    + gut lesbar: kurze Funktionen
    + Python design patterns,...
  - Unit-Tests für alle Klassen
+
 Einschränkungen:
  - Die Parameter (z.B. Kommandodefinitionen) sind jetzt Teil der Klassen und nicht mehr zentral abgelegt.
    Nachteil ist die geringere Anwenderfreundlichkeit - Konfigurationen sollten eigentlich vom Code getrennt sein
