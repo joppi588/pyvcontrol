@@ -38,7 +38,7 @@ commandset = {
     # Anlagenstatus
     'Betriebsart': {'addr': 'B000', 'len': 1, 'unit': 'BA', 'set': True},
     # getBetriebsart -- Bedienung HK1 - Heizkreis 1: Betriebsart (Textstring)
-    'Manuell': {'addr': 'B020', 'len': 1, 'unit': 'IUNON', 'set': True, 'min_value': 0, 'max_value': 2},
+    'WWeinmal': {'addr': 'B020', 'len': 1, 'unit': 'OO', 'set': True},
     # getManuell / setManuell -- 0 = normal, 1 = manueller Heizbetrieb, 2 = 1x Warmwasser auf Temp2
     'Sekundaerpumpe': {'addr': '0484', 'len': 1, 'unit': 'RT', 'set': False},
     # getStatusSekP -- Diagnose - Anlagenuebersicht: Sekundaerpumpe 1 (0..1)
@@ -123,7 +123,6 @@ commandset = {
     # Wärmeenergie für WW-Bereitung der letzten 12 Monate (kWh)
     'ElektroWW12M': {'addr': '1670', 'len': 4, 'unit': 'IU10', 'set': False},
     # elektr. Energie für WW-Bereitung der letzten 12 Monate (kWh)
-    'WWeinmal':{'addr':'B020','len':1,'unit':'OO','set':True}
 }
 
 
@@ -162,7 +161,7 @@ class viCommand(bytearray):
     def responselen(self):
         #returns the number of bytes in the response
         # 4 is the response header length, see protocommandset
-        return self.__valuebytes__+4+self.Command_bytes_read
+        return self.__valuebytes__+3+self.Command_bytes_read
 
 class viProtocmd(bytearray):
     # bytearray representation of proto-commands

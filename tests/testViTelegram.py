@@ -78,5 +78,15 @@ class testviTelegram_resp(unittest.TestCase):
         self.assertEqual(vt.vicmd.unit,'IS10')
         self.assertEqual(vd.value, 10.1)
 
+    def test_telegramdata(self):
+        b=bytes.fromhex('41 09 01 01 05 04 04 e4 29 00 00 25')
+        vt = v.viTelegram.frombytes(b)
+        vd=d.viDataFactory(vt.vicmd.unit,vt.payload)
+        self.assertEqual(13,vt.vicmd.responselen())
+        self.assertEqual(vt.vicmd.cmdname,'EinschaltungenSekundaer')
+        self.assertEqual(vt.vicmd.unit,'IUNON')
+        self.assertEqual(vd.value, 10724)
+
+
 if __name__ == '__main__':
     unittest.main()

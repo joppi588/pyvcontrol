@@ -59,7 +59,7 @@ class viControl:
 
         # Receive response and evaluate data
         vr = self.vs.read(vc.responselen())  # receive response
-        logging.debug(f'Received telegram {vr.hex()}')
+        logging.debug(f'Requested {vc.responselen()} bytes. Received telegram {vr.hex()}')
 
         #FIXME send ACK
 
@@ -174,15 +174,19 @@ class vSerial():
     def read(self, length):
         # read bytes from serial connection
         totalreadbytes = bytearray(0)
-        for ii in range(0,10):
+        failed_count=0
+        #FIXME: read length bytes and try ten times if nothing received
+        while failed_count<10:
             # try to get one or more bytes
             readbyte = self._serial.read()
             totalreadbytes += readbyte
-            if len(readbyte)==0:
-                # if nothing received, wait and retry
-                time.sleep(0.2)
-                logging.debug(f'Serial read: retry ({ii+1})')
             if len(totalreadbytes) >= length:
                 # exit loop if all bytes are received
                 break
+            if len(readbyte)==0:
+                # if nothing received, wait and retry
+                time.sleep(0.2)
+                failed_count+=1
+                logging.debug(f'Serial read: retry ({failed_count})')
+        logging.debug(f'Received {len(totalreadbytes)}/{length} bytes')
         return totalreadbytes

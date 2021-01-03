@@ -17,6 +17,7 @@
 #  along with this program. If not, see <http://www.gnu.org/licenses/>.
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
+import logging
 
 class viDataException(Exception):
     def __init__(self,msg):
@@ -29,25 +30,29 @@ class viData(bytearray):
     # konstruktor __init__ accepts byte-encoded input or real data
     # method __value__ returns the decoded value (str,int,fixed-point,...)
     # method __fromraw__ initializes the object with raw byte data
-    # methon __fromvalue__ initalizes the object with a typed value
+    # method __fromvalue__ initalizes the object with a typed value
 
+    # Implemented units:
+    # BT, DT, IS10, IUNON, OO, RT
+    # units not implemented so far:
+    # FIXME: implemented units -> create own classes
     unitset = {
-        'CT': {'unit_de': 'CycleTime', 'type': 'timer', 'signed': False, 'read_value_transform': 'non'},        # vito unit: CT
-        'ES': {'unit_de': 'ErrorState', 'type': 'list', 'signed': False, 'read_value_transform': 'non'},        # vito unit: ES
-        'IU2': {'unit_de': 'INT unsigned 2', 'type': 'integer', 'signed': False, 'read_value_transform': '2'},        # vito unit: UT1U, PR1
-        'IU10': {'unit_de': 'INT unsigned 10', 'type': 'integer', 'signed': False, 'read_value_transform': '10'},        # vito unit:
-        'IU3600': {'unit_de': 'INT unsigned 3600', 'type': 'integer', 'signed': False, 'read_value_transform': '3600'},        # vito unit: CS
-        'IUBOOL': {'unit_de': 'INT unsigned bool', 'type': 'integer', 'signed': False, 'read_value_transform': 'bool'},        # vito unit:
-        'IUINT': {'unit_de': 'INT unsigned int', 'type': 'integer', 'signed': False, 'read_value_transform': 'int'},        # vito unit:
-        'IS2': {'unit_de': 'INT signed 2', 'type': 'integer', 'signed': True, 'read_value_transform': '2'},        # vito unit: UT1, PR
-        'IS100': {'unit_de': 'INT signed 100', 'type': 'integer', 'signed': True, 'read_value_transform': '100'},        # vito unit:
-        'IS1000': {'unit_de': 'INT signed 1000', 'type': 'integer', 'signed': True, 'read_value_transform': '1000'},        # vito unit:
-        'ISNON': {'unit_de': 'INT signed non', 'type': 'integer', 'signed': True, 'read_value_transform': 'non'},        # vito unit:
-        'SC': {'unit_de': 'SystemScheme', 'type': 'list', 'signed': False, 'read_value_transform': 'non'},  # vito unit:
-        'SN': {'unit_de': 'Sachnummer', 'type': 'serial', 'signed': False, 'read_value_transform': 'non'},  # vito unit:
-        'SR': {'unit_de': 'SetReturnStatus', 'type': 'list', 'signed': False, 'read_value_transform': 'non'},        # vito unit:
-        'TI': {'unit_de': 'SystemTime', 'type': 'datetime', 'signed': False, 'read_value_transform': 'non'},        # vito unit: TI
-        'DA': {'unit_de': 'Date', 'type': 'date', 'signed': False, 'read_value_transform': 'non'},  # vito unit:
+        'CT': {'description': 'CycleTime', 'type': 'timer', 'signed': False, 'read_value_transform': 'non'},        # vito unit: CT
+        'ES': {'description': 'ErrorState', 'type': 'list', 'signed': False, 'read_value_transform': 'non'},        # vito unit: ES
+        'IU2': {'description': 'INT unsigned 2', 'type': 'integer', 'signed': False, 'read_value_transform': '2'},        # vito unit: UT1U, PR1
+        'IU10': {'description': 'INT unsigned 10', 'type': 'integer', 'signed': False, 'read_value_transform': '10'},        # vito unit:
+        'IU3600': {'description': 'INT unsigned 3600', 'type': 'integer', 'signed': False, 'read_value_transform': '3600'},        # vito unit: CS
+        'IUBOOL': {'description': 'INT unsigned bool', 'type': 'integer', 'signed': False, 'read_value_transform': 'bool'},        # vito unit:
+        'IUINT': {'description': 'INT unsigned int', 'type': 'integer', 'signed': False, 'read_value_transform': 'int'},        # vito unit:
+        'IS2': {'description': 'INT signed 2', 'type': 'integer', 'signed': True, 'read_value_transform': '2'},        # vito unit: UT1, PR
+        'IS100': {'description': 'INT signed 100', 'type': 'integer', 'signed': True, 'read_value_transform': '100'},        # vito unit:
+        'IS1000': {'description': 'INT signed 1000', 'type': 'integer', 'signed': True, 'read_value_transform': '1000'},        # vito unit:
+        'ISNON': {'description': 'INT signed non', 'type': 'integer', 'signed': True, 'read_value_transform': 'non'},        # vito unit:
+        'SC': {'description': 'SystemScheme', 'type': 'list', 'signed': False, 'read_value_transform': 'non'},  # vito unit:
+        'SN': {'description': 'Sachnummer', 'type': 'serial', 'signed': False, 'read_value_transform': 'non'},  # vito unit:
+        'SR': {'description': 'SetReturnStatus', 'type': 'list', 'signed': False, 'read_value_transform': 'non'},        # vito unit:
+        'TI': {'description': 'SystemTime', 'type': 'datetime', 'signed': False, 'read_value_transform': 'non'},        # vito unit: TI
+        'DA': {'description': 'Date', 'type': 'date', 'signed': False, 'read_value_transform': 'non'},  # vito unit:
     }
 
     def __init__(self,value):
@@ -79,7 +84,8 @@ class viData(bytearray):
 def viDataFactory(type,*args):
     # select data type object based on type
     # args are passed as such to the constructor of the function
-    datatype_object={'BT':viDataBT, 'DT':viDataDT,'IS10':viDataIS10,'IUNON':viDataIUNON,'RT':viDataRT,'OO':viDataOO}
+    logging.debug(f'Data factory: request to produce Data type {type} with args {args}')
+    datatype_object={'BA':viDataBA, 'DT':viDataDT, 'IS10':viDataIS10,'IU10':viDataIU10, 'IU3600':viDataIU3600,'IUNON':viDataIUNON, 'RT':viDataRT, 'OO':viDataOO}
     if type in datatype_object.keys():
         return datatype_object[type](*args)
     else:
@@ -90,8 +96,9 @@ def viDataFactory(type,*args):
 # ----------------------------------------
 # Below are the class definitions for each unit
 
-class viDataBT(viData):
-    unit={'code':'BT','unit_de': 'Betriebsart'}
+class viDataBA(viData):
+    #Betriebsart
+    unit={'code':'BA','description': 'Betriebsart','unit':''}
     # operating mode codes are hex numbers
     operatingmodes = {
         0x00: 'Abschaltbetrieb',
@@ -125,11 +132,12 @@ class viDataBT(viData):
 
     @property
     def value(self):
+        # returns decoded value
         return self.operatingmodes[int.from_bytes(self,'big')]
 
 class viDataDT(viData):
     # device types
-    unit= {'unit_de': 'DeviceType', 'code':'DT'}  # vito unit: DT
+    unit= {'description': 'DeviceType', 'code':'DT','unit':''}  # vito unit: DT
     devicetypes = {
         0x2098: 'V200KW2, Protokoll: KW2',
         0x2053: 'GWG_VBEM, Protokoll: GWG',
@@ -177,7 +185,7 @@ class viDataDT(viData):
 
 class viDataIS10(viData):
     #IS10 - signed fixed-point integer, 1 decimal
-    unit= {'code':'IS10','unit_de': 'INT signed 10'}
+    unit= {'code':'IS10','description': 'INT signed 10','unit':''}
 
     def __init__(self, value=b'\x00\x00', len=2):
         #sets int representation based on input value
@@ -193,9 +201,46 @@ class viDataIS10(viData):
     def value(self):
         return int.from_bytes(self,'little',signed=True)/10
 
+class viDataIU10(viData):
+    #IS10 - signed fixed-point integer, 1 decimal
+    unit= {'code':'IU10','description': 'INT unsigned 10','unit':''}
+
+    def __init__(self, value=b'\x00\x00', len=2):
+        #sets int representation based on input value
+        self.len=len  #length in bytes
+        super().__init__(value)
+
+    def __fromtype__(self,value):
+        #fixed-point number given
+        super().extend(int(value * 10).to_bytes(self.len,'little',signed=False))
+
+    @property
+    def value(self):
+        return int.from_bytes(self,'little',signed=False)/10
+
+
+class viDataIU3600(viData):
+    #IU3600 - signed fixed-point integer, 1 decimal
+    unit= {'code':'IS10','description': 'INT signed 10','unit':'h'}
+
+    def __init__(self, value=b'\x00\x00', len=2):
+        #sets int representation based on input value
+        self.len=len  #length in bytes
+        super().__init__(value)
+
+    def __fromtype__(self,value):
+        #fixed-point number given
+        super().extend(int(value * 3600).to_bytes(self.len,'little',signed=False))
+
+    @property
+    def value(self):
+        #FIXME round to two digits
+        return int.from_bytes(self,'little',signed=True)/3600
+
+
 class viDataIUNON(viData):
     #IUNON - unsigned int
-    unit={'code':'IUNON','unit_de': 'INT unsigned non'},        # vito unit: UTI, CO
+    unit={'code':'IUNON','description': 'INT unsigned non','unit':''},        # vito unit: UTI, CO
 
     def __init__(self, value=b'\x00\x00',len=2):
         #sets int representation based on input value
@@ -211,7 +256,7 @@ class viDataIUNON(viData):
         return int.from_bytes(self,'little',signed=False)
 
 class viDataRT(viData):
-    unit={'code':'RT','unit_de': 'ReturnStatus'}
+    unit={'code':'RT','description': 'ReturnStatus','unit':''}
     # operating mode codes are hex numbers
     returnstatus = {
         0x00: '0',
@@ -243,12 +288,12 @@ class viDataRT(viData):
         return self.returnstatus[int.from_bytes(self,'big')]
 
 class viDataOO(viData):
-    unit={'code':'OO','unit_de': 'OnOff'}
+    unit={'code':'OO','description': 'OnOff','unit':''}
     # operating mode codes are hex numbers
     OnOff = {
-        0x00: 'On',
+        0x00: 'Off',
         0x01: 'Manual',
-        0x02: 'Off',
+        0x02: 'On',
     }
     def __init__(self,value=b'\x02'):
         # sets operating mode (hex) based on string opmode

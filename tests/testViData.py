@@ -21,31 +21,31 @@
 import unittest
 from pyvcontrol import viData as v
 
-class viDataTestCaseBT(unittest.TestCase):
-    def test_BT04Empty(self):
+class viDataTestCaseBA(unittest.TestCase):
+    def test_BA04Empty(self):
         #create empty class and
-        dBT= v.viDataFactory('BT')
-        self.assertEqual(dBT.value, 'undefiniert') #defaults to mode 'undefiniert'
+        dBA= v.viDataFactory('BA')
+        self.assertEqual(dBA.value, 'undefiniert') #defaults to mode 'undefiniert'
 
-    def test_BT04raw(self):
-        dBT=v.viDataFactory('BT',b'\x04')
-        self.assertEqual(dBT.value, 'dauernd reduziert')
+    def test_BA04raw(self):
+        dBA=v.viDataFactory('BA',b'\x04')
+        self.assertEqual(dBA.value, 'dauernd reduziert')
 
-    def test_BT04(self):
+    def test_BA04(self):
         #create class with constructor and parameter
-        dBT= v.viDataFactory('BT', 'dauernd reduziert')
-        self.assertEqual(dBT,b'\x04')
+        dBA= v.viDataFactory('BA', 'dauernd reduziert')
+        self.assertEqual(dBA,b'\x04')
 
-    def test_BT666Empty(self):
+    def test_BA666Empty(self):
         #test call with non-existent mode
         with self.assertRaises(v.viDataException):
-            v.viDataFactory('BT',b'\x66\x66')
+            v.viDataFactory('BA',b'\x66\x66')
 
 
-    def test_BTfoobar(self):
+    def test_BAfoobar(self):
         #test call with non-existent mode
         with self.assertRaises(v.viDataException):
-            v.viDataFactory('BT', 'foobar')
+            v.viDataFactory('BA', 'foobar')
 
 class viDataTestCaseDT(unittest.TestCase):
     def test_DTempty(self):
@@ -97,7 +97,7 @@ class viDataTestCaseOO(unittest.TestCase):
 
     def test_OOraw(self):
         dOO=v.viDataFactory('OO',b'\x02')
-        self.assertEqual(dOO.value, 'Off')
+        self.assertEqual(dOO.value, 'On')
 
 
 if __name__ == '__main__':
