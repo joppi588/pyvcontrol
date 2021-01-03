@@ -3,10 +3,13 @@
 
 ![Python Logo](https://www.python.org/static/community_logos/python-logo.png "Sample inline image")
 
-Python module to communicate with Viessmann heatings via the optolink serial interface.
+Python package to communicate with Viessmann heatings via the optolink serial interface.
 It is suitable to replace vcontrold when using a python environment
 
-Neuentwicklung basierend 
+Python package zur Kommunikation mit Viessmann-Heizungen über die Optolink serielle Schnittstelle.
+Geeignet um vcontrold zu ersetzen wenn ohnehin mit Python gearbeitet wird.
+
+Neuentwicklung basierend  auf 
   - SmartHomeNG python Plugin (M.Wenzel)
   - vcontrold
 

@@ -161,6 +161,7 @@ class viCommand(bytearray):
     def responselen(self):
         #returns the number of bytes in the response
         # 4 is the response header length, see protocommandset
+        # FIXME proper calculation of answer length
         return self.__valuebytes__+3+self.Command_bytes_read
 
 class viProtocmd(bytearray):
