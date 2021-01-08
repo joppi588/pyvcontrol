@@ -87,7 +87,10 @@ def viDataFactory(type,*args):
     # select data type object based on type
     # args are passed as such to the constructor of the function
     logging.debug(f'Data factory: request to produce Data type {type} with args {args}')
-    datatype_object={'BA':viDataBA, 'DT':viDataDT, 'IS10':viDataIS10,'IU10':viDataIU10, 'IU3600':viDataIU3600,'IUNON':viDataIUNON, 'RT':viDataRT, 'OO':viDataOO}
+    datatype_object={'BA':viDataBA, 'DT':viDataDT, 'IS10':viDataIS10,'IU10':viDataIU10,
+                     'IU3600':viDataIU3600,'IUNON':viDataIUNON, 'RT':viDataRT, 'OO':viDataOO,
+                     'ES':viDataES,
+                     }
     if type in datatype_object.keys():
         return datatype_object[type](*args)
     else:
@@ -136,6 +139,98 @@ class viDataBA(viData):
     def value(self):
         # returns decoded value
         return self.operatingmodes[int.from_bytes(self,'big')]
+
+class viDataES(viData):
+    #ERROR states
+    unit={'code':'ES','description': 'Error','unit':''}
+    # error codes are hex numbers
+    errorset = {
+        0x00: 'Regelbetrieb (kein Fehler)',
+        0x0F: 'Wartung (fuer Reset Codieradresse 24 auf 0 stellen)',
+        0x10: 'Kurzschluss Aussentemperatursensor',
+        0x18: 'Unterbrechung Aussentemperatursensor',
+        0x20: 'Kurzschluss Vorlauftemperatursensor',
+        0x21: 'Kurzschluss Ruecklauftemperatursensor',
+        0x28: 'Unterbrechung Aussentemperatursensor',
+        0x29: 'Unterbrechung Ruecklauftemperatursensor',
+        0x30: 'Kurzschluss Kesseltemperatursensor',
+        0x38: 'Unterbrechung Kesseltemperatursensor',
+        0x40: 'Kurzschluss Vorlauftemperatursensor M2',
+        0x42: 'Unterbrechung Vorlauftemperatursensor M2',
+        0x50: 'Kurzschluss Speichertemperatursensor',
+        0x58: 'Unterbrechung Speichertemperatursensor',
+        0x92: 'Solar: Kurzschluss Kollektortemperatursensor',
+        0x93: 'Solar: Kurzschluss Sensor S3',
+        0x94: 'Solar: Kurzschluss Speichertemperatursensor',
+        0x9A: 'Solar: Unterbrechung Kollektortemperatursensor',
+        0x9B: 'Solar: Unterbrechung Sensor S3',
+        0x9C: 'Solar: Unterbrechung Speichertemperatursensor',
+        0x9E: 'Solar: Zu geringer bzw. kein Volumenstrom oder Temperaturwächter ausgeloest',
+        0x9F: 'Solar: Fehlermeldung Solarteil (siehe Solarregler)',
+        0xA7: 'Bedienteil defekt',
+        0xB0: 'Kurzschluss Abgastemperatursensor',
+        0xB1: 'Kommunikationsfehler Bedieneinheit',
+        0xB4: 'Interner Fehler (Elektronik)',
+        0xB5: 'Interner Fehler (Elektronik)',
+        0xB6: 'Ungueltige Hardwarekennung (Elektronik)',
+        0xB7: 'Interner Fehler (Kesselkodierstecker)',
+        0xB8: 'Unterbrechung Abgastemperatursensor',
+        0xB9: 'Interner Fehler (Dateneingabe wiederholen)',
+        0xBA: 'Kommunikationsfehler Erweiterungssatz fuer Mischerkreis M2',
+        0xBC: 'Kommunikationsfehler Fernbedienung Vitorol, Heizkreis M1',
+        0xBD: 'Kommunikationsfehler Fernbedienung Vitorol, Heizkreis M2',
+        0xBE: 'Falsche Codierung Fernbedienung Vitorol',
+        0xC1: 'Externe Sicherheitseinrichtung (Kessel kuehlt aus)',
+        0xC2: 'Kommunikationsfehler Solarregelung',
+        0xC5: 'Kommunikationsfehler drehzahlgeregelte Heizkreispumpe, Heizkreis M1',
+        0xC6: 'Kommunikationsfehler drehzahlgeregelte Heizkreispumpe, Heizkreis M2',
+        0xC7: 'Falsche Codierung der Heizkreispumpe',
+        0xC9: 'Stoermeldeeingang am Schaltmodul-V aktiv',
+        0xCD: 'Kommunikationsfehler Vitocom 100 (KM-BUS)',
+        0xCE: 'Kommunikationsfehler Schaltmodul-V',
+        0xCF: 'Kommunikationsfehler LON Modul',
+        0xD1: 'Brennerstoerung',
+        0xD4: 'Sicherheitstemperaturbegrenzer hat ausgeloest oder Stoermeldemodul nicht richtig gesteckt',
+        0xDA: 'Kurzschluss Raumtemperatursensor, Heizkreis M1',
+        0xDB: 'Kurzschluss Raumtemperatursensor, Heizkreis M2',
+        0xDD: 'Unterbrechung Raumtemperatursensor, Heizkreis M1',
+        0xDE: 'Unterbrechung Raumtemperatursensor, Heizkreis M2',
+        0xE4: 'Fehler Versorgungsspannung',
+        0xE5: 'Interner Fehler (Ionisationselektrode)',
+        0xE6: 'Abgas- / Zuluftsystem verstopft',
+        0xF0: 'Interner Fehler (Regelung tauschen)',
+        0xF1: 'Abgastemperaturbegrenzer ausgeloest',
+        0xF2: 'Temperaturbegrenzer ausgeloest',
+        0xF3: 'Flammensigal beim Brennerstart bereits vorhanden',
+        0xF4: 'Flammensigal nicht vorhanden',
+        0xF7: 'Differenzdrucksensor defekt',
+        0xF8: 'Brennstoffventil schliesst zu spaet',
+        0xF9: 'Geblaesedrehzahl beim Brennerstart zu niedrig',
+        0xFA: 'Geblaesestillstand nicht erreicht',
+        0xFD: 'Fehler Gasfeuerungsautomat',
+        0xFE: 'Starkes Stoerfeld (EMV) in der Naehe oder Elektronik defekt',
+        0xFF: 'Starkes Stoerfeld (EMV) in der Naehe oder interner Fehler',
+    }
+
+    def __init__(self,value=b'\x00'):
+        # default is no error
+        super().__init__(value)
+
+    #def __fromtype__(self,errstr):
+        # Implementation does not make sense, an error will always be raised by the Viessmann unit
+
+    def __fromraw__(self,value):
+        # set raw value directly
+        if int.from_bytes(value, 'big') in self.errorset.keys():
+            super().extend(value)
+        else:
+            raise viDataException(f'Unknown error code {value.hex()}')
+
+    @property
+    def value(self):
+        # returns decoded value
+        return self.errorset[int.from_bytes(self,'big')]
+
 
 class viDataDT(viData):
     # device types
