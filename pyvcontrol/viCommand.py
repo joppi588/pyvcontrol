@@ -29,6 +29,12 @@ controlset = {
 
 
 
+setreturnstatus = {
+    '00': 'OK',
+    '05': 'SYNC (NOT OK)',
+}
+
+
 
 class viCommand(bytearray):
     # the commands
@@ -170,16 +176,4 @@ class viCommand(bytearray):
 
 
 
-
-systemschemes = {
-    '01': 'WW',
-    '02': 'HK + WW',
-    '04': 'HK + WW',
-    '05': 'HK + WW'
-}
-
-setreturnstatus = {
-    '00': 'OK',
-    '05': 'SYNC (NOT OK)',
-}
 

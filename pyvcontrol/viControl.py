@@ -21,7 +21,7 @@
 
 from pyvcontrol.viCommand import viCommand,controlset
 from pyvcontrol.viTelegram import viTelegram
-from pyvcontrol.viData import viDataFactory
+from pyvcontrol.viData import viDataFactory,viData
 import logging
 import serial
 from threading import Lock
@@ -66,13 +66,34 @@ class viControl:
         vt = viTelegram.frombytes(vr)   #create response Telegram
         return viDataFactory(vt.vicmd.unit,vt.payload)     # return viData object from payload
 
-    def execWriteCmd(self,cmdname,value):
-        pass
-        # create viData object
-        # create write Telegram
-        # send Telegram
+    def execWriteCmd(self,cmdname,value) -> viData:
+        # sends a read command and gets the response.
 
-    def initComm(self):
+        vc=viCommand(cmdname)
+        # create viData object
+        vd=viDataFactory(vc.unit,value)
+        # create write Telegram
+        vt=viTelegram(vc,'Write','Request',vd)
+        # send Telegram
+        self.vs.send(vt)
+
+        # Check if sending was successfull
+        ack = self.vs.read(1)
+        logging.debug(f'Received  {ack.hex()}')
+        if ack != viControlCode('Acknowledge'):
+            raise viControlException(f'Expected acknowledge byte, received {ack}')
+
+        # Receive response and evaluate data
+        vr = self.vs.read(vc.responselen())  # receive response
+        logging.debug(f'Requested {vc.responselen()} bytes. Received telegram {vr.hex()}')
+
+        # FIXME send ACK
+
+        vt = viTelegram.frombytes(vr)  # create response Telegram
+        return viDataFactory(vt.vicmd.unit, vt.payload)  # return viData object from payload
+
+
+def initComm(self):
 
         # define subfunctions
         def __reset():

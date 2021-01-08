@@ -40,7 +40,6 @@ class viData(bytearray):
     # units not implemented so far:
     unitset = {
         'CT': {'description': 'CycleTime', 'type': 'timer', 'signed': False, 'read_value_transform': 'non'},        # vito unit: CT
-        'ES': {'description': 'ErrorState', 'type': 'list', 'signed': False, 'read_value_transform': 'non'},        # vito unit: ES
         'IU2': {'description': 'INT unsigned 2', 'type': 'integer', 'signed': False, 'read_value_transform': '2'},        # vito unit: UT1U, PR1
         'IU10': {'description': 'INT unsigned 10', 'type': 'integer', 'signed': False, 'read_value_transform': '10'},        # vito unit:
         'IU3600': {'description': 'INT unsigned 3600', 'type': 'integer', 'signed': False, 'read_value_transform': '3600'},        # vito unit: CS
@@ -415,3 +414,9 @@ class viDataOO(viData):
     def value(self):
         return self.OnOff[int.from_bytes(self, 'big')]
 
+systemschemes = {
+    '01': 'WW',
+    '02': 'HK + WW',
+    '04': 'HK + WW',
+    '05': 'HK + WW'
+}
