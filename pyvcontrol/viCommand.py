@@ -139,9 +139,6 @@ class viCommand(bytearray):
         # elektr. Energie für WW-Bereitung der letzten 12 Monate (kWh)
     }
 
-    Command_bytes_read = 5 # addr (2 bytes),
-    Command_bytes_write = 5
-
 
     def __init__(self,cmdname):
         # FIXME: Error handling if command name is not found
@@ -167,11 +164,14 @@ class viCommand(bytearray):
             raise Exception(f'No Command matching {b[0:2].hex()}')
         return viCommand(cmdname)
 
-    def responselen(self):
+    @property
+    def __responselen__(self):
         #returns the number of bytes in the response
-        # 4 is the response header length, see protocommandset
-        # FIXME proper calculation of answer length
-        return self.__valuebytes__+3+self.Command_bytes_read
+        # request_response:
+        # 2 'addr'
+        # 1 'Anzahl der Bytes des Wertes'
+        # x 'Wert'
+        return 3+self.__valuebytes__
 
 
 

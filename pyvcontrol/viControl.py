@@ -58,8 +58,8 @@ class viControl:
             raise viControlException(f'Expected acknoledge byte, received {ack}')
 
         # Receive response and evaluate data
-        vr = self.vs.read(vc.responselen())  # receive response
-        logging.debug(f'Requested {vc.responselen()} bytes. Received telegram {vr.hex()}')
+        vr = self.vs.read(vt.__responselen__)  # receive response
+        logging.debug(f'Requested {vc.__responselen__} bytes. Received telegram {vr.hex()}')
 
         #FIXME send ACK
 
@@ -84,8 +84,8 @@ class viControl:
             raise viControlException(f'Expected acknowledge byte, received {ack}')
 
         # Receive response and evaluate data
-        vr = self.vs.read(vc.responselen())  # receive response
-        logging.debug(f'Requested {vc.responselen()} bytes. Received telegram {vr.hex()}')
+        vr = self.vs.read(vt.__responselen__)  # receive response
+        logging.debug(f'Requested {vc.__responselen__} bytes. Received telegram {vr.hex()}')
 
         # FIXME send ACK
 
@@ -93,8 +93,7 @@ class viControl:
         return viDataFactory(vt.vicmd.unit, vt.payload)  # return viData object from payload
 
 
-def initComm(self):
-
+    def initComm(self):
         # define subfunctions
         def __reset():
             #send reset proto viCommand
@@ -150,7 +149,6 @@ class viControlCode(bytearray):
         'Reset_Command': '04',
         'Reset_Command_Response': '05',
         'Sync_Command': '160000',
-        'Sync_Command_Response': '06',
         # init:              send'Reset_Command' receive'Reset_Command_Response' send'Sync_Command'
         # request:           send('StartByte' 'Länge der Nutzdaten als Anzahl der Bytes zwischen diesem Byte und der Prüfsumme' 'Request' 'Read' 'addr' 'checksum')
         # request_response:  receive('Acknowledge' 'StartByte' 'Länge der Nutzdaten als Anzahl der Bytes zwischen diesem Byte und der Prüfsumme' 'Response' 'Read' 'addr' 'Anzahl der Bytes des Wertes' 'Wert' 'checksum')

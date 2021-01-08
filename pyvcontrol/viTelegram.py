@@ -93,6 +93,16 @@ class viTelegram(bytearray):
         # fixme replace 5 by constant command_bytes
         return self.tStartByte+(len(self.payload)+5).to_bytes(1,'big') + \
                     self.mode + self.type
+    @property
+    def __responselen__(self):
+        # length of response telegram
+        # 1 - Startbyte
+        # 1 - length of data from (excluding) startbyte until (excluding) checksum
+        # 1 - type
+        # 1 - mode
+        # x - command
+        # 1 - checksum
+        return 5+self.vicmd.__responselen__
 
     @property
     def TelegramMode(self):
@@ -128,6 +138,7 @@ class viTelegram(bytearray):
         vicmd = viCommand.frombytes(b[4:6])
         vt= viTelegram(vicmd, tMode=header[2:3], tType=header[3:4], payload=b[7:-1])
         return vt
+
 
     @classmethod
     def __checksumByte__(cls, packet):
