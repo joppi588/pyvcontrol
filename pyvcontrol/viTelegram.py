@@ -1,5 +1,5 @@
 import logging
-from pyvcontrol.viCommand import viCommand,viProtocmd
+from pyvcontrol.viCommand import viCommand
 
 class viTelegramException(Exception):
     pass
@@ -72,6 +72,7 @@ class viTelegram(bytearray):
     tTypes={'read': b'\x01',
          'write':b'\x02',
          'call':b'\x07'}
+    tStartByte=b'\x41'
 
 
     def __init__(self,vc:viCommand,tType='Read',tMode='Request',payload=bytearray(0)):
@@ -90,7 +91,7 @@ class viTelegram(bytearray):
     def __header__(self):
         # Create viCommand header
         # fixme replace 5 by constant command_bytes
-        return viProtocmd('StartByte')+(len(self.payload)+5).to_bytes(1,'big') + \
+        return self.tStartByte+(len(self.payload)+5).to_bytes(1,'big') + \
                     self.mode + self.type
 
     @property
@@ -115,7 +116,7 @@ class viTelegram(bytearray):
         if b[-1:]!=viTelegram.__checksumByte__(b[0:-1]):
             raise viTelegramException(f'Checksum not valid. Expected {b[-1:]}, Calculated {viTelegram.__checksumByte__(b[0:-1])}')
         #validate Startbyte
-        if b[0:1]!=viProtocmd('StartByte'):
+        if b[0:1]!=cls.tStartByte:
             raise viTelegramException('Startbyte not found')
         #validate Payloadlength
         payloadlength=b[6]
@@ -129,12 +130,12 @@ class viTelegram(bytearray):
         return vt
 
     @classmethod
-    def __checksumByte__(self, packet):
+    def __checksumByte__(cls, packet):
         # checksum is the last byte of the sum of all bytes in packet
         checksum = 0
         if len(packet) == 0:
             logging.error('No bytes received to calculate checksum')
-        elif packet[0:1] != viProtocmd('StartByte'):
+        elif packet[0:1] != cls.tStartByte:
             logging.error('bytes to calculate checksum from does not start with start byte')
         else:
             checksum = sum(packet[1:]) % 256

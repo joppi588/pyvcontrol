@@ -34,8 +34,10 @@ class viData(bytearray):
 
     # Implemented units:
     # BT, DT, IS10, IUNON, OO, RT
+    # FIXME: implemented all units -> create own classes
+    # FIXME: Units für Temperatur, h, etc. erzeugen
+
     # units not implemented so far:
-    # FIXME: implemented units -> create own classes
     unitset = {
         'CT': {'description': 'CycleTime', 'type': 'timer', 'signed': False, 'read_value_transform': 'non'},        # vito unit: CT
         'ES': {'description': 'ErrorState', 'type': 'list', 'signed': False, 'read_value_transform': 'non'},        # vito unit: ES

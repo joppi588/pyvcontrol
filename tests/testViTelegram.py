@@ -71,18 +71,18 @@ class testviTelegram_resp(unittest.TestCase):
         vt = v.viTelegram.frombytes(b)
         self.assertEqual(vt.TelegramMode,'error')
 
-    def test_telegramdata(self):
+    def test_telegramdata1(self):
         b=bytes.fromhex('41 07 01 01 01 0d 02 65 00 7e')
         vt = v.viTelegram.frombytes(b)
         vd=d.viDataFactory(vt.vicmd.unit,vt.payload)
         self.assertEqual(vt.vicmd.unit,'IS10')
         self.assertEqual(vd.value, 10.1)
 
-    def test_telegramdata(self):
+    def test_telegramdata2(self):
         b=bytes.fromhex('41 09 01 01 05 04 04 e4 29 00 00 25')
         vt = v.viTelegram.frombytes(b)
         vd=d.viDataFactory(vt.vicmd.unit,vt.payload)
-        self.assertEqual(13,vt.vicmd.responselen())
+        self.assertEqual(12,vt.vicmd.responselen())
         self.assertEqual(vt.vicmd.cmdname,'EinschaltungenSekundaer')
         self.assertEqual(vt.vicmd.unit,'IUNON')
         self.assertEqual(vd.value, 10724)

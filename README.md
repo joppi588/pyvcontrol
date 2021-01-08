@@ -28,6 +28,9 @@ Einschränkungen:
    Vorteil ist dass Code und Daten jetzt nahe beieinander sind (objektorientierte Programmierung)
  - nur V200WO1C/P300 implementiert. Erweiterung über eine weitere class factory möglich
 
+Beispielcode:
+- testViessmann.py: führt einen Lesezugriff für alle definierten Kommandos durch.
+
 [packaging guide]: https://packaging.python.org
 [distribution tutorial]: https://packaging.python.org/tutorials/packaging-projects/
 [src]: https://github.com/

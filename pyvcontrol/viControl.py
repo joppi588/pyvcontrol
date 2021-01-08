@@ -19,7 +19,7 @@
 
 
 
-from pyvcontrol.viCommand import viCommand,controlset,viProtocmd
+from pyvcontrol.viCommand import viCommand,controlset
 from pyvcontrol.viTelegram import viTelegram
 from pyvcontrol.viData import viDataFactory
 import logging
@@ -35,7 +35,7 @@ class viControl:
 # class to connect to viControl heating directly via Optolink
 # only supports WO1C with protocol P300
     def __init__(self):
-        self.vs=vSerial(controlset,'/dev/ttyUSB0')
+        self.vs=viSerial(controlset, '/dev/ttyUSB0')
         self.vs.connect()
         self.isSync = False
 
@@ -54,7 +54,7 @@ class viControl:
         # Check if sending was successfull
         ack=self.vs.read(1)
         logging.debug(f'Received  {ack.hex()}')
-        if ack!=viProtocmd('Acknowledge'):
+        if ack!=viControlCode('Acknowledge'):
             raise viControlException(f'Expected acknoledge byte, received {ack}')
 
         # Receive response and evaluate data
@@ -77,13 +77,13 @@ class viControl:
         # define subfunctions
         def __reset():
             #send reset proto viCommand
-            self.vs.send(viProtocmd('Reset_Command'))
-            logging.debug('Send reset command {}'.format(viProtocmd('Reset_Command')))
+            self.vs.send(viControlCode('Reset_Command'))
+            logging.debug('Send reset command {}'.format(viControlCode('Reset_Command')))
 
         def __sync():
             # Schnittstelle ist zurückgesetzt und wartet auf Daten; Antwort b'\x05' = Warten auf Initialisierungsstring oder Antwort b'\x06' = Schnittstelle initialisiert
-            self.vs.send(viProtocmd('Sync_Command'))
-            logging.debug('Send sync command {}'.format(viProtocmd('Sync_Command')))
+            self.vs.send(viControlCode('Sync_Command'))
+            logging.debug('Send sync command {}'.format(viControlCode('Sync_Command')))
 
         def __read_one_byte():
             readbyte = self.vs.read(1)
@@ -94,14 +94,14 @@ class viControl:
         for ii in range(0, 10):
             readbyte = __read_one_byte()
             logging.debug('Init Communication to viControl....')
-            if readbyte == viProtocmd('Acknowledge'):
+            if readbyte == viControlCode('Acknowledge'):
                 # Schnittstelle hat auf den Initialisierungsstring mit OK geantwortet. Die Abfrage von Werten kann beginnen. Diese Funktion meldet hierzu True zurück.
                 self.isSync = True
                 break
-            elif readbyte == viProtocmd('Not_initiated'):
+            elif readbyte == viControlCode('Not_initiated'):
                 # Send sync command
                 __sync()
-            elif readbyte==viProtocmd('Init_Error'):
+            elif readbyte==viControlCode('Init_Error'):
                 logging.error(f'The interface has reported an error (\x15), loop increment {ii}')
                 self.isSync=False
                 __reset()
@@ -116,8 +116,40 @@ class viControl:
         logging.info('Communication initialized')
         return True
 
+class viControlCode(bytearray):
+    # bytearray representation of proto-commands
+    controlcodeset = {
+        # the strings are hex numbers and can be converted using bytearray.fromhex(...)
+        # length in bytes is then available via 'len' function
+        #FIXME keine Strings sondern byte-werte
+        #fixme: definition als lower case
+        'Acknowledge': '06',
+        'Not_initiated': '05',
+        'Init_Error': '15',
+        'Reset_Command': '04',
+        'Reset_Command_Response': '05',
+        'Sync_Command': '160000',
+        'Sync_Command_Response': '06',
+        # init:              send'Reset_Command' receive'Reset_Command_Response' send'Sync_Command'
+        # request:           send('StartByte' 'Länge der Nutzdaten als Anzahl der Bytes zwischen diesem Byte und der Prüfsumme' 'Request' 'Read' 'addr' 'checksum')
+        # request_response:  receive('Acknowledge' 'StartByte' 'Länge der Nutzdaten als Anzahl der Bytes zwischen diesem Byte und der Prüfsumme' 'Response' 'Read' 'addr' 'Anzahl der Bytes des Wertes' 'Wert' 'checksum')
+    }
 
-class vSerial():
+    def __init__(self,cmd):
+        #if cmd is a string return protocommand code
+        if type(cmd)==str:
+            #FIXME das muss auch schöner gehen
+            super().__init__(0)
+            super().extend(bytes.fromhex(self.controlcodeset[cmd]))
+        elif type(cmd)==int:
+            # else, convert int to byte representation
+            super.__init__(cmd.to_bytes(1,'big'))
+        elif type(cmd)==bytes or type(cmd)==bytearray:
+            #pass raw data
+            super().__init__(cmd)
+
+
+class viSerial():
     # low-level communication interface
     #FIXME: control sets nicht übernommen
     __vlock__ = Lock()
