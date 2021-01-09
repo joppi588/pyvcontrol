@@ -59,7 +59,7 @@ class viControl:
 
         # Receive response and evaluate data
         vr = self.vs.read(vt.__responselen__)  # receive response
-        if vt.mode==viTelegram.tTypes['error']:
+        if vt.tType==viTelegram.tTypes['error']:
             raise viControlException('Write command returned an error')
         logging.debug(f'Requested {vt.__responselen__} bytes. Received telegram {vr.hex()}')
 
@@ -95,7 +95,7 @@ class viControl:
         # FIXME send ACK
 
         vt = viTelegram.frombytes(vr)  # create response Telegram
-        if vt.mode==viTelegram.tTypes['error']:
+        if vt.tType==viTelegram.tTypes['error']:
             raise viControlException('Write command returned an error')
 
         return viDataFactory(vt.vicmd.unit, vt.payload)  # return viData object from payload
