@@ -67,24 +67,23 @@ class viTelegram(bytearray):
     # Telegram mode
     # Telegram type
 
-    #FIXME mode und type wieder umdrehen
 
-    tModes={'request': b'\x00',
+    tTypes={'request': b'\x00',
            'response':b'\x01',
            'error':b'\x03', }
-    tTypes={'read': b'\x01',
+    tModes={'read': b'\x01',
          'write':b'\x02',
          'call':b'\x07'}
     tStartByte=b'\x41'
 
 
-    def __init__(self,vc:viCommand,tType='Read',tMode='Request',payload=bytearray(0)):
+    def __init__(self,vc:viCommand,tMode='Read',tType='Request',payload=bytearray(0)):
         #creates a telegram for sending as a combination of header, viCommand, payload and checksum
         #payload is optional
         # tType and tMode must be strings or bytes. Be careful when extracting from bytearray b - b[x] will be int not byte!
         self.vicmd=vc
-        self.mode=self.tModes[tMode.lower()] if type(tMode)==str else tMode #translate to byte or use raw value
-        self.type=self.tTypes[tType.lower()] if type(tType)==str else tType # translate to byte or use raw value
+        self.tType=self.tTypes[tType.lower()] if type(tType) == str else tType #translate to byte or use raw value
+        self.tMode=self.tModes[tMode.lower()] if type(tMode) == str else tMode # translate to byte or use raw value
         self.payload = payload # fixme payload length not validated against expected length by command unit
         #fixme: no payload for read commands
 
@@ -96,7 +95,7 @@ class viTelegram(bytearray):
         # Create viCommand header
         # fixme replace 5 by constant command_bytes
         return self.tStartByte+(len(self.payload)+5).to_bytes(1,'big') + \
-                    self.mode + self.type
+                    self.tType + self.tMode
     @property
     def __responselen__(self):
         # length of response telegram
@@ -106,24 +105,24 @@ class viTelegram(bytearray):
         # 1 - mode
         # x - command
         # 1 - checksum
-        return 5+self.vicmd.__responselen__(self.TelegramType)
+        return 5+self.vicmd.__responselen__(self.TelegramMode)
 
     @property
     def TelegramMode(self):
-        # Request/response/Error
-        return next(key for key, value in self.tModes.items() if value == self.mode)
+        # returns mode (read, write, function call)
+        return next(key for key, value in self.tModes.items() if value == self.tMode)
 
     @property
     def TelegramType(self):
-        # returns mode (read, write, function call)
-        return next(key for key, value in self.tTypes.items() if value == self.type)
+        # Request/response/Error
+        return next(key for key, value in self.tTypes.items() if value == self.tType)
 
     @classmethod
     def frombytes(cls,b:bytearray):
         # parses a byte array and returns the corresponding telegram with properties vicmd etc.
         # when parsing a response telegram, the first byte (ACK Acknowledge) must be stripped first
         # Telegram bytes are [0:4]->header, [4:6]->command code, [6]->payload length, [7:-2]-> payload, [-1]:-> checksum
-        # header bytes are [0]-> Startbyte, [1]:total value byte length,[2]: mode, [3] type
+        # header bytes are [0]-> Startbyte, [1]:total value byte length,[2]: type, [3] mode
 
 
         #validate checksum
@@ -134,9 +133,9 @@ class viTelegram(bytearray):
             raise viTelegramException('Startbyte not found')
 
         header = b[0:4]
-        logging.debug(f'Header: {header.hex()}, tMode={header[2:3].hex()}, tType={header[3:4].hex()}, payload={b[7:-1].hex()}')
+        logging.debug(f'Header: {header.hex()}, tType={header[2:3].hex()}, tMode={header[3:4].hex()}, payload={b[7:-1].hex()}')
         vicmd = viCommand.frombytes(b[4:6])
-        vt= viTelegram(vicmd, tMode=header[2:3], tType=header[3:4], payload=b[7:-1])
+        vt = viTelegram(vicmd, tType=header[2:3], tMode=header[3:4], payload=b[7:-1])
         return vt
 
 
