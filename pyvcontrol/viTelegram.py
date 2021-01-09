@@ -64,8 +64,11 @@ class viTelegram(bytearray):
     #
     # --> Antwort: 0x00EF = 239 = 23.9°
 
-    # Telegram type
     # Telegram mode
+    # Telegram type
+
+    #FIXME mode und type wieder umdrehen
+
     tModes={'request': b'\x00',
            'response':b'\x01',
            'error':b'\x03', }
@@ -83,6 +86,7 @@ class viTelegram(bytearray):
         self.mode=self.tModes[tMode.lower()] if type(tMode)==str else tMode #translate to byte or use raw value
         self.type=self.tTypes[tType.lower()] if type(tType)==str else tType # translate to byte or use raw value
         self.payload = payload # fixme payload length not validated against expected length by command unit
+        #fixme: no payload for read commands
 
         # -- create bytearray representation
         b = self.__header__() + self.vicmd + self.payload
@@ -102,7 +106,7 @@ class viTelegram(bytearray):
         # 1 - mode
         # x - command
         # 1 - checksum
-        return 5+self.vicmd.__responselen__
+        return 5+self.vicmd.__responselen__(self.TelegramType)
 
     @property
     def TelegramMode(self):
@@ -128,13 +132,9 @@ class viTelegram(bytearray):
         #validate Startbyte
         if b[0:1]!=cls.tStartByte:
             raise viTelegramException('Startbyte not found')
-        #validate Payloadlength
-        payloadlength=b[6]
-        if payloadlength!=len(b[7:-1]):
-            raise viTelegramException(f'Payload length {b[6]} in telegram does not match telegram length: {len(b[7:-1])} ')
 
         header = b[0:4]
-        logging.debug(f'Header: {header.hex()}, tMode={header[2:3].hex()}, tType={header[3:4]}, payload={b[7:-1].hex()}')
+        logging.debug(f'Header: {header.hex()}, tMode={header[2:3].hex()}, tType={header[3:4].hex()}, payload={b[7:-1].hex()}')
         vicmd = viCommand.frombytes(b[4:6])
         vt= viTelegram(vicmd, tMode=header[2:3], tType=header[3:4], payload=b[7:-1])
         return vt

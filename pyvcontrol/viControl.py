@@ -59,9 +59,11 @@ class viControl:
 
         # Receive response and evaluate data
         vr = self.vs.read(vt.__responselen__)  # receive response
-        logging.debug(f'Requested {vc.__responselen__} bytes. Received telegram {vr.hex()}')
+        if vt.mode==viTelegram.tModes['error']:
+            raise viControlException('Write command returned an error')
+        logging.debug(f'Requested {vt.__responselen__} bytes. Received telegram {vr.hex()}')
 
-        #FIXME send ACK
+        self.vs.send(viControlCode('Acknowledge')) #send acknowledge
 
         vt = viTelegram.frombytes(vr)   #create response Telegram
         return viDataFactory(vt.vicmd.unit,vt.payload)     # return viData object from payload
@@ -70,6 +72,9 @@ class viControl:
         # sends a read command and gets the response.
 
         vc=viCommand(cmdname)
+        if not vc.write:
+            raise viControlException(f'command {cmdname} cannot be written')
+
         # create viData object
         vd=viDataFactory(vc.unit,value)
         # create write Telegram
@@ -90,6 +95,9 @@ class viControl:
         # FIXME send ACK
 
         vt = viTelegram.frombytes(vr)  # create response Telegram
+        if vt.mode==viTelegram.tModes['error']:
+            raise viControlException('Write command returned an error')
+
         return viDataFactory(vt.vicmd.unit, vt.payload)  # return viData object from payload
 
 
@@ -111,6 +119,7 @@ class viControl:
             return readbyte
 
         #FIXME: wenn syncronisiert, sende sync string, entsprechend antwort weitermachen
+        #sonst starte mit reset command
         for ii in range(0, 10):
             readbyte = __read_one_byte()
             logging.debug('Init Communication to viControl....')
@@ -121,7 +130,7 @@ class viControl:
             elif readbyte == viControlCode('Not_initiated'):
                 # Send sync command
                 __sync()
-            elif readbyte==viControlCode('Init_Error'):
+            elif readbyte==viControlCode('Error'):
                 logging.error(f'The interface has reported an error (\x15), loop increment {ii}')
                 self.isSync=False
                 __reset()
@@ -136,6 +145,8 @@ class viControl:
         logging.info('Communication initialized')
         return True
 
+
+#FIXME ein dictionary würde hier reichen
 class viControlCode(bytearray):
     # bytearray representation of proto-commands
     controlcodeset = {
@@ -145,7 +156,7 @@ class viControlCode(bytearray):
         #fixme: definition als lower case
         'Acknowledge': '06',
         'Not_initiated': '05',
-        'Init_Error': '15',
+        'Error': '15',
         'Reset_Command': '04',
         'Reset_Command_Response': '05',
         'Sync_Command': '160000',

@@ -79,13 +79,25 @@ class testviTelegram_resp(unittest.TestCase):
         self.assertEqual(vd.value, 10.1)
 
     def test_telegramdata2(self):
+        # 'Read' telegram
         b=bytes.fromhex('41 09 01 01 05 04 04 e4 29 00 00 25')
         vt = v.viTelegram.frombytes(b)
         vd=d.viDataFactory(vt.vicmd.unit,vt.payload)
+        self.assertEqual('read',vt.TelegramType)
         self.assertEqual(12,vt.__responselen__)
         self.assertEqual(vt.vicmd.cmdname,'EinschaltungenSekundaer')
         self.assertEqual(vt.vicmd.unit,'IUNON')
         self.assertEqual(vd.value, 10724)
+
+    def test_telegramdata3(self):
+        # 'write' telegram
+        b=bytes.fromhex('41 09 01 02 05 04 04 19')
+        vt = v.viTelegram.frombytes(b)
+        vd=d.viDataFactory(vt.vicmd.unit,vt.payload)
+        self.assertEqual('write',vt.TelegramType)
+        self.assertEqual(8,vt.__responselen__)
+        self.assertEqual(vt.vicmd.cmdname,'EinschaltungenSekundaer')
+        self.assertEqual(vt.vicmd.unit,'IUNON')
 
 
 if __name__ == '__main__':
