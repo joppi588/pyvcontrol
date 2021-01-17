@@ -137,6 +137,8 @@ class viCommand(bytearray):
         # Wärmeenergie für WW-Bereitung der letzten 12 Monate (kWh)
         'ElektroWW12M': {'addr': '1670', 'len': 4, 'unit': 'IU10', 'write': False},
         # elektr. Energie für WW-Bereitung der letzten 12 Monate (kWh)
+        #'COPWW':{'addr':'1690','len':2,'unit':'IU10','write':False},
+        #'COPHeizung': {'addr': '1691', 'len': 2, 'unit': 'IU10', 'write': False},
     }
 
 

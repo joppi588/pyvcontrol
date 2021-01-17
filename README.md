@@ -15,11 +15,6 @@ Neuentwicklung basierend  auf
 
 Motivation:
 - unabhängiges Python-Modul ohne vcontrold verwenden zu müssen
-- Fingerübung zur sauberen Python-Programmierung
-   + Objektorientiert / modular
-   + gut lesbar: kurze Funktionen
-   + Python design patterns,...
- - Unit-Tests für alle Klassen
 
 Einschränkungen:
  - Die Parameter (z.B. Kommandodefinitionen) sind jetzt Teil der Klassen und nicht mehr zentral abgelegt.

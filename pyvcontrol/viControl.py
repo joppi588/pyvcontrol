@@ -21,6 +21,7 @@
 
 from pyvcontrol.viCommand import viCommand,controlset
 from pyvcontrol.viTelegram import viTelegram
+# FIXME viDataFactory as a method in class viData -> no import statement
 from pyvcontrol.viData import viDataFactory,viData
 import logging
 import serial
