@@ -17,9 +17,14 @@
 #  along with this program. If not, see <http://www.gnu.org/licenses/>.
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
+# implements classes
+# viControl: High-Level interface (API)
+# - initComm: initialize Communication
+# - execReadCmd: execute read Command
+# - execWriteCmd: execute write Command
+# viSerial: Low-level interface
 
-
-from pyvcontrol.viCommand import viCommand,controlset
+from pyvcontrol.viCommand import viCommand
 from pyvcontrol.viTelegram import viTelegram
 # FIXME viDataFactory as a method in class viData -> no import statement
 from pyvcontrol.viData import viDataFactory,viData
@@ -27,6 +32,13 @@ import logging
 import serial
 from threading import Lock
 import time
+
+controlset = {
+    'Baudrate': 4800,
+    'Bytesize': 8,          # 'EIGHTBITS'
+    'Parity': 'E',          # 'PARITY_EVEN',
+    'Stopbits': 2,          # 'STOPBITS_TWO',
+}
 
 class viControlException(Exception):
     def __init__(self,msg):
@@ -36,6 +48,7 @@ class viControl:
 # class to connect to viControl heating directly via Optolink
 # only supports WO1C with protocol P300
     def __init__(self):
+        # TODO: Serial port must not be hard-coded
         self.vs=viSerial(controlset, '/dev/ttyUSB0')
         self.vs.connect()
         self.isSync = False
@@ -187,7 +200,7 @@ class viSerial():
 
     #viControl socket: implement raw communication
     def __init__(self,ctrlset,port):
-        self.__connected__=False
+        self.__connected__ = False
         self.__controlset__ = ctrlset
         self.__serialport__ = port
 

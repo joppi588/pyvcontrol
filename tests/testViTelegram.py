@@ -25,79 +25,80 @@ from pyvcontrol.viTelegram import viTelegramException
 
 class testviTelegram(unittest.TestCase):
     def test_readTelegram(self):
-        vc=c.viCommand('Anlagentyp')
+        vc = c.viCommand('Anlagentyp')
         vt = v.viTelegram(vc, 'read')
-        self.assertEqual('4105000100f80200',vt.hex())
-        vc=c.viCommand('Warmwassertemperatur')
+        self.assertEqual('4105000100f80200', vt.hex())
+        vc = c.viCommand('Warmwassertemperatur')
         vt = v.viTelegram(vc, 'read')
-        self.assertEqual('41050001010d0216',vt.hex())
+        self.assertEqual('41050001010d0216', vt.hex())
 
     def test_checksumEmpty(self):
-        #raise error
-        b=bytes(0)
-        c=v.viTelegram.__checksumByte__(b)
-        self.assertEqual(b'\x00',c)
+        # raise error
+        b = bytes(0)
+        c = v.viTelegram.__checksumByte__(b)
+        self.assertEqual(b'\x00', c)
 
     def test_checksumStartbyte(self):
         # raise error
-        c=v.viTelegram.__checksumByte__(b'\x42\x41')
-        self.assertEqual(b'\x00',c)
+        c = v.viTelegram.__checksumByte__(b'\x42\x41')
+        self.assertEqual(b'\x00', c)
+
 
 class testviTelegram_resp(unittest.TestCase):
     def test_wrongchecksum(self):
-        b=bytes.fromhex('4105000100f80201')
+        b = bytes.fromhex('4105000100f80201')
         with self.assertRaises(viTelegramException):
-            vt=v.viTelegram.frombytes(b)
+            vt = v.viTelegram.frombytes(b)
 
     def test_telegramtype(self):
-        b=bytes.fromhex('41 05 00 01 01 0d 02 00 00 16')
+        b = bytes.fromhex('41 05 00 01 01 0d 02 00 00 16')
         vt = v.viTelegram.frombytes(b)
-        self.assertEqual(vt.TelegramMode,'read')
-        b=bytes.fromhex('41 05 00 02 01 0d 02 00 00 17')
+        self.assertEqual(vt.TelegramMode, 'read')
+        b = bytes.fromhex('41 05 00 02 01 0d 02 00 00 17')
         vt = v.viTelegram.frombytes(b)
-        self.assertEqual(vt.TelegramMode,'write')
-        b=bytes.fromhex('41 05 00 07 01 0d 02 00 00 1c')
+        self.assertEqual(vt.TelegramMode, 'write')
+        b = bytes.fromhex('41 05 00 07 01 0d 02 00 00 1c')
         vt = v.viTelegram.frombytes(b)
-        self.assertEqual(vt.TelegramMode,'call')
+        self.assertEqual(vt.TelegramMode, 'call')
 
     def test_telegramtype(self):
-        b=bytes.fromhex('41 05 00 01 01 0d 02 00 00 16')
+        b = bytes.fromhex('41 05 00 01 01 0d 02 00 00 16')
         vt = v.viTelegram.frombytes(b)
-        self.assertEqual(vt.TelegramType,'request')
-        b=bytes.fromhex('41 05 01 02 01 0d 02 00 00 18')
+        self.assertEqual(vt.TelegramType, 'request')
+        b = bytes.fromhex('41 05 01 02 01 0d 02 00 00 18')
         vt = v.viTelegram.frombytes(b)
-        self.assertEqual(vt.TelegramType,'response')
-        b=bytes.fromhex('41 05 03 07 01 0d 02 00 00 1f')
+        self.assertEqual(vt.TelegramType, 'response')
+        b = bytes.fromhex('41 05 03 07 01 0d 02 00 00 1f')
         vt = v.viTelegram.frombytes(b)
-        self.assertEqual(vt.TelegramType,'error')
+        self.assertEqual(vt.TelegramType, 'error')
 
     def test_telegramdata1(self):
-        b=bytes.fromhex('41 07 01 01 01 0d 02 65 00 7e')
+        b = bytes.fromhex('41 07 01 01 01 0d 02 65 00 7e')
         vt = v.viTelegram.frombytes(b)
-        vd=d.viDataFactory(vt.vicmd.unit,vt.payload)
-        self.assertEqual(vt.vicmd.unit,'IS10')
+        vd = d.viDataFactory(vt.vicmd.unit, vt.payload)
+        self.assertEqual(vt.vicmd.unit, 'IS10')
         self.assertEqual(vd.value, 10.1)
 
     def test_telegramdata2(self):
         # 'Read' telegram
-        b=bytes.fromhex('41 09 01 01 05 04 04 e4 29 00 00 25')
+        b = bytes.fromhex('41 09 01 01 05 04 04 e4 29 00 00 25')
         vt = v.viTelegram.frombytes(b)
-        vd=d.viDataFactory(vt.vicmd.unit,vt.payload)
-        self.assertEqual('read',vt.TelegramMode)
-        self.assertEqual(12,vt.__responselen__)
-        self.assertEqual(vt.vicmd.cmdname,'EinschaltungenSekundaer')
-        self.assertEqual(vt.vicmd.unit,'IUNON')
+        vd = d.viDataFactory(vt.vicmd.unit, vt.payload)
+        self.assertEqual('read', vt.TelegramMode)
+        self.assertEqual(12, vt.__responselen__)
+        self.assertEqual(vt.vicmd.cmdname, 'EinschaltungenSekundaer')
+        self.assertEqual(vt.vicmd.unit, 'IUNON')
         self.assertEqual(vd.value, 10724)
 
     def test_telegramdata3(self):
         # 'write' telegram
-        b=bytes.fromhex('41 09 01 02 05 04 04 19')
+        b = bytes.fromhex('41 09 01 02 05 04 04 19')
         vt = v.viTelegram.frombytes(b)
-        vd=d.viDataFactory(vt.vicmd.unit,vt.payload)
-        self.assertEqual('write',vt.TelegramMode)
-        self.assertEqual(8,vt.__responselen__)
-        self.assertEqual(vt.vicmd.cmdname,'EinschaltungenSekundaer')
-        self.assertEqual(vt.vicmd.unit,'IUNON')
+        vd = d.viDataFactory(vt.vicmd.unit, vt.payload)
+        self.assertEqual('write', vt.TelegramMode)
+        self.assertEqual(8, vt.__responselen__)
+        self.assertEqual(vt.vicmd.cmdname, 'EinschaltungenSekundaer')
+        self.assertEqual(vt.vicmd.unit, 'IUNON')
 
 
 if __name__ == '__main__':

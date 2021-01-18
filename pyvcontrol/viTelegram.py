@@ -1,3 +1,22 @@
+# ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
+# Copyright 2021 Jochen Schmähling
+# ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
+#  Python Module for communication with viControl heatings using the serial Optolink interface
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program. If not, see <http://www.gnu.org/licenses/>.
+# ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
+
 import logging
 from pyvcontrol.viCommand import viCommand
 
@@ -7,7 +26,7 @@ class viTelegramException(Exception):
 class viTelegram(bytearray):
     #represents a telegram (header, viCommand, payload and checksum)
 
-    # P300 Protokoll
+    # P300 Protokoll (thanks to M.Wenzel, SmartHomeNG plugin)
     #
     # Beispiel
     #
@@ -64,13 +83,11 @@ class viTelegram(bytearray):
     #
     # --> Antwort: 0x00EF = 239 = 23.9°
 
-    # Telegram mode
     # Telegram type
-
-
     tTypes={'request': b'\x00',
            'response':b'\x01',
            'error':b'\x03', }
+    # Telegram mode
     tModes={'read': b'\x01',
          'write':b'\x02',
          'call':b'\x07'}

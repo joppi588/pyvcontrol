@@ -17,17 +17,19 @@
 #  along with this program. If not, see <http://www.gnu.org/licenses/>.
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
+# test cases for class viData
 
 import unittest
 from pyvcontrol import viData as v
 
 class viDataTestCaseBA(unittest.TestCase):
     def test_BA04Empty(self):
-        #create empty class and
+        #create empty class and check mode
         dBA= v.viDataFactory('BA')
         self.assertEqual(dBA.value, 'undefiniert') #defaults to mode 'undefiniert'
 
     def test_BA04raw(self):
+        #create class with defined operation mode from raw byte
         dBA=v.viDataFactory('BA',b'\x04')
         self.assertEqual(dBA.value, 'dauernd reduziert')
 
@@ -53,6 +55,7 @@ class viDataTestCaseDT(unittest.TestCase):
         dDT= v.viDataFactory('DT')
         self.assertEqual(dDT.value, 'unknown')
     def test_DTraw(self):
+        #initialize from raw data
         dDT=v.viDataFactory('DT',b'\x20\x4D')
         self.assertEqual(dDT.value, 'V200WO1C, Protokoll: P300')
 

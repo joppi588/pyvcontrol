@@ -17,15 +17,10 @@
 #  along with this program. If not, see <http://www.gnu.org/licenses/>.
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
+
+
+
 import logging
-
-controlset = {
-    'Baudrate': 4800,
-    'Bytesize': 8,          # 'EIGHTBITS'
-    'Parity': 'E',          # 'PARITY_EVEN',
-    'Stopbits': 2,          # 'STOPBITS_TWO',
-}
-
 
 
 
@@ -144,6 +139,7 @@ class viCommand(bytearray):
 
     def __init__(self,cmdname):
         # FIXME: Error handling if command name is not found
+        # FIXME: uniform naming of private and public properties
         cs=self.commandset[cmdname]
         self.__cmdcode__=cs['addr']
         self.__valuebytes__=cs['len']
@@ -157,6 +153,7 @@ class viCommand(bytearray):
 
     @classmethod
     def frombytes(cls,b:bytearray):
+        #FIXME Rename the "fromxxx" methods to "from_xxx" similar to int.from_bytes
         #create command from addr given as byte
         #only the first two bytes of b are evaluated
         try:
