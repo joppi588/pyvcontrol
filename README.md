@@ -14,7 +14,7 @@ Neuentwicklung basierend  auf
   - vcontrold
 
 Motivation:
-- unabhängiges Python-Modul ohne vcontrold verwenden zu müssen
+- Python-Modul um direkt auf die Viessmann-Heizung zugreifen zu können (ohne Umweg über vcontrold)
 
 Einschränkungen:
  - Die Parameter (z.B. Kommandodefinitionen) sind jetzt Teil der Klassen und nicht mehr zentral abgelegt.
