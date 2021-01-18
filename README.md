@@ -10,8 +10,8 @@ Python package zur Kommunikation mit Viessmann-Heizungen über die Optolink seri
 Geeignet um vcontrold zu ersetzen wenn ohnehin mit Python gearbeitet wird.
 
 Neuentwicklung basierend  auf 
-- [SmartHomeNG python Plugin]: https://github.com/sisamiwe/myplugins/tree/master/viessmann (SmartHomeNG python Plugin)
-- [vcontrold]: https://github.com/openv (vcontrold)
+-  [SHNGpyPlugin]
+-  [vcontrold]
 
 Motivation:
 - Python-Modul um direkt auf die Viessmann-Heizung zugreifen zu können (ohne Umweg über vcontrold)
@@ -27,6 +27,8 @@ Einschränkungen:
 Beispielcode:
 - testViessmann.py: führt einen Lesezugriff für alle definierten Kommandos durch.
 
+[vcontrold]: https://github.com/openv (vcontrold)
+[SHNGpyPlugin]: https://github.com/sisamiwe/myplugins/tree/master/viessmann (SmartHomeNG python Plugin)
 [packaging guide]: https://packaging.python.org
 [distribution tutorial]: https://packaging.python.org/tutorials/packaging-projects/
 [src]: https://github.com/
