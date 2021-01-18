@@ -17,6 +17,7 @@ Motivation:
 - Python-Modul um direkt auf die Viessmann-Heizung zugreifen zu können (ohne Umweg über vcontrold)
 
 Einschränkungen:
+ - Beta: Nur Basisfunktionen sind getestet
  - Die Parameter (z.B. Kommandodefinitionen) sind jetzt Teil der Klassen und nicht mehr zentral abgelegt.
    Nachteil ist die geringere Anwenderfreundlichkeit - Konfigurationen sollten eigentlich vom Code getrennt sein
    (Allerdings sind die vcontrold-XMLs auch nicht sonderlich gut wartbar)
