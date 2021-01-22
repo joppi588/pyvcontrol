@@ -26,8 +26,7 @@
 
 from pyvcontrol.viCommand import viCommand
 from pyvcontrol.viTelegram import viTelegram
-# FIXME viDataFactory as a method in class viData -> no import statement
-from pyvcontrol.viData import viDataFactory,viData
+from pyvcontrol.viData import viData
 import logging
 import serial
 from threading import Lock
@@ -80,7 +79,7 @@ class viControl:
         self.vs.send(viControlCode('Acknowledge')) #send acknowledge
 
         vt = viTelegram.frombytes(vr)   #create response Telegram
-        return viDataFactory(vt.vicmd.unit,vt.payload)     # return viData object from payload
+        return viData.create(vt.vicmd.unit,vt.payload)     # return viData object from payload
 
     def execWriteCmd(self,cmdname,value) -> viData:
         # sends a read command and gets the response.
@@ -90,7 +89,7 @@ class viControl:
             raise viControlException(f'command {cmdname} cannot be written')
 
         # create viData object
-        vd=viDataFactory(vc.unit,value)
+        vd=viData.create(vc.unit,value)
         # create write Telegram
         vt=viTelegram(vc,'Write','Request',vd)
         # send Telegram
@@ -112,7 +111,7 @@ class viControl:
         if vt.tType==viTelegram.tTypes['error']:
             raise viControlException('Write command returned an error')
 
-        return viDataFactory(vt.vicmd.unit, vt.payload)  # return viData object from payload
+        return viData.create(vt.vicmd.unit, vt.payload)  # return viData object from payload
 
 
     def initComm(self):
