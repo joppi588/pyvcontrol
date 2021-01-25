@@ -18,16 +18,17 @@
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
 import unittest
-from pyvcontrol.viCommand import viCommand
+from pyvcontrol.viCommand import viCommand,viCommandException
 
 
 class testViCommand(unittest.TestCase):
 
     def test_vicmdnomatch(self):
         # Command not existing
-        # FIXME: check for exception more specifically (implement viCommandException)
-        with self.assertRaises(Exception):
+        with self.assertRaises(viCommandException):
             vc = viCommand.frombytes(b'\xF1\x00')
+        with self.assertRaises(viCommandException):
+            vc = viCommand('foo')
 
     def test_vicmdfrombytes(self):
         # create command from raw bytes

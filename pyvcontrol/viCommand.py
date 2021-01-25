@@ -29,7 +29,8 @@ setreturnstatus = {
     '05': 'SYNC (NOT OK)',
 }
 
-
+class viCommandException(Exception):
+    pass
 
 class viCommand(bytearray):
     # the commands
@@ -138,9 +139,11 @@ class viCommand(bytearray):
 
 
     def __init__(self,cmdname):
-        # FIXME: Error handling if command name is not found
         # FIXME: uniform naming of private and public properties
-        cs=self.commandset[cmdname]
+        try:
+            cs = self.commandset[cmdname]
+        except:
+            raise viCommandException(f'Unknown command {cmdname}')
         self.__cmdcode__=cs['addr']
         self.__valuebytes__=cs['len']
         self.unit=cs['unit']
@@ -160,7 +163,7 @@ class viCommand(bytearray):
             logging.debug(f'Convert {b.hex()} to command')
             cmdname=next(key for key, value in cls.commandset.items() if value['addr'].lower() == b[0:2].hex())
         except:
-            raise Exception(f'No Command matching {b[0:2].hex()}')
+            raise viCommandException(f'No Command matching {b[0:2].hex()}')
         return viCommand(cmdname)
 
     def __responselen__(self,mode='read'):
