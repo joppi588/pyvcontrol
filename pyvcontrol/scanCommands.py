@@ -23,7 +23,6 @@
 from pyvcontrol.viControl import viSerial,viControl,viControlCode,viControlException
 from pyvcontrol.viCommand import viCommand
 from pyvcontrol.viTelegram import viTelegram
-from pyvcontrol.viData import viDataFactory
 import logging
 
 tModes={3:'Error',1:'valid response'}

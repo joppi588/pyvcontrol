@@ -81,20 +81,20 @@ class viData(bytearray):
         # returns value converted from raw data
         raise NotImplementedError
 
-
-def viDataFactory(type,*args):
-    # select data type object based on type
-    # args are passed as such to the constructor of the function
-    logging.debug(f'Data factory: request to produce Data type {type} with args {args}')
-    datatype_object={'BA':viDataBA, 'DT':viDataDT, 'IS10':viDataIS10,'IU10':viDataIU10,
-                     'IU3600':viDataIU3600,'IUNON':viDataIUNON, 'RT':viDataRT, 'OO':viDataOO,
-                     'ES':viDataES,
-                     }
-    if type in datatype_object.keys():
-        return datatype_object[type](*args)
-    else:
-        #if unit type is not implemented
-        raise viDataException(f'Unit {type} not known')
+    @classmethod
+    def create(cls,type,*args):
+        # select data type object based on type
+        # args are passed as such to the constructor of the function
+        logging.debug(f'Data factory: request to produce Data type {type} with args {args}')
+        datatype_object={'BA':viDataBA, 'DT':viDataDT, 'IS10':viDataIS10,'IU10':viDataIU10,
+                         'IU3600':viDataIU3600,'IUNON':viDataIUNON, 'RT':viDataRT, 'OO':viDataOO,
+                         'ES':viDataES,
+                         }
+        if type in datatype_object.keys():
+            return datatype_object[type](*args)
+        else:
+            #if unit type is not implemented
+            raise viDataException(f'Unit {type} not known')
 
 
 # ----------------------------------------

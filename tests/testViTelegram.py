@@ -19,7 +19,8 @@
 
 
 import unittest
-from pyvcontrol import viControl as v, viCommand as c, viData as d
+from pyvcontrol import viControl as v, viCommand as c
+from pyvcontrol.viData import viData as d
 from pyvcontrol.viTelegram import viTelegramException
 
 
@@ -75,7 +76,7 @@ class testviTelegram_resp(unittest.TestCase):
     def test_telegramdata1(self):
         b = bytes.fromhex('41 07 01 01 01 0d 02 65 00 7e')
         vt = v.viTelegram.frombytes(b)
-        vd = d.viDataFactory(vt.vicmd.unit, vt.payload)
+        vd = d.create(vt.vicmd.unit, vt.payload)
         self.assertEqual(vt.vicmd.unit, 'IS10')
         self.assertEqual(vd.value, 10.1)
 
@@ -83,7 +84,7 @@ class testviTelegram_resp(unittest.TestCase):
         # 'Read' telegram
         b = bytes.fromhex('41 09 01 01 05 04 04 e4 29 00 00 25')
         vt = v.viTelegram.frombytes(b)
-        vd = d.viDataFactory(vt.vicmd.unit, vt.payload)
+        vd = d.create(vt.vicmd.unit, vt.payload)
         self.assertEqual('read', vt.TelegramMode)
         self.assertEqual(12, vt.__responselen__)
         self.assertEqual(vt.vicmd.cmdname, 'EinschaltungenSekundaer')
@@ -94,7 +95,7 @@ class testviTelegram_resp(unittest.TestCase):
         # 'write' telegram
         b = bytes.fromhex('41 09 01 02 05 04 04 19')
         vt = v.viTelegram.frombytes(b)
-        vd = d.viDataFactory(vt.vicmd.unit, vt.payload)
+        vd = d.create(vt.vicmd.unit, vt.payload)
         self.assertEqual('write', vt.TelegramMode)
         self.assertEqual(8, vt.__responselen__)
         self.assertEqual(vt.vicmd.cmdname, 'EinschaltungenSekundaer')

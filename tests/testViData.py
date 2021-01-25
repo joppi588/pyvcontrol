@@ -20,61 +20,61 @@
 # test cases for class viData
 
 import unittest
-from pyvcontrol import viData as v
+from pyvcontrol.viData import viData as v, viDataException
 
 class viDataTestCaseBA(unittest.TestCase):
     def test_BA04Empty(self):
         #create empty class and check mode
-        dBA= v.viDataFactory('BA')
+        dBA= v.create('BA')
         self.assertEqual(dBA.value, 'undefiniert') #defaults to mode 'undefiniert'
 
     def test_BA04raw(self):
         #create class with defined operation mode from raw byte
-        dBA=v.viDataFactory('BA',b'\x04')
+        dBA=v.create('BA',b'\x04')
         self.assertEqual(dBA.value, 'dauernd reduziert')
 
     def test_BA04(self):
         #create class with constructor and parameter
-        dBA= v.viDataFactory('BA', 'dauernd reduziert')
+        dBA= v.create('BA', 'dauernd reduziert')
         self.assertEqual(dBA,b'\x04')
 
     def test_BA666Empty(self):
         #test call with non-existent mode
-        with self.assertRaises(v.viDataException):
-            v.viDataFactory('BA',b'\x66\x66')
+        with self.assertRaises(viDataException):
+            v.create('BA',b'\x66\x66')
 
 
     def test_BAfoobar(self):
         #test call with non-existent mode
-        with self.assertRaises(v.viDataException):
-            v.viDataFactory('BA', 'foobar')
+        with self.assertRaises(viDataException):
+            v.create('BA', 'foobar')
 
 class viDataTestCaseDT(unittest.TestCase):
     def test_DTempty(self):
         #initialize empty device typt (standard)
-        dDT= v.viDataFactory('DT')
+        dDT= v.create('DT')
         self.assertEqual(dDT.value, 'unknown')
     def test_DTraw(self):
         #initialize from raw data
-        dDT=v.viDataFactory('DT',b'\x20\x4D')
+        dDT=v.create('DT',b'\x20\x4D')
         self.assertEqual(dDT.value, 'V200WO1C, Protokoll: P300')
 
     def test_DTstr(self):
-        dDT=v.viDataFactory('DT','unknown')
+        dDT=v.create('DT','unknown')
         self.assertEqual(dDT,b'\x00\x00')
 
 class viDataTestCaseIS10(unittest.TestCase):
     def test_IS10(self):
-        dIS10=v.viDataFactory('IS10',10.15)
+        dIS10=v.create('IS10',10.15)
         self.assertEqual(dIS10.value, 10.1)
 
     def test_IS10raw(self):
-        dIS10=v.viDataFactory('IS10',b'e\x00')
+        dIS10=v.create('IS10',b'e\x00')
         self.assertEqual(dIS10.value, 10.1)
 
     def test_IS10minus(self):
         f=-9.856
-        dIS10=v.viDataFactory('IS10',f)
+        dIS10=v.create('IS10',f)
         print(f'Hex representation of {f} is {dIS10.hex()}')
         self.assertEqual(dIS10.value, -9.8)
 
@@ -83,23 +83,23 @@ class viDataTestCaseIS10(unittest.TestCase):
 class viDataTestCaseIUNON(unittest.TestCase):
     def test_IUNON(self):
         f=415
-        dIUNON=v.viDataFactory('IUNON',f)
+        dIUNON=v.create('IUNON',f)
         print(f'Hex representation of {f} is {dIUNON.hex()}')
         self.assertEqual(dIUNON.value, f)
 
     def test_IUNONraw(self):
-        dIUNON=v.viDataFactory('IUNON',b'\x9f\x01')
+        dIUNON=v.create('IUNON',b'\x9f\x01')
         self.assertEqual(dIUNON.value, 415)
 
 class viDataTestCaseOO(unittest.TestCase):
     def test_OO(self):
         f='On'
-        dOO=v.viDataFactory('OO',f)
+        dOO=v.create('OO',f)
         print(f'Hex representation of {f} is {dOO.hex()}')
         self.assertEqual(dOO.value, f)
 
     def test_OOraw(self):
-        dOO=v.viDataFactory('OO',b'\x02')
+        dOO=v.create('OO',b'\x02')
         self.assertEqual(dOO.value, 'On')
 
 
