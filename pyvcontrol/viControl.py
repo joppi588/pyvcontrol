@@ -155,7 +155,7 @@ class viControl:
             # initialisation not successful
             raise viControlException('Could not initialize communication')
 
-        logging.info('Communication initialized')
+        logging.debug('Communication initialized')
         return True
 
 
@@ -236,7 +236,7 @@ class viSerial():
         self._serial = None
         self.__vlock__.release()
         self.__connected__ = False
-        logging.info('disconnected from viControl')
+        logging.debug('Disconnected from viControl')
 
     def send(self, packet):
         # if connected send the packet
