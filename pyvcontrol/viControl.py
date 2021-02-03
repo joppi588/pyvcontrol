@@ -40,12 +40,11 @@ controlset = {
 }
 
 ctrlcode = {
-    # FIXME: Unleserlich...
-    'reset_cmd': bytearray.fromhex('04'),
-    'sync_cmd': bytearray.fromhex('160000'),
-    'acknowledge': bytearray.fromhex('06'),
-    'not_init': bytearray.fromhex('05'),
-    'error': bytearray.fromhex('15'),
+    'reset_cmd':    b'\x04',
+    'sync_cmd':     b'\x16\x00\x00',
+    'acknowledge':  b'\x06',
+    'not_init':     b'\x05',
+    'error':        b'\x15',
 }
 
 
@@ -113,7 +112,7 @@ class viControl:
 
         # Receive response and evaluate data
         vr = self.vs.read(vt.__responselen__)  # receive response
-        logging.debug(f'Requested {vc.__responselen__} bytes. Received telegram {vr.hex()}')
+        logging.debug(f'Requested {vt.__responselen__} bytes. Received telegram {vr.hex()}')
 
         self.vs.send(ctrlcode['acknowledge'])  # send acknowledge
 
@@ -142,7 +141,7 @@ class viControl:
                 break
             elif readbyte == ctrlcode['not_init']:
                 # Schnittstelle ist zurückgesetzt und wartet auf Daten; Antwort b'\x05' = Warten auf Initialisierungsstring
-                logging.debug(f'Step {ii}: Not initialized, send sync')
+                logging.debug(f'Step {ii}: Viessmann ready, not initialized, send sync')
                 self.vs.send(ctrlcode['sync_cmd'])
             elif readbyte == ctrlcode['error']:
                 # in case of error try to reset
@@ -190,7 +189,7 @@ class viSerial():
                 self._serial.bytesize = self.__controlset__['Bytesize']
                 self._serial.stopbits = self.__controlset__['Stopbits']
                 self._serial.port = self.__serialport__
-                self._serial.timeout = 0.2
+                self._serial.timeout = 0.25 # read method will try 10 times -> 2.5s max waiting time
                 self._serial.open()
                 self.__connected__ = True
                 logging.debug('Connected to {}'.format(self.__serialport__))
@@ -234,4 +233,4 @@ class viSerial():
                 failed_count += 1
                 logging.debug(f'Serial read: retry ({failed_count})')
         logging.debug(f'Received {len(totalreadbytes)}/{length} bytes')
-        return totalreadbytes
+        return bytes(totalreadbytes)
