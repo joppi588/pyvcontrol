@@ -95,8 +95,8 @@ class viTelegram(bytearray):
 
 
     def __init__(self,vc:viCommand,tMode='Read',tType='Request',payload=bytearray(0)):
-        #creates a telegram for sending as a combination of header, viCommand, payload and checksum
-        #payload is optional
+        # creates a telegram for sending as a combination of header, viCommand, payload and checksum
+        # payload is optional, usually of type viData
         # tType and tMode must be strings or bytes. Be careful when extracting from bytearray b - b[x] will be int not byte!
         self.vicmd=vc
         self.tType=self.tTypes[tType.lower()] if type(tType) == str else tType #translate to byte or use raw value
@@ -110,19 +110,25 @@ class viTelegram(bytearray):
 
     def __header__(self):
         # Create viCommand header
-        # fixme replace 5 by constant command_bytes
-        return self.tStartByte+(len(self.payload)+5).to_bytes(1,'big') + \
-                    self.tType + self.tMode
+        # 1 byte - Startbyte
+        # 1 byte - length of data from (excluding) startbyte until (excluding) checksum
+        # 1 byte - type
+        # 1 byte - mode
+        #
+        # Data length (bytes): data length (1), type (1), mode (1), command code (2), payload viData (x)
+        datalen = 5 + len(self.payload)
+        return self.tStartByte + datalen.to_bytes(1, 'big') + self.tType + self.tMode
+
     @property
     def __responselen__(self):
-        # length of response telegram
+        # length of response telegram in bytes
         # 1 - Startbyte
         # 1 - length of data from (excluding) startbyte until (excluding) checksum
         # 1 - type
         # 1 - mode
         # x - command
         # 1 - checksum
-        return 5+self.vicmd.__responselen__(self.TelegramMode)
+        return 4+self.vicmd.__responselen__(self.TelegramMode)+1
 
     @property
     def TelegramMode(self):

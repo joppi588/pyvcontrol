@@ -34,124 +34,126 @@ import time
 
 controlset = {
     'Baudrate': 4800,
-    'Bytesize': 8,          # 'EIGHTBITS'
-    'Parity': 'E',          # 'PARITY_EVEN',
-    'Stopbits': 2,          # 'STOPBITS_TWO',
+    'Bytesize': 8,  # 'EIGHTBITS'
+    'Parity': 'E',  # 'PARITY_EVEN',
+    'Stopbits': 2,  # 'STOPBITS_TWO',
 }
 
+ctrlcode = {
+    'reset_cmd': 0x04,
+    'sync_cmd': '\x16\x00\x00',
+    'acknowledge': 0x06,
+    'not_init': 0x05,
+    'error': 0x15,
+}
+
+
 class viControlException(Exception):
-    def __init__(self,msg):
+    def __init__(self, msg):
         super().__init__(msg)
 
+
 class viControl:
-# class to connect to viControl heating directly via Optolink
-# only supports WO1C with protocol P300
-    def __init__(self):
-        # TODO: Serial port must not be hard-coded
-        self.vs=viSerial(controlset, '/dev/ttyUSB0')
+    # class to connect to viControl heating directly via Optolink
+    # only supports WO1C with protocol P300
+    def __init__(self, port='/dev/ttyUSB0'):
+        self.vs = viSerial(controlset, port)
         self.vs.connect()
-        self.isSync = False
+        self.isInitialized = False
 
     def __del__(self):
-        #destructor, releases serial port
+        # destructor, releases serial port
         self.vs.disconnect()
 
-    def execReadCmd(self,cmdname):
+    def execReadCmd(self, cmdname):
         # sends a read command and gets the response.
-        vc = viCommand(cmdname)           # create command
+        vc = viCommand(cmdname)  # create command
         vt = viTelegram(vc, 'read')  # create read Telegram
 
         logging.debug(f'Send telegram {vt.hex()}')
-        self.vs.send(vt)                    # send Telegram
+        self.vs.send(vt)  # send Telegram
 
         # Check if sending was successfull
-        ack=self.vs.read(1)
+        ack = self.vs.read(1)
         logging.debug(f'Received  {ack.hex()}')
-        if ack!=viControlCode('Acknowledge'):
-            raise viControlException(f'Expected acknoledge byte, received {ack}')
+        if ack != ctrlcode['acknowledge']:
+            raise viControlException(f'Expected acknowledge byte, received {ack}')
 
         # Receive response and evaluate data
         vr = self.vs.read(vt.__responselen__)  # receive response
-        if vt.tType==viTelegram.tTypes['error']:
-            raise viControlException('Write command returned an error')
         logging.debug(f'Requested {vt.__responselen__} bytes. Received telegram {vr.hex()}')
 
-        self.vs.send(viControlCode('Acknowledge')) #send acknowledge
+        self.vs.send(ctrlcode['acknowledge'])  # send acknowledge
 
-        vt = viTelegram.frombytes(vr)   #create response Telegram
-        return viData.create(vt.vicmd.unit,vt.payload)     # return viData object from payload
+        vt = viTelegram.frombytes(vr)  # create response Telegram
+        if vt.tType == viTelegram.tTypes['error']:
+            raise viControlException('Read command returned an error')
+        return viData.create(vt.vicmd.unit, vt.payload)  # return viData object from payload
 
-    def execWriteCmd(self,cmdname,value) -> viData:
+    def execWriteCmd(self, cmdname, value) -> viData:
         # sends a read command and gets the response.
 
-        vc=viCommand(cmdname)
+        vc = viCommand(cmdname)
         if not vc.write:
             raise viControlException(f'command {cmdname} cannot be written')
 
         # create viData object
-        vd=viData.create(vc.unit,value)
+        vd = viData.create(vc.unit, value)
         # create write Telegram
-        vt=viTelegram(vc,'Write','Request',vd)
+        vt = viTelegram(vc, 'Write', 'Request', vd)
         # send Telegram
         self.vs.send(vt)
 
         # Check if sending was successfull
         ack = self.vs.read(1)
         logging.debug(f'Received  {ack.hex()}')
-        if ack != viControlCode('Acknowledge'):
+        if ack != ctrlcode['acknowledge']:
             raise viControlException(f'Expected acknowledge byte, received {ack}')
 
         # Receive response and evaluate data
         vr = self.vs.read(vt.__responselen__)  # receive response
         logging.debug(f'Requested {vc.__responselen__} bytes. Received telegram {vr.hex()}')
 
-        # FIXME send ACK
+        self.vs.send(ctrlcode['acknowledge'])  # send acknowledge
 
         vt = viTelegram.frombytes(vr)  # create response Telegram
-        if vt.tType==viTelegram.tTypes['error']:
+        if vt.tType == viTelegram.tTypes['error']:
             raise viControlException('Write command returned an error')
 
         return viData.create(vt.vicmd.unit, vt.payload)  # return viData object from payload
 
-
     def initComm(self):
-        # define subfunctions
-        def __reset():
-            #send reset proto viCommand
-            self.vs.send(viControlCode('Reset_Command'))
-            logging.debug('Send reset command {}'.format(viControlCode('Reset_Command')))
+        logging.debug('Init Communication to viControl....')
+        self.isInitialized = False
 
-        def __sync():
-            # Schnittstelle ist zurückgesetzt und wartet auf Daten; Antwort b'\x05' = Warten auf Initialisierungsstring oder Antwort b'\x06' = Schnittstelle initialisiert
-            self.vs.send(viControlCode('Sync_Command'))
-            logging.debug('Send sync command {}'.format(viControlCode('Sync_Command')))
+        # loop cases
+        # 1 - ii=0: read timeout -> send reset / ii=1: not_init, send sync / ii=2:  Initialization successful
+        # 1 - ii=0: error -> send reset / ii=1: not_init, send sync / ii=2:  Initialization successful
+        # 2 - ... ii=10: exit loop, give up
 
-        def __read_one_byte():
-            readbyte = self.vs.read(1)
-            logging.debug('Read {}'.format(readbyte))
-            return readbyte
-
-        #FIXME: wenn syncronisiert, sende sync string, entsprechend antwort weitermachen
-        #sonst starte mit reset command
         for ii in range(0, 10):
-            readbyte = __read_one_byte()
-            logging.debug('Init Communication to viControl....')
-            if readbyte == viControlCode('Acknowledge'):
-                # Schnittstelle hat auf den Initialisierungsstring mit OK geantwortet. Die Abfrage von Werten kann beginnen. Diese Funktion meldet hierzu True zurück.
-                self.isSync = True
+            # loop until interface is initialized
+            readbyte = self.vs.read(1)
+            if readbyte == ctrlcode['acknowledge']:
+                # Schnittstelle hat auf den Initialisierungsstring mit OK geantwortet. Die Abfrage von Werten kann beginnen.
+                logging.debug(f'Step {ii}: Initialization successful')
+                self.isInitialized = True
                 break
-            elif readbyte == viControlCode('Not_initiated'):
-                # Send sync command
-                __sync()
-            elif readbyte==viControlCode('Error'):
+            elif readbyte == ctrlcode['not_init']:
+                # Schnittstelle ist zurückgesetzt und wartet auf Daten; Antwort b'\x05' = Warten auf Initialisierungsstring
+                logging.debug(f'Step {ii}: Not initialized, send sync')
+                self.vs.send(ctrlcode['sync_cmd'])
+            elif readbyte == ctrlcode['error']:
+                # in case of error try to reset
                 logging.error(f'The interface has reported an error (\x15), loop increment {ii}')
-                self.isSync=False
-                __reset()
+                logging.debug(f'Step {ii}: Send reset')
+                self.vs.send(ctrlcode['reset_cmd'])
             else:
-                self.isSync=False
-                __reset()
+                # send reset
+                logging.debug(f'Step {ii}: Send reset')
+                self.vs.send(ctrlcode['reset_cmd'])
 
-        if not self.isSync:
+        if not self.isInitialized:
             # initialisation not successful
             raise viControlException('Could not initialize communication')
 
@@ -159,51 +161,19 @@ class viControl:
         return True
 
 
-#FIXME ein dictionary würde hier reichen
-class viControlCode(bytearray):
-    # bytearray representation of proto-commands
-    controlcodeset = {
-        # the strings are hex numbers and can be converted using bytearray.fromhex(...)
-        # length in bytes is then available via 'len' function
-        #FIXME keine Strings sondern byte-werte
-        #fixme: definition als lower case
-        'Acknowledge': '06',
-        'Not_initiated': '05',
-        'Error': '15',
-        'Reset_Command': '04',
-        'Reset_Command_Response': '05',
-        'Sync_Command': '160000',
-        # init:              send'Reset_Command' receive'Reset_Command_Response' send'Sync_Command'
-        # request:           send('StartByte' 'Länge der Nutzdaten als Anzahl der Bytes zwischen diesem Byte und der Prüfsumme' 'Request' 'Read' 'addr' 'checksum')
-        # request_response:  receive('Acknowledge' 'StartByte' 'Länge der Nutzdaten als Anzahl der Bytes zwischen diesem Byte und der Prüfsumme' 'Response' 'Read' 'addr' 'Anzahl der Bytes des Wertes' 'Wert' 'checksum')
-    }
-
-    def __init__(self,cmd):
-        #if cmd is a string return protocommand code
-        if type(cmd)==str:
-            #FIXME das muss auch schöner gehen
-            super().__init__(0)
-            super().extend(bytes.fromhex(self.controlcodeset[cmd]))
-        elif type(cmd)==int:
-            # else, convert int to byte representation
-            super.__init__(cmd.to_bytes(1,'big'))
-        elif type(cmd)==bytes or type(cmd)==bytearray:
-            #pass raw data
-            super().__init__(cmd)
-
-
 class viSerial():
     # low-level communication interface
-    #FIXME: control sets nicht übernommen
+    # FIXME: control sets nicht übernommen
     __vlock__ = Lock()
 
-    #viControl socket: implement raw communication
-    def __init__(self,ctrlset,port):
+    # viControl socket: implement raw communication
+    def __init__(self, ctrlset, port):
         self.__connected__ = False
         self.__controlset__ = ctrlset
         self.__serialport__ = port
 
     def connect(self):
+        # setup serial connection
         # if not connected, try to acquire lock
         if self.__connected__:
             # do nothing
@@ -224,9 +194,9 @@ class viSerial():
                 self.__connected__ = True
                 logging.debug('Connected to {}'.format(self.__serialport__))
             except Exception as e:
-                logging.error('Could not _connect to {}; Error: {}'.format(self.__serialport__, e))
+                logging.error('Could not connect to {}; Error: {}'.format(self.__serialport__, e))
                 self.__vlock__.release()
-                self.__connected__=False
+                self.__connected__ = False
         else:
             logging.error('Could not acquire lock')
 
@@ -249,19 +219,19 @@ class viSerial():
     def read(self, length):
         # read bytes from serial connection
         totalreadbytes = bytearray(0)
-        failed_count=0
-        #FIXME: read length bytes and try ten times if nothing received
-        while failed_count<10:
+        failed_count = 0
+        # FIXME: read length bytes and try ten times if nothing received
+        while failed_count < 10:
             # try to get one or more bytes
             readbyte = self._serial.read()
             totalreadbytes += readbyte
             if len(totalreadbytes) >= length:
                 # exit loop if all bytes are received
                 break
-            if len(readbyte)==0:
+            if len(readbyte) == 0:
                 # if nothing received, wait and retry
                 time.sleep(0.2)
-                failed_count+=1
+                failed_count += 1
                 logging.debug(f'Serial read: retry ({failed_count})')
         logging.debug(f'Received {len(totalreadbytes)}/{length} bytes')
         return totalreadbytes

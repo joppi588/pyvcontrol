@@ -18,19 +18,12 @@
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
 
-
-
 import logging
 
 
-
-setreturnstatus = {
-    '00': 'OK',
-    '05': 'SYNC (NOT OK)',
-}
-
 class viCommandException(Exception):
     pass
+
 
 class viCommand(bytearray):
     # the commands
@@ -66,7 +59,8 @@ class viCommand(bytearray):
         # getSpdKomp -- Compressor Frequency
 
         # Temperaturen
-        'SolltempWarmwasser': {'addr': '6000', 'len': 2, 'unit': 'IS10', 'write': True, 'min_value': 10, 'max_value': 60},
+        'SolltempWarmwasser': {'addr': '6000', 'len': 2, 'unit': 'IS10', 'write': True, 'min_value': 10,
+                               'max_value': 60},
         # getTempWWSoll -- Bedienung WW - Betriebsdaten WW: Warmwassersolltemperatur (10..60 (95))
         'VorlauftempSek': {'addr': '0105', 'len': 2, 'unit': 'IS10', 'write': False},
         # getTempSekVL -- Information - Heizkreis HK1: Vorlauftemperatur Sekundaer 1 (0..95)
@@ -133,52 +127,46 @@ class viCommand(bytearray):
         # Wärmeenergie für WW-Bereitung der letzten 12 Monate (kWh)
         'ElektroWW12M': {'addr': '1670', 'len': 4, 'unit': 'IU10', 'write': False},
         # elektr. Energie für WW-Bereitung der letzten 12 Monate (kWh)
-        #'COPWW':{'addr':'1690','len':2,'unit':'IU10','write':False},
-        #'COPHeizung': {'addr': '1691', 'len': 2, 'unit': 'IU10', 'write': False},
+        # 'COPWW':{'addr':'1690','len':2,'unit':'IU10','write':False},
+        # 'COPHeizung': {'addr': '1691', 'len': 2, 'unit': 'IU10', 'write': False},
     }
 
-
-    def __init__(self,cmdname):
+    def __init__(self, cmdname):
         # FIXME: uniform naming of private and public properties
         try:
             cs = self.commandset[cmdname]
         except:
             raise viCommandException(f'Unknown command {cmdname}')
-        self.__cmdcode__=cs['addr']
-        self.__valuebytes__=cs['len']
-        self.unit=cs['unit']
-        self.write=cs['write']
-        self.cmdname=cmdname
+        self.__cmdcode__ = cs['addr']
+        self.__valuebytes__ = cs['len']
+        self.unit = cs['unit']
+        self.write = cs['write']
+        self.cmdname = cmdname
 
-        #create bytearray representation
-        b=bytes.fromhex(self.__cmdcode__)+self.__valuebytes__.to_bytes(1,'big')
+        # create bytearray representation
+        b = bytes.fromhex(self.__cmdcode__) + self.__valuebytes__.to_bytes(1, 'big')
         super().__init__(b)
 
     @classmethod
-    def frombytes(cls,b:bytearray):
-        #FIXME Rename the "fromxxx" methods to "from_xxx" similar to int.from_bytes
-        #create command from addr given as byte
-        #only the first two bytes of b are evaluated
+    def frombytes(cls, b: bytearray):
+        # FIXME Rename the "fromxxx" methods to "from_xxx" similar to int.from_bytes
+        # create command from addr given as byte
+        # only the first two bytes of b are evaluated
         try:
             logging.debug(f'Convert {b.hex()} to command')
-            cmdname=next(key for key, value in cls.commandset.items() if value['addr'].lower() == b[0:2].hex())
+            cmdname = next(key for key, value in cls.commandset.items() if value['addr'].lower() == b[0:2].hex())
         except:
             raise viCommandException(f'No Command matching {b[0:2].hex()}')
         return viCommand(cmdname)
 
-    def __responselen__(self,mode='read'):
-        #returns the number of bytes in the response
+    def __responselen__(self, mode='read'):
+        # returns the number of bytes in the response
         # request_response:
         # 2 'addr'
         # 1 'Anzahl der Bytes des Wertes'
         # x 'Wert'
-        if mode.lower()=='read':
-            return 3+self.__valuebytes__
+        if mode.lower() == 'read':
+            return 3 + self.__valuebytes__
         else:
             # in write mode the written values are not returned
             return 3
-
-
-
-
-

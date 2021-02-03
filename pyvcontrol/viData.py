@@ -285,13 +285,13 @@ class viDataIS10(viData):
 
     def __init__(self, value=b'\x00\x00', len=2):
         #sets int representation based on input value
-        self.len=len  #length in bytes
+        self.len = len  #length in bytes
         super().__init__(value)
 
-    def __fromtype__(self,value):
+    def __fromtype__(self, value):
         #fixed-point number given
-        #FIXME reference to self.len is a side effect, better pass as parameter but how?
-        super().extend(int(value * 10).to_bytes(self.len,'little',signed=True))
+        #FIXME Is it ok to overwrite its own value or should a new object be returned?
+        super().extend(int(value * 10).to_bytes(self.len, 'little', signed=True))
 
     @property
     def value(self):
