@@ -40,11 +40,12 @@ controlset = {
 }
 
 ctrlcode = {
-    'reset_cmd': 0x04,
-    'sync_cmd': '\x16\x00\x00',
-    'acknowledge': 0x06,
-    'not_init': 0x05,
-    'error': 0x15,
+    # FIXME: Unleserlich...
+    'reset_cmd': bytearray.fromhex('04'),
+    'sync_cmd': bytearray.fromhex('160000'),
+    'acknowledge': bytearray.fromhex('06'),
+    'not_init': bytearray.fromhex('05'),
+    'error': bytearray.fromhex('15'),
 }
 
 
@@ -150,7 +151,7 @@ class viControl:
                 self.vs.send(ctrlcode['reset_cmd'])
             else:
                 # send reset
-                logging.debug(f'Step {ii}: Send reset')
+                logging.debug(f'Received [{readbyte}]. Step {ii}: Send reset')
                 self.vs.send(ctrlcode['reset_cmd'])
 
         if not self.isInitialized:
@@ -189,7 +190,7 @@ class viSerial():
                 self._serial.bytesize = self.__controlset__['Bytesize']
                 self._serial.stopbits = self.__controlset__['Stopbits']
                 self._serial.port = self.__serialport__
-                self._serial.timeout = 1
+                self._serial.timeout = 0.2
                 self._serial.open()
                 self.__connected__ = True
                 logging.debug('Connected to {}'.format(self.__serialport__))
@@ -230,7 +231,6 @@ class viSerial():
                 break
             if len(readbyte) == 0:
                 # if nothing received, wait and retry
-                time.sleep(0.2)
                 failed_count += 1
                 logging.debug(f'Serial read: retry ({failed_count})')
         logging.debug(f'Received {len(totalreadbytes)}/{length} bytes')
