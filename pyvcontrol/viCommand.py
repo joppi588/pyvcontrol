@@ -133,6 +133,7 @@ class viCommand(bytearray):
 
     def __init__(self, cmdname):
         # FIXME: uniform naming of private and public properties
+        # init object using the attributes of the chosen command
         try:
             cs = self.commandset[cmdname]
         except:

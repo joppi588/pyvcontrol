@@ -20,7 +20,7 @@
 #brute force command scanner
 #hilft nicht viel da es sehr viele funktionierende Kommandos gibt.
 
-from pyvcontrol.viControl import viSerial,viControl,viControlCode,viControlException
+from pyvcontrol.viControl import viSerial,viControl,ctrlcode,viControlException
 from pyvcontrol.viCommand import viCommand
 from pyvcontrol.viTelegram import viTelegram
 import logging
@@ -45,7 +45,7 @@ def runScanner():
             try:
                 # Check if sending was successfull
                 ack=vo.vs.read(1)
-                if ack!=viControlCode('Acknowledge'):
+                if ack!=ctrlcode['acknowledge']:
                     logging.debug(f'Viessmann returned {ack.hex()}')
                     vo.initComm()
                     raise viControlException(f'Expected acknowledge byte, received {ack}')
