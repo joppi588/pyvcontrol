@@ -52,10 +52,10 @@ class viCommand(bytearray):
                                'max_value': 60},
 
         # Sekundaerpumpe [%] (including one status byte)
-        'Sekundaerpumpe': {'addr': 'B421', 'len': 2, 'unit': 'IUINT', 'write': False},
+        'Sekundaerpumpe': {'addr': 'B421', 'len': 2, 'unit': 'IUNON', 'write': False},
 
         # Verdichter [%] (including one status byte)
-        'Verdichter': {'addr': 'B423', 'len': 2, 'unit': 'IUINT', 'write': False},
+        'Verdichter': {'addr': 'B423', 'len': 2, 'unit': 'IUNON', 'write': False},
 
         # getAnlTyp -- Information - Allgemein: Anlagentyp (204D)
         'Anlagentyp': {'addr': '00F8', 'len': 2, 'unit': 'DT', 'write': False},
