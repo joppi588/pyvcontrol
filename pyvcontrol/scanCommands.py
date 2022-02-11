@@ -20,19 +20,19 @@
 #brute force command scanner
 #hilft nicht viel da es sehr viele funktionierende Kommandos gibt.
 
-from pyvcontrol.viControl import viSerial,viControl,ctrlcode,viControlException
+from pyvcontrol.viControl import viSerial, viControl, ctrlcode, viControlException
 from pyvcontrol.viCommand import viCommand
 from pyvcontrol.viTelegram import viTelegram
 import logging
 
-tModes={3:'Error',1:'valid response'}
+tModes = {3: 'Error', 1: 'valid response'}
 addressrange = range(0x1640, 0x1690)  # loop addresses
 
 
 def runScanner():
     vo = viControl()
     vo.initComm()
-    #vc=viCommand('Betriebsart') #Create command, overwrite contents later
+    # vc=viCommand('Betriebsart') #Create command, overwrite contents later
 
     for addr in addressrange:
         for kk in range(1,5):
