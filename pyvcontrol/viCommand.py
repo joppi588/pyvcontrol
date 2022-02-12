@@ -29,8 +29,12 @@ class viCommand(bytearray):
     # the commands
     # viCommand object value is a bytearray of addr and len
 
+    # TODO: statt 'write':False besser mode:rw/w verwenden
+
     commandset = {
-        # Tested Parameters (Vitocal 200S WO1C Baujahr 2019)
+        # All Parameters are tested and working on Vitocal 200S WO1C (Baujahr 2019)
+
+        # ------ Statusinfos (read only) ------
 
         # Warmwasser: Warmwassertemperatur oben (0..95)
         'Warmwassertemperatur': {'addr': '010d', 'len': 2, 'unit': 'IS10', 'write': False},
@@ -44,6 +48,17 @@ class viCommand(bytearray):
         # Ruecklauftemperatur Sekundaer 1 (0..95)
         'RuecklauftempSek': {'addr': '0106', 'len': 2, 'unit': 'IS10', 'write': False},
 
+        # Sekundaerpumpe [%] (including one status byte)
+        'Sekundaerpumpe': {'addr': 'B421', 'len': 2, 'unit': 'IUNON', 'write': False},
+
+        # Verdichter [%] (including one status byte)
+        'Verdichter': {'addr': 'B423', 'len': 2, 'unit': 'IUNON', 'write': False},
+
+        # Anlagentyp (muss 204D sein)
+        'Anlagentyp': {'addr': '00F8', 'len': 2, 'unit': 'DT', 'write': False},
+
+        # --------- Menüebene -------
+
         # getManuell / setManuell -- 0 = normal, 1 = manueller Heizbetrieb, 2 = 1x Warmwasser auf Temp2
         'WWeinmal': {'addr': 'B020', 'len': 1, 'unit': 'OO', 'write': True},
 
@@ -51,14 +66,14 @@ class viCommand(bytearray):
         'SolltempWarmwasser': {'addr': '6000', 'len': 2, 'unit': 'IS10', 'write': True, 'min_value': 10,
                                'max_value': 60},
 
-        # Sekundaerpumpe [%] (including one status byte)
-        'Sekundaerpumpe': {'addr': 'B421', 'len': 2, 'unit': 'IUNON', 'write': False},
+        # --------- Codierebene 2 ---------
 
-        # Verdichter [%] (including one status byte)
-        'Verdichter': {'addr': 'B423', 'len': 2, 'unit': 'IUNON', 'write': False},
+        # Hysterese Vorlauf ein: Verdichter schaltet im Heizbetrieb ein
+        'Hysterese_Vorlauf_ein': {'addr': '7304', 'len': 2, 'unit': 'IU10', 'write': True},
 
-        # getAnlTyp -- Information - Allgemein: Anlagentyp (204D)
-        'Anlagentyp': {'addr': '00F8', 'len': 2, 'unit': 'DT', 'write': False},
+        # Hysterese Vorlauf aus: Verdichter schaltet im Heizbetrieb ab
+        'Hysterese_Vorlauf_aus': {'addr': '7313', 'len': 2, 'unit': 'IU10', 'write': True}
+
 
     }
 
