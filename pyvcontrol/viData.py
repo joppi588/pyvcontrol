@@ -33,7 +33,15 @@ class viData(bytearray):
     # method __fromvalue__ initalizes the object with a typed value
 
     # Implemented units:
-    # BT, DT, IS10, IUNON, OO, RT
+    # BA    : Betriebsart
+    # ES    : Errorset
+    # DT    : Devicetype
+    # IS10  : Int signed, base 10 (i.e. 1 digit fixed point)
+    # IU10  : Int unsigned, base 10 (i.e. 1 digit fixed point)
+    # IUNON : Int unsigned, no base
+    # IU3600: Int unsigned, base 3600 (i.e. hours & seconds)
+    # OO    : On Off,
+    # RT    : Return Type
     # FIXME: implemented all units -> create own classes
     # FIXME: Units für Temperatur, h, etc. erzeugen
 
@@ -41,8 +49,6 @@ class viData(bytearray):
     unitset = {
         'CT': {'description': 'CycleTime', 'type': 'timer', 'signed': False, 'read_value_transform': 'non'},        # vito unit: CT
         'IU2': {'description': 'INT unsigned 2', 'type': 'integer', 'signed': False, 'read_value_transform': '2'},        # vito unit: UT1U, PR1
-        'IU10': {'description': 'INT unsigned 10', 'type': 'integer', 'signed': False, 'read_value_transform': '10'},        # vito unit:
-        'IU3600': {'description': 'INT unsigned 3600', 'type': 'integer', 'signed': False, 'read_value_transform': '3600'},        # vito unit: CS
         'IUBOOL': {'description': 'INT unsigned bool', 'type': 'integer', 'signed': False, 'read_value_transform': 'bool'},        # vito unit:
         'IUINT': {'description': 'INT unsigned int', 'type': 'integer', 'signed': False, 'read_value_transform': 'int'},        # vito unit:
         'IS2': {'description': 'INT signed 2', 'type': 'integer', 'signed': True, 'read_value_transform': '2'},        # vito unit: UT1, PR
@@ -230,7 +236,6 @@ class viDataES(viData):
         # returns decoded value
         return self.errorset[int.from_bytes(self,'big')]
 
-
 class viDataDT(viData):
     # device types
     unit= {'description': 'DeviceType', 'code':'DT','unit':''}  # vito unit: DT
@@ -314,7 +319,6 @@ class viDataIU10(viData):
     def value(self):
         return int.from_bytes(self,'little',signed=False)/10
 
-
 class viDataIU3600(viData):
     #IU3600 - signed fixed-point integer, 1 decimal
     unit= {'code':'IS10','description': 'INT signed 10','unit':'h'}
@@ -332,7 +336,6 @@ class viDataIU3600(viData):
     def value(self):
         #FIXME round to two digits
         return int.from_bytes(self,'little',signed=True)/3600
-
 
 class viDataIUNON(viData):
     #IUNON - unsigned int
