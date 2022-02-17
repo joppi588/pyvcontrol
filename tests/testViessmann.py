@@ -17,6 +17,8 @@
 #  along with this program. If not, see <http://www.gnu.org/licenses/>.
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
+# Tests the connection to Viessmann. Needs a physical connection
+
 import unittest
 import logging
 from pyvcontrol.viControl import viControl
