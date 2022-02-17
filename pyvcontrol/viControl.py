@@ -65,7 +65,7 @@ class viControl:
         # destructor, releases serial port
         self.vs.disconnect()
 
-    def execReadCmd(self, cmdname):
+    def execReadCmd(self, cmdname) -> viData:
         # sends a read command and gets the response.
         vc = viCommand(cmdname)  # create command
         vt = viTelegram(vc, 'read')  # create read Telegram
