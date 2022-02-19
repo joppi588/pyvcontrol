@@ -20,6 +20,7 @@
 # Provides a mock class to simulate the behavior of viControl class on a machine not connected to Viessmann
 
 from pyvcontrol.viData import viData
+from pyvcontrol.viCommand import viCommand
 import random
 
 
@@ -28,7 +29,9 @@ class viControlMock:
         return True
 
     def execReadCmd(self, cmdName):
+        vc=viCommand(cmdName)
         return viData.create('IUNON', random.randint(0, 50))
 
     def execWriteCmd(self, cmdName, value):
+        vc=viCommand(cmdName)
         return None

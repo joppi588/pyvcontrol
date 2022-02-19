@@ -8,7 +8,7 @@ setup(name='pyvcontrol',
       author_email='j_ochen_573@freenet.de',
       packages=['pyvcontrol'],
       zip_safe=False,
-      install_requires=['pyserial'],
+      install_requires=['pyserial','pyyaml'],
       classifiers=[
             #   3 - Alpha
             #   4 - Beta
