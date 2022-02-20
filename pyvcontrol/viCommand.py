@@ -69,6 +69,18 @@ class viCommand(bytearray):
         # Verdichter [%] (including one status byte)
         'Verdichter':               {'addr': 'B423', 'len': 4, 'unit': 'IUNON', 'write': False},
 
+        # Druck Sauggas [bar] (including one status byte) - Kühlmittel
+        'DruckSauggas': {'addr': 'B410', 'len': 3, 'unit': 'IS10', 'write': False},
+
+        # Druck Heissgas [bar] (including one status byte)- Kühlmittel
+        'DruckHeissgas': {'addr': 'B411', 'len': 3, 'unit': 'IS10', 'write': False},
+
+        # Temperatur Sauggas [bar] (including one status byte)- Kühlmittel
+        'DruckSauggas': {'addr': 'B409', 'len': 3, 'unit': 'IS10', 'write': False},
+
+        # Temperatur Heissgas [bar] (including one status byte)- Kühlmittel
+        'DruckHeissgas': {'addr': 'B40A', 'len': 3, 'unit': 'IS10', 'write': False},
+
         # Anlagentyp (muss 204D sein)
         'Anlagentyp':               {'addr': '00F8', 'len': 4, 'unit': 'DT', 'write': False},
 
