@@ -18,6 +18,8 @@
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
 # Provides a mock class to simulate the behavior of viControl class on a machine not connected to Viessmann
+# Usage: @patch('pyvcontrol.viTools.viControl', return_value=viControlMock())
+
 
 from pyvcontrol.viData import viData
 from pyvcontrol.viCommand import viCommand
