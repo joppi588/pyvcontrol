@@ -105,6 +105,8 @@ class viTelegram(bytearray):
         self.payload = payload  # fixme payload length not validated against expected length by command unit
         # fixme: no payload for read commands
 
+        logging.debug(f'CMD: {self.vicmd.hex(" ")} / Payload {self.payload.hex(" ")}')
+
         # -- create bytearray representation
         b = self.__header__() + self.vicmd + self.payload
         super().__init__(b + self.__checksumByte__(b))
@@ -116,8 +118,8 @@ class viTelegram(bytearray):
         # 1 byte - type
         # 1 byte - mode
         #
-        # Data length (bytes): data length (1), type (1), mode (1), command code (2), payload viData (x)
-        datalen = 5 + len(self.payload)
+        # Data length (bytes):  type (1), mode (1), command code (x), payload viData (x)
+        datalen = 2 + len(self.vicmd) + len(self.payload) #fixed bug ... command for read contains the expected length  
         return self.tStartByte + datalen.to_bytes(1, 'big') + self.tType + self.tMode
 
     @property
@@ -162,6 +164,21 @@ class viTelegram(bytearray):
         vicmd = viCommand.frombytes(b[4:6])
         vt = viTelegram(vicmd, tType=header[2:3], tMode=header[3:4], payload=b[7:-1])
         return vt
+    
+    @classmethod
+    def checkStartByteAnGetLength(cls, b: bytearray):
+        # parses a byte array and returns the corresponding telegram with properties vicmd etc.
+        # when parsing a response telegram, the first byte (ACK Acknowledge) must be stripped first
+        # header bytes are [0]-> Startbyte, [1]:total value byte length
+        # uses for function call with variable length
+        # return the length to be read
+
+        # validate Startbyte
+        if b[0:1] != cls.tStartByte:
+            raise viTelegramException('Startbyte not found')
+
+        return int.from_bytes( b[1:2],'big')
+
 
     @classmethod
     def __checksumByte__(cls, packet):

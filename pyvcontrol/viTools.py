@@ -22,6 +22,23 @@ import logging
 import curses
 import time
 
+def viscanFuncionCall(commandname, functionrange):
+    # scans the function call with all parameters and print HEX and decoded OUTPUT in terminal
+    # FIXME: works only for B800
+    # TODO: implement for other function calls with *args as ranges
+    
+    vo = viControl()
+    vo.initComm()
+
+    for func in functionrange: # First Parameter is Byte
+        print(f"==========Function # {func}===========")
+        for day in range(0,6):
+            try:
+                print (vo.execFunctionCall(commandname, func, day).valueScan)
+            except Exception as e:
+                logging.error({e})
+                print(f'Day {day}: An exception occurred: {e}')
+                
 
 
 def viscancommands(addressrange):
