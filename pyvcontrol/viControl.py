@@ -24,6 +24,7 @@
 # - execWriteCmd: execute write Command
 # viSerial: Low-level interface
 
+from ast import arg
 from pyvcontrol.viCommand import viCommand
 from pyvcontrol.viTelegram import viTelegram
 from pyvcontrol.viData import viData
@@ -65,12 +66,18 @@ class viControl:
         # destructor, releases serial port
         self.vs.disconnect()
 
+    # FIXME: die 3 exec-Methoden refaktorieren ... das sie sehr ähnlich sind
+
     def execReadCmd(self, cmdname) -> viData:
         # sends a read command and gets the response.
         vc = viCommand(cmdname)  # create command
+
+        if vc.function:
+            raise viControlException(f'command {cmdname} is not readable, because it is a function call')
+
         vt = viTelegram(vc, 'read')  # create read Telegram
 
-        logging.debug(f'Send telegram {vt.hex()}')
+        logging.debug(f'Send telegram {vt.hex(" ")}')
         self.vs.send(vt)  # send Telegram
 
         # Check if sending was successfull
@@ -119,6 +126,48 @@ class viControl:
         vt = viTelegram.frombytes(vr)  # create response Telegram
         if vt.tType == viTelegram.tTypes['error']:
             raise viControlException('Write command returned an error')
+
+        return viData.create(vt.vicmd.unit, vt.payload)  # return viData object from payload
+
+    def execFunctionCall(self, cmdname, *function_args) -> viData:
+        # call function see: https://github.com/openv/openv/wiki/FunctionCalls-WO1C
+        # not tested ... does not work with Vitocal333G
+
+        vc = viCommand(cmdname)
+        if not vc.function:
+            raise viControlException(f'command {cmdname} is not a function call')
+
+        # create viData object
+        vd = viData.create(vc.unit)
+        # create write Telegram
+        vt = viTelegram(vc, 'call', 'Request', bytearray((len(function_args),*function_args)))
+        # send Telegram
+        logging.debug(f'Send telegram {vt.hex(" ")}')
+        self.vs.send(vt)
+
+        # Check if sending was successfull
+        ack = self.vs.read(1)
+        logging.debug(f'Received  {ack.hex()}')
+        if ack != ctrlcode['acknowledge']:
+            raise viControlException(f'Expected acknowledge byte, received {ack}')
+
+        # Receive response and evaluate data
+        header = self.vs.read(2) #read the header ... the read the length received in the header  
+        logging.debug(f'Requested 2 (0x41 + length) bytes. Received telegram {header.hex()}')
+
+        l = viTelegram.checkStartByteAnGetLength(header)
+        body = self.vs.read(l+1) #read the response (length + checksum)
+
+        vr = header+body
+
+        # receive response
+        logging.debug(f'Requested {l+1} bytes. Received telegram {vr.hex()}')
+
+        self.vs.send(ctrlcode['acknowledge'])  # send acknowledge
+
+        vt = viTelegram.frombytes(vr)  # create response Telegram
+        if vt.tType == viTelegram.tTypes['error']:
+            raise viControlException('Function Call returned ERROR')
 
         return viData.create(vt.vicmd.unit, vt.payload)  # return viData object from payload
 

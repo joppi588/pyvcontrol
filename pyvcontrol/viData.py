@@ -17,7 +17,10 @@
 #  along with this program. If not, see <http://www.gnu.org/licenses/>.
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
+from email import header
 import logging
+from collections import namedtuple
+from struct import unpack
 
 class viDataException(Exception):
     def __init__(self,msg):
@@ -94,7 +97,7 @@ class viData(bytearray):
         logging.debug(f'Data factory: request to produce Data type {type} with args {args}')
         datatype_object={'BA':viDataBA, 'DT':viDataDT, 'IS10':viDataIS10,'IU10':viDataIU10,
                          'IU3600':viDataIU3600,'IUNON':viDataIUNON, 'RT':viDataRT, 'OO':viDataOO,
-                         'ES':viDataES,
+                         'ES':viDataES, 'F_E': viDataEnergy,
                          }
         if type in datatype_object.keys():
             return datatype_object[type](*args)
@@ -246,6 +249,7 @@ class viDataDT(viData):
         0x2094: 'V200KW1, Protokoll: KW2',
         0x209F: 'V200KO1B, Protokoll: P300, KW2',
         0x204D: 'V200WO1C, Protokoll: P300',
+        0x204B: 'Vitocal 333G, Protokoll: P300',
         0x20B8: 'V333MW1, Protokoll: ',
         0x20A0: 'V100GC1, Protokoll: ',
         0x20C2: 'VDensHO1, Protokoll: ',
@@ -416,6 +420,54 @@ class viDataOO(viData):
     @property
     def value(self):
         return self.OnOff[int.from_bytes(self, 'big')]
+
+
+# holder type for Energy
+Energy = namedtuple('Energy', 'byte1 day year week heating_energy heating_electrical_energy water_energy water_electrical_energy, cooling_energy cooling_electrical_energy total_energy total_eletrical_energy')
+
+class viDataEnergy(viData):
+    #Energy-Type ... Return from Function-Call B800
+    # see https://github.com/openv/openv/issues/480#issuecomment-712235475
+    # see https://github.com/openv/openv/wiki/FunctionCalls-WO1C
+    unit={'code':'F_E','description': 'returns Named Tuple with enery Data','unit':''},      
+
+    def __init__(self, value=b'\x00\x00',len=16):
+        #sets int representation based on input value
+        self.len=len  #length in bytes
+        super().__init__(value)
+
+    def __fromtype__(self,value):
+        raise viDataException(f'Value not setable from Type')
+
+    @property
+    def value(self) -> Energy:
+        # decode the Result Record an return a named tuple
+        # see links above
+
+        # example 02 02 16 09 92 03 aa 00 99 00 2d 00 00 00 00 00
+        raw = unpack('<4B6H', self)        
+        
+        res = Energy(
+            raw[0],raw[1],2000+raw[2],raw[3],
+            raw[4]*0.1, raw[5]*0.1, #heating
+            raw[6]*0.1, raw[7]*0.1, #water
+            raw[8]*0.1, raw[9]*0.1, #cooling ??? 
+            raw[4]*0.1+raw[6]*0.1+raw[8]*0.1, raw[5]*0.1+raw[7]*0.1+raw[9]*0.1 #total
+        )
+
+        return res
+        
+    @property
+    def valueScan(self):
+        # special property for scanning a function Call, see viTools
+        # for function call B800: it seems that the first for bytes are a header
+        # extract the header an try to decode the body as signed short
+        header = unpack('<4B', self[0:4]) 
+        body = unpack(f'<{len(self[4:])//2}h', self[4:])
+        bodyDiv10 = [x*0.1 for x in body]
+
+        return f"{self.hex(' ')} -- {header} - {body} / {bodyDiv10}"
+
 
 systemschemes = {
     '01': 'WW',

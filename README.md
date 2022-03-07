@@ -9,6 +9,9 @@ Replacement for vcontrold when using a python environment.
 Python package zur Kommunikation mit Viessmann-Heizungen über die Optolink serielle Schnittstelle.
 Geeignet um vcontrold zu ersetzen wenn ohnehin mit Python gearbeitet wird.
 
+Neu:
+- FunctionCall zum Abfragen der Engergiebilanz ... dort scheint aber auch noch das Betriebstagebuch lesbar zu sein (Details: https://github.com/openv/openv/issues/480#issuecomment-703803129 )
+
 Neuentwicklung basierend  auf 
 -  [SmartHomeNG plugin (Python)][SHNGpyPlugin]
 -  [vcontrold][vcontrold]
@@ -22,7 +25,10 @@ Einschränkungen/known issues:
  - nur V200WO1C/P300 implementiert. 
 
 Beispielcode:
-- testViessmann.py: führt einen Lesezugriff für alle definierten Kommandos durch.
+- testViessmann.py: führt einen Lesezugriff für alle definierten Kommandos durch. Zum Scannen der Parameter im FunctionCall am Ende unittest.main() auskommentieren und bei viscanFuncionCall den Kommentar entfernen
+
+
+
 
 [vcontrold]: https://github.com/openv (vcontrold)
 [SHNGpyPlugin]: https://github.com/sisamiwe/myplugins/tree/master/viessmann (SmartHomeNG python Plugin)
