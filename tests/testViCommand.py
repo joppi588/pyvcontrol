@@ -38,7 +38,7 @@ class testViCommand(unittest.TestCase):
     def test_vicmdAnlagentyp(self):
         # create command from string
         vc = viCommand('Anlagentyp')
-        self.assertEqual(vc.hex(), '00f802')
+        self.assertEqual(vc.hex(), '00f804')
 
     def test_vicmdWWeinmal(self):
         # create command from string

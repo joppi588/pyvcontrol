@@ -20,6 +20,78 @@
 
 import logging
 
+commands_VITOCAL_WO1C = {
+    # All Parameters are tested and working on Vitocal 200S WO1C (Baujahr 2019)
+
+    # ------ Statusinfos (read only) ------
+
+    # Warmwasser: Warmwassertemperatur oben (0..95)
+    'Warmwassertemperatur': {'addr': '010d', 'len': 2, 'unit': 'IS10', 'write': False},
+
+    # Aussentemperatur (-40..70)
+    'Aussentemperatur': {'addr': '0101', 'len': 2, 'unit': 'IS10', 'write': False},
+
+    # Heizkreis HK1: Vorlauftemperatur Sekundaer 1 (0..95)
+    'VorlauftempSek': {'addr': '0105', 'len': 2, 'unit': 'IS10', 'write': False},
+
+    # Ruecklauftemperatur Sekundaer 1 (0..95)
+    'RuecklauftempSek': {'addr': '0106', 'len': 2, 'unit': 'IS10', 'write': False},
+
+    # Sekundaerpumpe [%] (including one status byte)
+    'Sekundaerpumpe': {'addr': 'B421', 'len': 2, 'unit': 'IUNON', 'write': False},
+
+    # Faktor Energiebilanz(1 = 0.1kWh, 10 = 1kWh, 100 = 10kWh)
+    'FaktorEnergiebilanz': {'addr': '163F', 'len': 1, 'unit': 'IUNON', 'write': False},
+
+    # Heizwärme  "Heizbetrieb", Verdichter 1
+    'Heizwaerme': {'addr': '1640', 'len': 4, 'unit': 'IUNON', 'write': False},
+
+    # Elektroenergie "Heizbetrieb", Verdichter 1
+    'Heizenergie': {'addr': '1660', 'len': 4, 'unit': 'IUNON', 'write': False},
+
+    # Heizwärme  "WW-Betrieb", Verdichter 1
+    'WWwaerme': {'addr': '1650', 'len': 4, 'unit': 'IUNON', 'write': False},
+
+    # Elektroenergie "WW-Betrieb", Verdichter 1
+    'WWenergie': {'addr': '1670', 'len': 4, 'unit': 'IUNON', 'write': False},
+
+    # Verdichter [%] (including one status byte)
+    'Verdichter': {'addr': 'B423', 'len': 4, 'unit': 'IUNON', 'write': False},
+
+    # Druck Sauggas [bar] (including one status byte) - Kühlmittel
+    'DruckSauggas': {'addr': 'B410', 'len': 3, 'unit': 'IS10', 'write': False},
+
+    # Druck Heissgas [bar] (including one status byte)- Kühlmittel
+    'DruckHeissgas': {'addr': 'B411', 'len': 3, 'unit': 'IS10', 'write': False},
+
+    # Temperatur Sauggas [bar] (including one status byte)- Kühlmittel
+    'TempSauggas': {'addr': 'B409', 'len': 3, 'unit': 'IS10', 'write': False},
+
+    # Temperatur Heissgas [bar] (including one status byte)- Kühlmittel
+    'TempHeissgas': {'addr': 'B40A', 'len': 3, 'unit': 'IS10', 'write': False},
+
+    # Anlagentyp (muss 204D sein)
+    'Anlagentyp': {'addr': '00F8', 'len': 4, 'unit': 'DT', 'write': False},
+
+    # --------- Menüebene -------
+
+    # getManuell / setManuell -- 0 = normal, 1 = manueller Heizbetrieb, 2 = 1x Warmwasser auf Temp2
+    'WWeinmal': {'addr': 'B020', 'len': 1, 'unit': 'OO', 'write': True},
+
+    # Warmwassersolltemperatur (10..60 (95))
+    'SolltempWarmwasser': {'addr': '6000', 'len': 2, 'unit': 'IS10', 'write': True, 'min_value': 10,
+                           'max_value': 60},
+
+    # --------- Codierebene 2 ---------
+
+    # Hysterese Vorlauf ein: Verdichter schaltet im Heizbetrieb ein
+    'Hysterese_Vorlauf_ein': {'addr': '7304', 'len': 2, 'unit': 'IU10', 'write': True},
+
+    # Hysterese Vorlauf aus: Verdichter schaltet im Heizbetrieb ab
+    'Hysterese_Vorlauf_aus': {'addr': '7313', 'len': 2, 'unit': 'IU10', 'write': True}
+
+}
+
 
 class viCommandException(Exception):
     pass
@@ -31,82 +103,15 @@ class viCommand(bytearray):
 
     # TODO: statt 'write':False besser mode:rw/w verwenden
 
-    commandset = {
-        # All Parameters are tested and working on Vitocal 200S WO1C (Baujahr 2019)
-
-        # ------ Statusinfos (read only) ------
-
-        # Warmwasser: Warmwassertemperatur oben (0..95)
-        'Warmwassertemperatur':     {'addr': '010d', 'len': 2, 'unit': 'IS10', 'write': False},
-
-        # Aussentemperatur (-40..70)
-        'Aussentemperatur':         {'addr': '0101', 'len': 2, 'unit': 'IS10', 'write': False},
-
-        # Heizkreis HK1: Vorlauftemperatur Sekundaer 1 (0..95)
-        'VorlauftempSek':           {'addr': '0105', 'len': 2, 'unit': 'IS10', 'write': False},
-
-        # Ruecklauftemperatur Sekundaer 1 (0..95)
-        'RuecklauftempSek':         {'addr': '0106', 'len': 2, 'unit': 'IS10', 'write': False},
-
-        # Sekundaerpumpe [%] (including one status byte)
-        'Sekundaerpumpe':           {'addr': 'B421', 'len': 2, 'unit': 'IUNON', 'write': False},
-
-        # Faktor Energiebilanz(1 = 0.1kWh, 10 = 1kWh, 100 = 10kWh)
-        'FaktorEnergiebilanz':      {'addr': '163F', 'len': 1, 'unit': 'IUNON', 'write': False},
-
-        # Heizwärme  "Heizbetrieb", Verdichter 1
-        'Heizwaerme':               {'addr': '1640', 'len': 4, 'unit': 'IUNON', 'write': False},
-
-        # Elektroenergie "Heizbetrieb", Verdichter 1
-        'Heizenergie':              {'addr': '1660', 'len': 4, 'unit': 'IUNON', 'write': False},
-
-        # Heizwärme  "WW-Betrieb", Verdichter 1
-        'WWwaerme':                 {'addr': '1650', 'len': 4, 'unit': 'IUNON', 'write': False},
-
-        # Elektroenergie "WW-Betrieb", Verdichter 1
-        'WWenergie':                {'addr': '1670', 'len': 4, 'unit': 'IUNON', 'write': False},
-
-        # Verdichter [%] (including one status byte)
-        'Verdichter':               {'addr': 'B423', 'len': 4, 'unit': 'IUNON', 'write': False},
-
-        # Druck Sauggas [bar] (including one status byte) - Kühlmittel
-        'DruckSauggas': {'addr': 'B410', 'len': 3, 'unit': 'IS10', 'write': False},
-
-        # Druck Heissgas [bar] (including one status byte)- Kühlmittel
-        'DruckHeissgas': {'addr': 'B411', 'len': 3, 'unit': 'IS10', 'write': False},
-
-        # Temperatur Sauggas [bar] (including one status byte)- Kühlmittel
-        'TempSauggas': {'addr': 'B409', 'len': 3, 'unit': 'IS10', 'write': False},
-
-        # Temperatur Heissgas [bar] (including one status byte)- Kühlmittel
-        'TempHeissgas': {'addr': 'B40A', 'len': 3, 'unit': 'IS10', 'write': False},
-
-        # Anlagentyp (muss 204D sein)
-        'Anlagentyp':               {'addr': '00F8', 'len': 4, 'unit': 'DT', 'write': False},
-
-        # --------- Menüebene -------
-
-        # getManuell / setManuell -- 0 = normal, 1 = manueller Heizbetrieb, 2 = 1x Warmwasser auf Temp2
-        'WWeinmal':                 {'addr': 'B020', 'len': 1, 'unit': 'OO', 'write': True},
-
-        # Warmwassersolltemperatur (10..60 (95))
-        'SolltempWarmwasser':       {'addr': '6000', 'len': 2, 'unit': 'IS10', 'write': True, 'min_value': 10,
-                               'max_value': 60},
-
-        # --------- Codierebene 2 ---------
-
-        # Hysterese Vorlauf ein: Verdichter schaltet im Heizbetrieb ein
-        'Hysterese_Vorlauf_ein':    {'addr': '7304', 'len': 2, 'unit': 'IU10', 'write': True},
-
-        # Hysterese Vorlauf aus: Verdichter schaltet im Heizbetrieb ab
-        'Hysterese_Vorlauf_aus':    {'addr': '7313', 'len': 2, 'unit': 'IU10', 'write': True}
-
-
-    }
+    # =============================================================
+    # CHANGE YOUR COMMANDSET HERE:
+    commandset = commands_VITOCAL_WO1C
+    # =============================================================
 
     def __init__(self, cmdname):
         # FIXME: uniform naming of private and public properties
         # init object using the attributes of the chosen command
+
         try:
             cs = self.commandset[cmdname]
         except:
