@@ -20,7 +20,7 @@
 
 import logging
 
-commands_VITOCAL_WO1C = {
+VITOCAL_WO1C = {
     # All Parameters are tested and working on Vitocal 200S WO1C (Baujahr 2019)
 
     # ------ Statusinfos (read only) ------
@@ -105,7 +105,7 @@ class viCommand(bytearray):
 
     # =============================================================
     # CHANGE YOUR COMMANDSET HERE:
-    commandset = commands_VITOCAL_WO1C
+    commandset = VITOCAL_WO1C
     # =============================================================
 
     def __init__(self, cmdname):
