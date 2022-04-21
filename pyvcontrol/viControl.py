@@ -80,8 +80,8 @@ class viControl:
             raise viControlException(f'Expected acknowledge byte, received {ack}')
 
         # Receive response and evaluate data
-        vr = self.vs.read(vt.__responselen__)  # receive response
-        logging.debug(f'Requested {vt.__responselen__} bytes. Received telegram {vr.hex()}')
+        vr = self.vs.read(vt._response_length)  # receive response
+        logging.debug(f'Requested {vt._response_length} bytes. Received telegram {vr.hex()}')
 
         self.vs.send(ctrlcode['acknowledge'])  # send acknowledge
 
@@ -111,8 +111,8 @@ class viControl:
             raise viControlException(f'Expected acknowledge byte, received {ack}')
 
         # Receive response and evaluate data
-        vr = self.vs.read(vt.__responselen__)  # receive response
-        logging.debug(f'Requested {vt.__responselen__} bytes. Received telegram {vr.hex()}')
+        vr = self.vs.read(vt._response_length)  # receive response
+        logging.debug(f'Requested {vt._response_length} bytes. Received telegram {vr.hex()}')
 
         self.vs.send(ctrlcode['acknowledge'])  # send acknowledge
 

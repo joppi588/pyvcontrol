@@ -26,14 +26,14 @@ class testViCommand(unittest.TestCase):
     def test_vicmdnomatch(self):
         # Command not existing
         with self.assertRaises(viCommandException):
-            vc = viCommand.frombytes(b'\xF1\x00')
+            vc = viCommand._from_bytes(b'\xF1\x00')
         with self.assertRaises(viCommandException):
             vc = viCommand('foo')
 
     def test_vicmdfrombytes(self):
         # create command from raw bytes
-        vc = viCommand.frombytes(b'\x00\xf8')
-        self.assertEqual(vc.cmdname, 'Anlagentyp')
+        vc = viCommand._from_bytes(b'\x00\xf8')
+        self.assertEqual(vc.command_name, 'Anlagentyp')
 
     def test_vicmdAnlagentyp(self):
         # create command from string

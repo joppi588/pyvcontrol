@@ -106,10 +106,10 @@ class viTelegram(bytearray):
         # fixme: no payload for read commands
 
         # -- create bytearray representation
-        b = self.__header__() + self.vicmd + self.payload
+        b = self._header() + self.vicmd + self.payload
         super().__init__(b + self.__checksumByte__(b))
 
-    def __header__(self):
+    def _header(self):
         # Create viCommand header
         # 1 byte - Startbyte
         # 1 byte - length of data from (excluding) startbyte until (excluding) checksum
@@ -121,7 +121,7 @@ class viTelegram(bytearray):
         return self.tStartByte + datalen.to_bytes(1, 'big') + self.tType + self.tMode
 
     @property
-    def __responselen__(self):
+    def _response_length(self):
         # length of response telegram in bytes
         # 1 - Startbyte
         # 1 - length of data from (excluding) startbyte until (excluding) checksum
@@ -129,7 +129,7 @@ class viTelegram(bytearray):
         # 1 - mode
         # x - command
         # 1 - checksum
-        return 4 + self.vicmd.__responselen__(self.TelegramMode) + 1
+        return 4 + self.vicmd._response_length(self.TelegramMode) + 1
 
     @property
     def TelegramMode(self):
@@ -159,7 +159,7 @@ class viTelegram(bytearray):
         header = b[0:4]
         logging.debug(
             f'Header: {header.hex()}, tType={header[2:3].hex()}, tMode={header[3:4].hex()}, payload={b[7:-1].hex()}')
-        vicmd = viCommand.frombytes(b[4:6])
+        vicmd = viCommand._from_bytes(b[4:6])
         vt = viTelegram(vicmd, tType=header[2:3], tMode=header[3:4], payload=b[7:-1])
         return vt
 

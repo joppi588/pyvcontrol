@@ -20,75 +20,80 @@
 
 import logging
 
+ACCESS_MODE = 'access_mode'
+UNIT = 'unit'
+LENGTH = 'length'
+ADDRESS = 'address'
+
 VITOCAL_WO1C = {
     # All Parameters are tested and working on Vitocal 200S WO1C (Baujahr 2019)
 
     # ------ Statusinfos (read only) ------
 
     # Warmwasser: Warmwassertemperatur oben (0..95)
-    'Warmwassertemperatur': {'addr': '010d', 'len': 2, 'unit': 'IS10', 'write': False},
+    'Warmwassertemperatur': {ADDRESS: '010d', LENGTH: 2, UNIT: 'IS10'},
 
     # Aussentemperatur (-40..70)
-    'Aussentemperatur': {'addr': '0101', 'len': 2, 'unit': 'IS10', 'write': False},
+    'Aussentemperatur': {ADDRESS: '0101', LENGTH: 2, UNIT: 'IS10'},
 
     # Heizkreis HK1: Vorlauftemperatur Sekundaer 1 (0..95)
-    'VorlauftempSek': {'addr': '0105', 'len': 2, 'unit': 'IS10', 'write': False},
+    'VorlauftempSek': {ADDRESS: '0105', LENGTH: 2, UNIT: 'IS10'},
 
     # Ruecklauftemperatur Sekundaer 1 (0..95)
-    'RuecklauftempSek': {'addr': '0106', 'len': 2, 'unit': 'IS10', 'write': False},
+    'RuecklauftempSek': {ADDRESS: '0106', LENGTH: 2, UNIT: 'IS10'},
 
     # Sekundaerpumpe [%] (including one status byte)
-    'Sekundaerpumpe': {'addr': 'B421', 'len': 2, 'unit': 'IUNON', 'write': False},
+    'Sekundaerpumpe': {ADDRESS: 'B421', LENGTH: 2, UNIT: 'IUNON'},
 
     # Faktor Energiebilanz(1 = 0.1kWh, 10 = 1kWh, 100 = 10kWh)
-    'FaktorEnergiebilanz': {'addr': '163F', 'len': 1, 'unit': 'IUNON', 'write': False},
+    'FaktorEnergiebilanz': {ADDRESS: '163F', LENGTH: 1, UNIT: 'IUNON'},
 
     # Heizwärme  "Heizbetrieb", Verdichter 1
-    'Heizwaerme': {'addr': '1640', 'len': 4, 'unit': 'IUNON', 'write': False},
+    'Heizwaerme': {ADDRESS: '1640', LENGTH: 4, UNIT: 'IUNON'},
 
     # Elektroenergie "Heizbetrieb", Verdichter 1
-    'Heizenergie': {'addr': '1660', 'len': 4, 'unit': 'IUNON', 'write': False},
+    'Heizenergie': {ADDRESS: '1660', LENGTH: 4, UNIT: 'IUNON'},
 
     # Heizwärme  "WW-Betrieb", Verdichter 1
-    'WWwaerme': {'addr': '1650', 'len': 4, 'unit': 'IUNON', 'write': False},
+    'WWwaerme': {ADDRESS: '1650', LENGTH: 4, UNIT: 'IUNON'},
 
     # Elektroenergie "WW-Betrieb", Verdichter 1
-    'WWenergie': {'addr': '1670', 'len': 4, 'unit': 'IUNON', 'write': False},
+    'WWenergie': {ADDRESS: '1670', LENGTH: 4, UNIT: 'IUNON'},
 
     # Verdichter [%] (including one status byte)
-    'Verdichter': {'addr': 'B423', 'len': 4, 'unit': 'IUNON', 'write': False},
+    'Verdichter': {ADDRESS: 'B423', LENGTH: 4, UNIT: 'IUNON'},
 
     # Druck Sauggas [bar] (including one status byte) - Kühlmittel
-    'DruckSauggas': {'addr': 'B410', 'len': 3, 'unit': 'IS10', 'write': False},
+    'DruckSauggas': {ADDRESS: 'B410', LENGTH: 3, UNIT: 'IS10'},
 
     # Druck Heissgas [bar] (including one status byte)- Kühlmittel
-    'DruckHeissgas': {'addr': 'B411', 'len': 3, 'unit': 'IS10', 'write': False},
+    'DruckHeissgas': {ADDRESS: 'B411', LENGTH: 3, UNIT: 'IS10'},
 
     # Temperatur Sauggas [bar] (including one status byte)- Kühlmittel
-    'TempSauggas': {'addr': 'B409', 'len': 3, 'unit': 'IS10', 'write': False},
+    'TempSauggas': {ADDRESS: 'B409', LENGTH: 3, UNIT: 'IS10'},
 
     # Temperatur Heissgas [bar] (including one status byte)- Kühlmittel
-    'TempHeissgas': {'addr': 'B40A', 'len': 3, 'unit': 'IS10', 'write': False},
+    'TempHeissgas': {ADDRESS: 'B40A', LENGTH: 3, UNIT: 'IS10'},
 
     # Anlagentyp (muss 204D sein)
-    'Anlagentyp': {'addr': '00F8', 'len': 4, 'unit': 'DT', 'write': False},
+    'Anlagentyp': {ADDRESS: '00F8', LENGTH: 4, UNIT: 'DT'},
 
     # --------- Menüebene -------
 
     # getManuell / setManuell -- 0 = normal, 1 = manueller Heizbetrieb, 2 = 1x Warmwasser auf Temp2
-    'WWeinmal': {'addr': 'B020', 'len': 1, 'unit': 'OO', 'write': True},
+    'WWeinmal': {ADDRESS: 'B020', LENGTH: 1, UNIT: 'OO', ACCESS_MODE: 'write'},
 
     # Warmwassersolltemperatur (10..60 (95))
-    'SolltempWarmwasser': {'addr': '6000', 'len': 2, 'unit': 'IS10', 'write': True, 'min_value': 10,
+    'SolltempWarmwasser': {ADDRESS: '6000', LENGTH: 2, UNIT: 'IS10', ACCESS_MODE: 'write', 'min_value': 10,
                            'max_value': 60},
 
     # --------- Codierebene 2 ---------
 
     # Hysterese Vorlauf ein: Verdichter schaltet im Heizbetrieb ein
-    'Hysterese_Vorlauf_ein': {'addr': '7304', 'len': 2, 'unit': 'IU10', 'write': True},
+    'Hysterese_Vorlauf_ein': {ADDRESS: '7304', LENGTH: 2, UNIT: 'IU10', ACCESS_MODE: 'write'},
 
     # Hysterese Vorlauf aus: Verdichter schaltet im Heizbetrieb ab
-    'Hysterese_Vorlauf_aus': {'addr': '7313', 'len': 2, 'unit': 'IU10', 'write': True}
+    'Hysterese_Vorlauf_aus': {ADDRESS: '7313', LENGTH: 2, UNIT: 'IU10', ACCESS_MODE: 'write'}
 
 }
 
@@ -98,54 +103,54 @@ class viCommandException(Exception):
 
 
 class viCommand(bytearray):
-    # the commands
-    # viCommand object value is a bytearray of addr and len
-
-    # TODO: statt 'write':False besser mode:rw/w verwenden
+    """Representation of a command. Object value is a bytearray of address and length."""
 
     # =============================================================
-    # CHANGE YOUR COMMANDSET HERE:
-    commandset = VITOCAL_WO1C
+    # CHANGE YOUR COMMAND SET HERE:
+    command_set = VITOCAL_WO1C
     # =============================================================
 
-    def __init__(self, cmdname):
-        # FIXME: uniform naming of private and public properties
-        # init object using the attributes of the chosen command
+    def __init__(self, command_name):
+        """initialize object using the attributes of the chosen command."""
 
         try:
-            cs = self.commandset[cmdname]
+            command = self.command_set[command_name]
         except:
-            raise viCommandException(f'Unknown command {cmdname}')
-        self.__cmdcode__ = cs['addr']
-        self.__valuebytes__ = cs['len']
-        self.unit = cs['unit']
-        self.write = cs['write']
-        self.cmdname = cmdname
+            raise viCommandException(f'Unknown command {command_name}')
+        self._command_code = command[ADDRESS]
+        self._value_bytes = command[LENGTH]
+        self.unit = command[UNIT]
+        self.access_mode = self._get_access_mode(command)
+        self.command_name = command_name
 
         # create bytearray representation
-        b = bytes.fromhex(self.__cmdcode__) + self.__valuebytes__.to_bytes(1, 'big')
+        b = bytes.fromhex(self._command_code) + self._value_bytes.to_bytes(1, 'big')
         super().__init__(b)
 
+    def _get_access_mode(self, command):
+        if ACCESS_MODE in command.keys():
+            return command[ACCESS_MODE]
+        else:
+            return 'read'
+
     @classmethod
-    def frombytes(cls, b: bytearray):
-        # FIXME Rename the "fromxxx" methods to "from_xxx" similar to int.from_bytes
-        # create command from addr given as byte
-        # only the first two bytes of b are evaluated
+    def _from_bytes(cls, b: bytearray):
+        """Create command from address b given as byte, only the first two bytes of b are evaluated."""
         try:
             logging.debug(f'Convert {b.hex()} to command')
-            cmdname = next(key for key, value in cls.commandset.items() if value['addr'].lower() == b[0:2].hex())
+            command_name = next(key for key, value in cls.command_set.items() if value[ADDRESS].lower() == b[0:2].hex())
         except:
             raise viCommandException(f'No Command matching {b[0:2].hex()}')
-        return viCommand(cmdname)
+        return viCommand(command_name)
 
-    def __responselen__(self, mode='read'):
-        # returns the number of bytes in the response
+    def _response_length(self, mode='read'):
+        """Returns the number of bytes in the response."""
         # request_response:
-        # 2 'addr'
+        # 2 'address'
         # 1 'Anzahl der Bytes des Wertes'
         # x 'Wert'
         if mode.lower() == 'read':
-            return 3 + self.__valuebytes__
+            return 3 + self._value_bytes
         else:
             # in write mode the written values are not returned
             return 3

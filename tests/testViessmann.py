@@ -30,7 +30,7 @@ class MyTestCase(unittest.TestCase):
         vo = viControl()
         vo.initComm()
 
-        for cmd in viCommand.commandset.keys():
+        for cmd in viCommand.command_set.keys():
             vd = vo.execReadCmd(cmd)
             print(f'{cmd} : {vd.value}')
 
