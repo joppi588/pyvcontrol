@@ -93,7 +93,10 @@ VITOCAL_WO1C = {
     'Hysterese_Vorlauf_ein': {ADDRESS: '7304', LENGTH: 2, UNIT: 'IU10', ACCESS_MODE: 'write'},
 
     # Hysterese Vorlauf aus: Verdichter schaltet im Heizbetrieb ab
-    'Hysterese_Vorlauf_aus': {ADDRESS: '7313', LENGTH: 2, UNIT: 'IU10', ACCESS_MODE: 'write'}
+    'Hysterese_Vorlauf_aus': {ADDRESS: '7313', LENGTH: 2, UNIT: 'IU10', ACCESS_MODE: 'write'},
+
+    # --------- Function Call --------
+    'Energiebilanz': {ADDRESS: 'B800', LENGTH: 16, UNIT: 'F_E', ACCESS_MODE: 'call'},
 
 }
 
