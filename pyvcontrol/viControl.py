@@ -85,7 +85,7 @@ class viControl:
 
         self.vs.send(ctrlcode['acknowledge'])  # send acknowledge
 
-        vt = viTelegram.frombytes(vr)  # create response Telegram
+        vt = viTelegram.from_bytes(vr)  # create response Telegram
         if vt.tType == viTelegram.tTypes['error']:
             raise viControlException('Read command returned an error')
         return viData.create(vt.vicmd.unit, vt.payload)  # return viData object from payload
@@ -116,7 +116,7 @@ class viControl:
 
         self.vs.send(ctrlcode['acknowledge'])  # send acknowledge
 
-        vt = viTelegram.frombytes(vr)  # create response Telegram
+        vt = viTelegram.from_bytes(vr)  # create response Telegram
         if vt.tType == viTelegram.tTypes['error']:
             raise viControlException('Write command returned an error')
 

@@ -107,18 +107,16 @@ class viTelegram(bytearray):
 
         # -- create bytearray representation
         b = self._header() + self.vicmd + self.payload
-        super().__init__(b + self.__checksumByte__(b))
+        super().__init__(b + self._checksum_byte(b))
 
     def _header(self):
         # Create viCommand header
-        # 1 byte - Startbyte
-        # 1 byte - length of data from (excluding) startbyte until (excluding) checksum
         # 1 byte - type
         # 1 byte - mode
         #
-        # Data length (bytes): data length (1), type (1), mode (1), command code (2), payload viData (x)
-        datalen = 5 + len(self.payload)
-        return self.tStartByte + datalen.to_bytes(1, 'big') + self.tType + self.tMode
+        # Data length (bytes): type (1), mode (1), command code (x), payload viData (x)
+        data_length = 2 + len(self.vicmd) + len(self.payload)
+        return self.tStartByte + data_length.to_bytes(1, 'big') + self.tType + self.tMode
 
     @property
     def _response_length(self):
@@ -129,29 +127,29 @@ class viTelegram(bytearray):
         # 1 - mode
         # x - command
         # 1 - checksum
-        return 4 + self.vicmd._response_length(self.TelegramMode) + 1
+        return 4 + self.vicmd._response_length(self.telegram_mode) + 1
 
     @property
-    def TelegramMode(self):
+    def telegram_mode(self):
         # returns mode (read, write, function call)
         return next(key for key, value in self.tModes.items() if value == self.tMode)
 
     @property
-    def TelegramType(self):
+    def telegram_type(self):
         # Request/response/Error
         return next(key for key, value in self.tTypes.items() if value == self.tType)
 
     @classmethod
-    def frombytes(cls, b: bytearray):
+    def from_bytes(cls, b: bytearray):
         # parses a byte array and returns the corresponding telegram with properties vicmd etc.
         # when parsing a response telegram, the first byte (ACK Acknowledge) must be stripped first
         # Telegram bytes are [0:4]->header, [4:6]->command code, [6]->payload length, [7:-2]-> payload, [-1]:-> checksum
         # header bytes are [0]-> Startbyte, [1]:total value byte length,[2]: type, [3] mode
 
         # validate checksum
-        if b[-1:] != viTelegram.__checksumByte__(b[0:-1]):
+        if b[-1:] != viTelegram._checksum_byte(b[0:-1]):
             raise viTelegramException(
-                f'Checksum not valid. Expected {b[-1:]}, Calculated {viTelegram.__checksumByte__(b[0:-1])}')
+                f'Checksum not valid. Expected {b[-1:]}, Calculated {viTelegram._checksum_byte(b[0:-1])}')
         # validate Startbyte
         if b[0:1] != cls.tStartByte:
             raise viTelegramException('Startbyte not found')
@@ -164,7 +162,7 @@ class viTelegram(bytearray):
         return vt
 
     @classmethod
-    def __checksumByte__(cls, packet):
+    def _checksum_byte(cls, packet):
         # checksum is the last byte of the sum of all bytes in packet
         checksum = 0
         if len(packet) == 0:
