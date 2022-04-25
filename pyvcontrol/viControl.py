@@ -94,7 +94,7 @@ class viControl:
         # sends a read command and gets the response.
 
         vc = viCommand(cmdname)
-        if not vc.write:
+        if vc.access_mode != 'write':
             raise viControlException(f'command {cmdname} cannot be written')
 
         # create viData object
