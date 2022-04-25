@@ -40,11 +40,11 @@ controlset = {
 }
 
 ctrlcode = {
-    'reset_cmd':    b'\x04',
-    'sync_cmd':     b'\x16\x00\x00',
-    'acknowledge':  b'\x06',
-    'not_init':     b'\x05',
-    'error':        b'\x15',
+    'reset_cmd': b'\x04',
+    'sync_cmd': b'\x16\x00\x00',
+    'acknowledge': b'\x06',
+    'not_init': b'\x05',
+    'error': b'\x15',
 }
 
 
@@ -66,61 +66,48 @@ class viControl:
         self.vs.disconnect()
 
     def execReadCmd(self, cmdname) -> viData:
-        # sends a read command and gets the response.
-        vc = viCommand(cmdname)  # create command
-        vt = viTelegram(vc, 'read')  # create read Telegram
-
-        logging.debug(f'Send telegram {vt.hex()}')
-        self.vs.send(vt)  # send Telegram
-
-        # Check if sending was successfull
-        ack = self.vs.read(1)
-        logging.debug(f'Received  {ack.hex()}')
-        if ack != ctrlcode['acknowledge']:
-            raise viControlException(f'Expected acknowledge byte, received {ack}')
-
-        # Receive response and evaluate data
-        vr = self.vs.read(vt._response_length)  # receive response
-        logging.debug(f'Requested {vt._response_length} bytes. Received telegram {vr.hex()}')
-
-        self.vs.send(ctrlcode['acknowledge'])  # send acknowledge
-
-        vt = viTelegram.from_bytes(vr)  # create response Telegram
-        if vt.tType == viTelegram.tTypes['error']:
-            raise viControlException('Read command returned an error')
-        return viData.create(vt.vicmd.unit, vt.payload)  # return viData object from payload
+        """ sends a read command and gets the response."""
+        return self.execute_command(cmdname, 'read')
 
     def execWriteCmd(self, cmdname, value) -> viData:
-        # sends a read command and gets the response.
+        """ sends a write command and gets the response."""
+        return self.execute_command(cmdname, 'write', payload=value)
 
-        vc = viCommand(cmdname)
-        if vc.access_mode != 'write':
-            raise viControlException(f'command {cmdname} cannot be written')
+    def execFunctionCall(self, cmdname, *function_args) -> viData:
+        """ sends a function call command and gets response."""
+        payload = bytearray((len(function_args), *function_args))
+        return self.execute_command(cmdname, 'call', payload=payload)
 
-        # create viData object
-        vd = viData.create(vc.unit, value)
-        # create write Telegram
-        vt = viTelegram(vc, 'Write', 'Request', vd)
+    def execute_command(self, command_name, access_mode, payload=bytes(0)) -> viData:
+
+        # TODO: Put each of the following blocks in a separate function
+        # prepare command
+        vc = viCommand(command_name)
+        allowed_access_mode = {'read': ['read'], 'write': ['read', 'write'], 'call': ['call']}
+        if access_mode not in allowed_access_mode[vc.access_mode]:
+            raise viControlException(f'command {command_name} allows only {allowed_access_mode[vc.access_mode]} access')
+
         # send Telegram
+        vt = viTelegram(vc, access_mode, payload=payload)
+        logging.debug(f'Send telegram {vt.hex()}')
         self.vs.send(vt)
 
-        # Check if sending was successfull
+        # Check if sending was successful
         ack = self.vs.read(1)
         logging.debug(f'Received  {ack.hex()}')
         if ack != ctrlcode['acknowledge']:
             raise viControlException(f'Expected acknowledge byte, received {ack}')
 
         # Receive response and evaluate data
-        vr = self.vs.read(vt._response_length)  # receive response
-        logging.debug(f'Requested {vt._response_length} bytes. Received telegram {vr.hex()}')
-
+        vr = self.vs.read(vt.response_length)  # receive response
+        vt = viTelegram.from_bytes(vr)
+        logging.debug(f'Requested {vt.response_length} bytes. Received telegram {vr.hex()}')
+        if vt.tType == viTelegram.tTypes['error']:
+            raise viControlException(f'{access_mode} command returned an error')
         self.vs.send(ctrlcode['acknowledge'])  # send acknowledge
 
-        vt = viTelegram.from_bytes(vr)  # create response Telegram
-        if vt.tType == viTelegram.tTypes['error']:
-            raise viControlException('Write command returned an error')
-
-        return viData.create(vt.vicmd.unit, vt.payload)  # return viData object from payload
+        # return viData object from payload
+        return viData.create(vt.vicmd.unit, vt.payload)
 
     def initComm(self):
         logging.debug('Init Communication to viControl....')
@@ -189,7 +176,7 @@ class viSerial():
                 self._serial.bytesize = self.__controlset__['Bytesize']
                 self._serial.stopbits = self.__controlset__['Stopbits']
                 self._serial.port = self.__serialport__
-                self._serial.timeout = 0.25 # read method will try 10 times -> 2.5s max waiting time
+                self._serial.timeout = 0.25  # read method will try 10 times -> 2.5s max waiting time
                 self._serial.open()
                 self.__connected__ = True
                 logging.debug('Connected to {}'.format(self.__serialport__))

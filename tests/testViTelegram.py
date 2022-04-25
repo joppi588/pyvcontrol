@@ -86,7 +86,7 @@ class testviTelegram_resp(unittest.TestCase):
         vt = v.viTelegram.from_bytes(b)
         vd = d.create(vt.vicmd.unit, vt.payload)
         self.assertEqual('read', vt.telegram_mode)
-        self.assertEqual(12, vt._response_length)
+        self.assertEqual(12, vt.response_length)
         self.assertEqual(vt.vicmd.command_name, 'WWwaerme')
         self.assertEqual(vt.vicmd.unit, 'IUNON')
         self.assertEqual(vd.value, 10724)
@@ -97,7 +97,7 @@ class testviTelegram_resp(unittest.TestCase):
         vt = v.viTelegram.from_bytes(b)
         vd = d.create(vt.vicmd.unit, vt.payload)
         self.assertEqual('write', vt.telegram_mode)
-        self.assertEqual(8, vt._response_length)
+        self.assertEqual(8, vt.response_length)
         self.assertEqual(vt.vicmd.command_name, 'WWwaerme')
         self.assertEqual(vt.vicmd.unit, 'IUNON')
 

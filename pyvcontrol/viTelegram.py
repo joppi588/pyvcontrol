@@ -110,7 +110,7 @@ class viTelegram(bytearray):
         super().__init__(b + self._checksum_byte(b))
 
     def _header(self):
-        # Create viCommand header
+        """ Create viTelegram header"""
         # 1 byte - type
         # 1 byte - mode
         #
@@ -119,7 +119,7 @@ class viTelegram(bytearray):
         return self.tStartByte + data_length.to_bytes(1, 'big') + self.tType + self.tMode
 
     @property
-    def _response_length(self):
+    def response_length(self):
         # length of response telegram in bytes
         # 1 - Startbyte
         # 1 - length of data from (excluding) startbyte until (excluding) checksum
@@ -127,7 +127,7 @@ class viTelegram(bytearray):
         # 1 - mode
         # x - command
         # 1 - checksum
-        return 4 + self.vicmd._response_length(self.telegram_mode) + 1
+        return 4 + self.vicmd.response_length(self.telegram_mode) + 1
 
     @property
     def telegram_mode(self):

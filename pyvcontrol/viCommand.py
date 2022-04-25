@@ -146,14 +146,16 @@ class viCommand(bytearray):
             raise viCommandException(f'No Command matching {b[0:2].hex()}')
         return viCommand(command_name)
 
-    def _response_length(self, mode='read'):
+    def response_length(self, access_mode='read'):
         """Returns the number of bytes in the response."""
         # request_response:
         # 2 'address'
         # 1 'Anzahl der Bytes des Wertes'
         # x 'Wert'
-        if mode.lower() == 'read':
+        if access_mode.lower() == 'read':
             return 3 + self._value_bytes
-        else:
+        elif access_mode.lower() == 'write':
             # in write mode the written values are not returned
             return 3
+        else:
+            return 3 + self._value_bytes
