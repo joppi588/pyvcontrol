@@ -28,7 +28,7 @@ from pyvcontrol.viCommand import viCommand
 class MyTestCase(unittest.TestCase):
     def test_readsequence(self):
         vo = viControl()
-        vo.initComm()
+        vo.initialize_communication()
 
         for cmd in viCommand.command_set.keys():
             vd = vo.execReadCmd(cmd)
@@ -40,7 +40,7 @@ class MyTestCase(unittest.TestCase):
     def test_writesequence(self):
         # Ändert einen Datensatz und stellt ursprüngl. Wert wieder her
         vo = viControl()
-        vo.initComm()
+        vo.initialize_communication()
         cmd = 'RaumsolltempParty'
         v_orig = vo.execReadCmd(cmd).value
 

@@ -27,13 +27,13 @@ import random
 
 
 class viControlMock:
-    def initComm(self):
+    def initialize_communication(self):
         return True
 
     def execReadCmd(self, cmdName):
-        vc=viCommand(cmdName)
+        vc = viCommand(cmdName)
         return viData.create('IUNON', random.randint(0, 50))
 
     def execWriteCmd(self, cmdName, value):
-        vc=viCommand(cmdName)
+        vc = viCommand(cmdName)
         return None

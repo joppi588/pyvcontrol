@@ -31,7 +31,7 @@ def viscancommands(addressrange):
     logging.basicConfig(filename='scancommands.log', filemode='w', level=logging.DEBUG)
 
     vo = viControl()
-    vo.initComm()
+    vo.initialize_communication()
 
     for addr in addressrange:
         for kk in range(1,5):
@@ -47,7 +47,7 @@ def viscancommands(addressrange):
                 ack=vo.vs.read(1)
                 if ack!=ctrlcode['acknowledge']:
                     logging.debug(f'Viessmann returned {ack.hex()}')
-                    vo.initComm()
+                    vo.initialize_communication()
                     raise viControlException(f'Expected acknowledge byte, received {ack}')
 
                 # Receive response and evaluate data
@@ -91,7 +91,7 @@ def vimonitor(commandlist, updateinterval=30):
         stdscr.refresh()
         stdscr.addstr(1,0,"--- Viessmann monitor ---\n")
         try:
-            vo.initComm()
+            vo.initialize_communication()
             for c in commandlist:
                 v = vo.execReadCmd(c).value
                 stdscr.addstr(f"{c}: " , curses.A_BOLD)
