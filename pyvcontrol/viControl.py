@@ -118,6 +118,11 @@ class viControl:
         # return viData object from payload
         return viData.create(vt.vicmd.unit, vt.payload)
 
+    @deprecated(version='1.3', reason="replaced by initialize_communication.")
+    def initComm(self):
+        self.initialize_communication()
+
+
     def initialize_communication(self):
         logging.debug('Init Communication to viControl....')
         self.is_initialized = False
