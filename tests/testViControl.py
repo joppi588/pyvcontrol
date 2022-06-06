@@ -62,7 +62,7 @@ class TestViControl(unittest.TestCase):
 
     @patch('pyvcontrol.viControl.viSerial', return_value=MockViSerial())
     def test_exec_write_command(self, mock1):
-        # FIXME: Checksum is constant but not valid
+        mock1.return_value.source = ctrlcode['acknowledge'] + bytes.fromhex('41 07 01 01 01 0d 02 19 00 7e')
         vc = viControl()
         vc.execWriteCmd('SolltempWarmwasser', 35)
 
