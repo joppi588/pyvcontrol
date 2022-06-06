@@ -117,7 +117,7 @@ def vi_scan_function_call(commandname, functionrange):
     # scans the function call with all parameters and print HEX and decoded OUTPUT in terminal
 
     vo = viControl()
-    vo.initComm()
+    vo.initialize_communication()
 
     for func in functionrange:  # First Parameter is Byte
         print(f"==========Function # {func}===========")
