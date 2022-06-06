@@ -24,6 +24,7 @@ from pyvcontrol.viData import viData
 import logging
 import serial
 from threading import Lock
+from deprecated import deprecated
 
 control_set = {
     'Baudrate': 4800,
@@ -58,14 +59,30 @@ class viControl:
         # destructor, releases serial port
         self.vs.disconnect()
 
+    def execute_read_command(self, command_name) -> viData:
+        """ sends a read command and gets the response."""
+        return self.execute_command(command_name, 'read')
+
+    def execute_write_command(self, cmdname, value) -> viData:
+        """ sends a write command and gets the response."""
+        return self.execute_command(cmdname, 'write', payload=value)
+
+    def execute_function_call(self, cmdname, *function_args) -> viData:
+        """ sends a function call command and gets response."""
+        payload = bytearray((len(function_args), *function_args))
+        return self.execute_command(cmdname, 'call', payload=payload)
+
+    @deprecated(version='1.3', reason="replaced by execute_read_command")
     def execReadCmd(self, cmdname) -> viData:
         """ sends a read command and gets the response."""
         return self.execute_command(cmdname, 'read')
 
+    @deprecated(version='1.3', reason="replaced by execute_write_command")
     def execWriteCmd(self, cmdname, value) -> viData:
         """ sends a write command and gets the response."""
         return self.execute_command(cmdname, 'write', payload=value)
 
+    @deprecated(version='1.3', reason="replaced by execute_write_command")
     def execFunctionCall(self, cmdname, *function_args) -> viData:
         """ sends a function call command and gets response."""
         payload = bytearray((len(function_args), *function_args))

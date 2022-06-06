@@ -111,3 +111,19 @@ def vimonitor(commandlist, updateinterval=30):
     curses.nocbreak()
     curses.echo()
     curses.endwin()
+
+
+def vi_scan_function_call(commandname, functionrange):
+    # scans the function call with all parameters and print HEX and decoded OUTPUT in terminal
+
+    vo = viControl()
+    vo.initComm()
+
+    for func in functionrange:  # First Parameter is Byte
+        print(f"==========Function # {func}===========")
+        for day in range(0, 6):
+            try:
+                print(vo.execFunctionCall(commandname, func, day).valueScan)
+            except Exception as e:
+                logging.error({e})
+                print(f'Day {day}: An exception occurred: {e}')

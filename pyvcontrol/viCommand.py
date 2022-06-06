@@ -36,6 +36,9 @@ VITOCAL_WO1C = {
     # Aussentemperatur (-40..70)
     'Aussentemperatur': {ADDRESS: '0101', LENGTH: 2, UNIT: 'IS10'},
 
+    # Betriebsmodus
+    'Betriebsmodus': {ADDRESS: '0E2E', LENGTH:3, UNIT: 'IUNON'},
+
     # Heizkreis HK1: Vorlauftemperatur Sekundaer 1 (0..95)
     'VorlauftempSek': {ADDRESS: '0105', LENGTH: 2, UNIT: 'IS10'},
 
