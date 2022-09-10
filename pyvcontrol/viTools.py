@@ -23,7 +23,6 @@ import curses
 import time
 
 
-
 def viscancommands(addressrange):
     # brute force command scanner
     # hilft v.a. um die richtige Payload-Länge für bekannte Kommandos herauszufinden
@@ -34,30 +33,30 @@ def viscancommands(addressrange):
     vo.initialize_communication()
 
     for addr in addressrange:
-        for kk in range(1,5):
+        for kk in range(1, 5):
             # TODO: Inneren Teil ausschneiden und in separate Funktion? ("low level read command")
             logging.debug(f'---{hex(addr)}-{kk}------------------')
-            vc = addr.to_bytes(2,'big')+kk.to_bytes(1,'big')
+            vc = addr.to_bytes(2, 'big') + kk.to_bytes(1, 'big')
             vt = viTelegram(vc, 'read')  # create read Telegram
-            vo.vs.send(vt)                    # send Telegram
+            vo.vs.send(vt)  # send Telegram
             logging.debug(f'Send telegram {vt.hex()}')
 
             try:
                 # Check if sending was successfull
-                ack=vo.vs.read(1)
-                if ack!=ctrlcode['acknowledge']:
+                ack = vo.vs.read(1)
+                if ack != ctrlcode['acknowledge']:
                     logging.debug(f'Viessmann returned {ack.hex()}')
                     vo.initialize_communication()
                     raise viControlException(f'Expected acknowledge byte, received {ack}')
 
                 # Receive response and evaluate data
                 vr1 = vo.vs.read(2)  # receive response
-                vr2 = vo.vs.read(vr1[1]+1) # read rest of telegram
+                vr2 = vo.vs.read(vr1[1] + 1)  # read rest of telegram
                 # FIXME: create Telegram instead of low-level access (for better readability)
                 logging.debug(f'received telegram {vr1.hex()} {vr2.hex()}')
 
-                if vr2[0].to_bytes(1,'little') == viTelegram.tTypes['response']:
-                    v=int.from_bytes(vr2[-1-kk:-1],'little')
+                if vr2[0].to_bytes(1, 'little') == viTelegram.tTypes['response']:
+                    v = int.from_bytes(vr2[-1 - kk:-1], 'little')
                     print(f'Found working command 0x{hex(addr)}, payload length {kk}, value {v}')
 
 
@@ -66,45 +65,45 @@ def viscancommands(addressrange):
                 print(f'An exception occurred: {e}')
 
 
-def vimonitor(commandlist, updateinterval=30):
-# repeatedly executes commands
-# commandlist is a list of strings (command names from viCommand)
+def vimonitor(command_list, updateinterval=30):
+    # repeatedly executes commands
+    # commandlist is a list of strings (command names from viCommand)
 
-# TODO: accept also addresses & length as commands
-# Option 1) "Generic command" based on addr and length 2) add command to command set first
-    if not isinstance(commandlist,list):
+    # TODO: accept also addresses & length as commands
+    # Option 1) "Generic command" based on addr and length 2) add command to command set first
+    if not isinstance(command_list, list):
         # wrap single commands into a list
-        commandlist=[commandlist]
+        command_list = [command_list]
 
     logging.basicConfig(filename='Monitor.log', filemode='w', level=logging.DEBUG)
     vo = viControl()
 
-    stdscr = curses.initscr()
+    standard_screen = curses.initscr()
     curses.noecho()
     curses.cbreak()
-    stdscr.nodelay(True)
+    standard_screen.nodelay(True)
 
     loop_monitor = True
     while loop_monitor:
-        stdscr.clear()
-        stdscr.addstr(0,0,'Reading values...')
-        stdscr.refresh()
-        stdscr.addstr(1,0,"--- Viessmann monitor ---\n")
+        standard_screen.clear()
+        standard_screen.addstr(0, 0, 'Reading values...')
+        standard_screen.refresh()
+        standard_screen.addstr(1, 0, "--- Viessmann monitor ---\n")
         try:
             vo.initialize_communication()
-            for c in commandlist:
+            for c in command_list:
                 v = vo.execReadCmd(c).value
-                stdscr.addstr(f"{c}: " , curses.A_BOLD)
-                stdscr.addstr(f"{v}\n")
+                standard_screen.addstr(f"{c}: ", curses.A_BOLD)
+                standard_screen.addstr(f"{v}\n")
         except Exception as e:
-            stdscr.addstr(f'Error: {e}')
+            standard_screen.addstr(f'Error: {e}')
 
-        stdscr.addstr('\n-----------------------\nPress any key to abort')
+        standard_screen.addstr('\n-----------------------\nPress any key to abort')
         for k in range(updateinterval):
             time.sleep(1)
-            stdscr.addstr(0,0,f"[Update in {updateinterval-k}s]       ")
-            stdscr.refresh()
-            if stdscr.getch() > 0:
+            standard_screen.addstr(0, 0, f"[Update in {updateinterval - k}s]       ")
+            standard_screen.refresh()
+            if standard_screen.getch() > 0:
                 loop_monitor = False
                 break
 

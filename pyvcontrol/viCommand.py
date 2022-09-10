@@ -25,6 +25,13 @@ UNIT = 'unit'
 LENGTH = 'length'
 ADDRESS = 'address'
 
+OPERATION_MODE = {
+    'OFF': 0,
+    'WW': 1,
+    'HEATING_WW': 2,
+    'COOLING': 7
+}
+
 VITOCAL_WO1C = {
     # All Parameters are tested and working on Vitocal 200S WO1C (Baujahr 2019)
 

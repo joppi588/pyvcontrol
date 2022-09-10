@@ -59,10 +59,20 @@ class viControl:
         # destructor, releases serial port
         self.vs.disconnect()
 
+    @deprecated(version='1.3', reason="replaced by execute_read_command")
+    def execReadCmd(self, cmdname) -> viData:
+        """ sends a read command and gets the response."""
+        return self.execute_read_command(cmdname)
+
     def execute_read_command(self, command_name) -> viData:
         """ sends a read command and gets the response."""
         vc = viCommand(command_name)
         return self.execute_command(vc, 'read')
+
+    @deprecated(version='1.3', reason="replaced by execute_write_command")
+    def execWriteCmd(self, cmdname, value) -> viData:
+        """ sends a write command and gets the response."""
+        return self.execute_write_command(cmdname, value=value)
 
     def execute_write_command(self, command_name, value) -> viData:
         """ sends a write command and gets the response."""
@@ -70,33 +80,25 @@ class viControl:
         vd = viData.create(vc.unit, value)
         return self.execute_command(vc, 'write', payload=vd)
 
-    def execute_function_call(self, cmdname, *function_args) -> viData:
-        """ sends a function call command and gets response."""
-        payload = bytearray((len(function_args), *function_args))
-        return self.execute_command(cmdname, 'call', payload=payload)
-
-    @deprecated(version='1.3', reason="replaced by execute_read_command")
-    def execReadCmd(self, cmdname) -> viData:
-        """ sends a read command and gets the response."""
-        return self.execute_read_command(cmdname)
-
-    @deprecated(version='1.3', reason="replaced by execute_write_command")
-    def execWriteCmd(self, cmdname, value) -> viData:
-        """ sends a write command and gets the response."""
-        return self.execute_write_command(cmdname, value=value)
-
     @deprecated(version='1.3', reason="replaced by execute_write_command")
     def execFunctionCall(self, cmdname, *function_args) -> viData:
         """ sends a function call command and gets response."""
         payload = bytearray((len(function_args), *function_args))
         return self.execute_command(cmdname, 'call', payload=payload)
 
+    def execute_function_call(self, command_name, *function_args) -> viData:
+        """ sends a function call command and gets response."""
+        payload = bytearray((len(function_args), *function_args))
+        vc = viCommand(command_name)
+        return self.execute_command(vc, 'call', payload=payload)
+
     def execute_command(self, vc, access_mode, payload=bytes(0)) -> viData:
 
         # prepare command
         allowed_access_mode = {'read': ['read'], 'write': ['read', 'write'], 'call': ['call']}
         if access_mode not in allowed_access_mode[vc.access_mode]:
-            raise viControlException(f'command {vc.command_name} allows only {allowed_access_mode[vc.access_mode]} access')
+            raise viControlException(
+                f'command {vc.command_name} allows only {allowed_access_mode[vc.access_mode]} access')
 
         # send Telegram
         vt = viTelegram(vc, access_mode, payload=payload)
@@ -123,7 +125,6 @@ class viControl:
     @deprecated(version='1.3', reason="replaced by initialize_communication.")
     def initComm(self):
         self.initialize_communication()
-
 
     def initialize_communication(self):
         logging.debug('Init Communication to viControl....')
@@ -221,19 +222,19 @@ class viSerial():
 
     def read(self, length):
         # read bytes from serial connection
-        totalreadbytes = bytearray(0)
+        total_read_bytes = bytearray(0)
         failed_count = 0
         # FIXME: read length bytes and try ten times if nothing received
         while failed_count < 10:
             # try to get one or more bytes
-            readbyte = self._serial.read()
-            totalreadbytes += readbyte
-            if len(totalreadbytes) >= length:
+            read_byte = self._serial.read()
+            total_read_bytes += read_byte
+            if len(total_read_bytes) >= length:
                 # exit loop if all bytes are received
                 break
-            if len(readbyte) == 0:
+            if len(read_byte) == 0:
                 # if nothing received, wait and retry
                 failed_count += 1
                 logging.debug(f'Serial read: retry ({failed_count})')
-        logging.debug(f'Received {len(totalreadbytes)}/{length} bytes')
-        return bytes(totalreadbytes)
+        logging.debug(f'Received {len(total_read_bytes)}/{length} bytes')
+        return bytes(total_read_bytes)

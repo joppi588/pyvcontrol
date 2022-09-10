@@ -30,10 +30,10 @@ class viControlMock:
     def initialize_communication(self):
         return True
 
-    def execReadCmd(self, cmdName):
+    def execute_read_command(self, cmdName):
         vc = viCommand(cmdName)
         return viData.create('IUNON', random.randint(0, 50))
 
-    def execWriteCmd(self, cmdName, value):
+    def execute_write_command(self, cmdName, value):
         vc = viCommand(cmdName)
         return None

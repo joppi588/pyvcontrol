@@ -13,7 +13,7 @@ class testviTools(unittest.TestCase):
         self.assertEqual(True, True)  # add assertion here
 
     @patch('pyvcontrol.viTools.viControl', return_value=viControlMock())
-    def test_monitor_unknowncommand(self, mock1):
+    def test_monitor_unknown_command(self, mock1):
         vimonitor(['Warmwassertemperatur', 'Vorlauftemperatur'])
         self.assertEqual(True, True)  # add assertion here
 

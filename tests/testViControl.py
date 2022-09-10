@@ -32,7 +32,7 @@ class MockViSerial:
         self._serial_port = ''
         self._serial = []
         self.sink = bytearray(0)
-        self.source = ctrlcode['acknowledge'] + bytes.fromhex('41 07 01 01 01 0d 02 65 00 7e')
+        self.source = bytearray(0)
         self.source_cursor = 0
 
     def connect(self):
@@ -56,21 +56,32 @@ class TestViControl(unittest.TestCase):
 
     @patch('pyvcontrol.viControl.viSerial', return_value=MockViSerial())
     def test_exec_forbidden_write_command(self, mock1):
+        mock1.return_value.source = ctrlcode['acknowledge'] + bytes.fromhex('41 07 01 01 01 0d 02 65 00 7e')
         vc = viControl()
         with self.assertRaises(viControlException):
-            vc.execWriteCmd('Warmwassertemperatur', 5)
+            vc.execute_write_command('Warmwassertemperatur', 5)
 
     @patch('pyvcontrol.viControl.viSerial', return_value=MockViSerial())
     def test_exec_write_command(self, mock1):
         mock1.return_value.source = ctrlcode['acknowledge'] + bytes.fromhex('41 07 01 01 01 0d 02 19 00 7e')
         vc = viControl()
-        vc.execWriteCmd('SolltempWarmwasser', 35)
-
+        vc.execute_write_command('SolltempWarmwasser', 35)
 
     @patch('pyvcontrol.viControl.viSerial', return_value=MockViSerial())
     def test_exec_read_command(self, mock1):
+        mock1.return_value.source = ctrlcode['acknowledge'] + bytes.fromhex('41 07 01 01 01 0d 02 65 00 7e')
         vc = viControl()
-        data = vc.execReadCmd('Warmwassertemperatur')
+        data = vc.execute_read_command('Warmwassertemperatur')
         self.assertEqual(data.value, 10.1)
 
+    @patch('pyvcontrol.viControl.viSerial', return_value=MockViSerial())
+    def test_exec_function_call(self, mock1):
+        vc = viControl()
+        self.assertFalse(True)
 
+    @patch('pyvcontrol.viControl.viSerial', return_value=MockViSerial())
+    def test_exec_forbidden_function_call(self, mock1):
+        mock1.return_value.source = ctrlcode['acknowledge'] + bytes.fromhex('41 07 01 01 01 0d 02 65 00 7e')
+        vc = viControl()
+        with self.assertRaises(viControlException):
+            vc.execute_function_call('Warmwassertemperatur', 5)
