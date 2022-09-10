@@ -87,7 +87,7 @@ VITOCAL_WO1C = {
     # --------- Menüebene -------
 
     # Betriebsmodus
-    'Betriebsmodus': {ADDRESS: 'B000', LENGTH: 1, UNIT: 'IUNON', ACCESS_MODE: 'write'},
+    'Betriebsmodus': {ADDRESS: 'B000', LENGTH: 2, UNIT: 'IUNON', ACCESS_MODE: 'write'},
 
     # getManuell / setManuell -- 0 = normal, 1 = manueller Heizbetrieb, 2 = 1x Warmwasser auf Temp2
     'WWeinmal': {ADDRESS: 'B020', LENGTH: 1, UNIT: 'OO', ACCESS_MODE: 'write'},
