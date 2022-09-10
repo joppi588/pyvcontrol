@@ -28,8 +28,7 @@ ADDRESS = 'address'
 OPERATION_MODE = {
     'OFF': 0,
     'WW': 1,
-    'HEATING_WW': 2,
-    'COOLING': 7
+    'HEATING_WW': 2
 }
 
 VITOCAL_WO1C = {
@@ -42,9 +41,6 @@ VITOCAL_WO1C = {
 
     # Aussentemperatur (-40..70)
     'Aussentemperatur': {ADDRESS: '0101', LENGTH: 2, UNIT: 'IS10'},
-
-    # Betriebsmodus
-    'Betriebsmodus': {ADDRESS: '0E2E', LENGTH: 3, UNIT: 'IUNON'},
 
     # Heizkreis HK1: Vorlauftemperatur Sekundaer 1 (0..95)
     'VorlauftempSek': {ADDRESS: '0105', LENGTH: 2, UNIT: 'IS10'},
@@ -89,6 +85,9 @@ VITOCAL_WO1C = {
     'Anlagentyp': {ADDRESS: '00F8', LENGTH: 4, UNIT: 'DT'},
 
     # --------- Menüebene -------
+
+    # Betriebsmodus
+    'Betriebsmodus': {ADDRESS: 'B000', LENGTH: 1, UNIT: 'IUNON', ACCESS_MODE: 'write'},
 
     # getManuell / setManuell -- 0 = normal, 1 = manueller Heizbetrieb, 2 = 1x Warmwasser auf Temp2
     'WWeinmal': {ADDRESS: 'B020', LENGTH: 1, UNIT: 'OO', ACCESS_MODE: 'write'},

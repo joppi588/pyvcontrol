@@ -126,19 +126,13 @@ class viDataBA(viData):
     unit = {'code': 'BA', 'description': 'Betriebsart', 'unit': ''}
     # operating mode codes are hex numbers
     operatingmodes = {
-        0x00: 'Abschaltbetrieb',
-        0x01: 'Warmwasser',
-        0x02: 'Heizen und Warmwasser',
-        0x03: 'undefiniert',
-        0x04: 'dauernd reduziert',
-        0x05: 'dauernd normal',
-        0x06: 'normal Abschalt',
-        0x07: 'nur kühlen'
-    }
+        0x00: 'OFF',
+        0x01: 'WW',
+        0x02: 'HEATING_WW',
+     }
 
-    def __init__(self, value=b'\x03'):
-        # sets operating mode (hex) based on string opmode
-        # if opmode is skipped defaults to 'undefiniert'
+    def __init__(self, value=0):
+        # sets operating mode (hex) based on value
         super().__init__(value)
 
     def _create_from_value(self, opmode):
