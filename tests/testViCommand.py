@@ -19,6 +19,7 @@
 
 import unittest
 from pyvcontrol.viCommand import viCommand,viCommandException
+from pyvcontrol.viData import viData
 
 
 class testViCommand(unittest.TestCase):
@@ -55,6 +56,10 @@ class testViCommand(unittest.TestCase):
         vc = viCommand('Warmwassertemperatur')
         self.assertEqual(vc.hex(), '010d02')
 
+    def test_vicmdBetriebsmodus(self):
+        #Given: When: Then: Correct viData is returned
+        vc = viCommand('Betriebsmodus')
+        self.assertEqual(vc.unit,'BA')
 
 if __name__ == '__main__':
     unittest.main()
