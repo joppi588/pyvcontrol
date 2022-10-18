@@ -27,17 +27,17 @@ class viDataTestCaseBA(unittest.TestCase):
     def test_BA04Empty(self):
         # create empty class and check mode
         dBA = vd.create('BA')
-        self.assertEqual(dBA.value, 'undefiniert')  # defaults to mode 'undefiniert'
+        self.assertEqual(dBA.value, 'OFF')  # defaults to mode 'OFF'
 
     def test_BA04raw(self):
         # create class with defined operation mode from raw byte
-        dBA = vd.create('BA', b'\x04')
-        self.assertEqual(dBA.value, 'dauernd reduziert')
+        dBA = vd.create('BA', b'\x02')
+        self.assertEqual(dBA.value, 'HEATING_WW')
 
     def test_BA04(self):
         # create class with constructor and parameter
-        dBA = vd.create('BA', 'dauernd reduziert')
-        self.assertEqual(dBA, b'\x04')
+        dBA = vd.create('BA', 'WW')
+        self.assertEqual(dBA, b'\x01')
 
     def test_BA666Empty(self):
         # test call with non-existent mode

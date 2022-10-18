@@ -131,7 +131,7 @@ class viDataBA(viData):
         0x02: 'HEATING_WW',
      }
 
-    def __init__(self, value=0):
+    def __init__(self, value=b'\x00'):
         # sets operating mode (hex) based on value
         super().__init__(value)
 
