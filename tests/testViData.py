@@ -24,22 +24,22 @@ from pyvcontrol.viData import viData as vd, viDataException
 
 
 class viDataTestCaseBA(unittest.TestCase):
-    def test_BA04Empty(self):
+    def test_BAEmpty(self):
         # create empty class and check mode
         dBA = vd.create('BA')
         self.assertEqual(dBA.value, 'OFF')  # defaults to mode 'OFF'
 
-    def test_BA04raw(self):
+    def test_BA02raw(self):
         # create class with defined operation mode from raw byte
         dBA = vd.create('BA', b'\x02')
         self.assertEqual(dBA.value, 'HEATING_WW')
 
-    def test_BA04(self):
+    def test_BA01(self):
         # create class with constructor and parameter
         dBA = vd.create('BA', 'WW')
         self.assertEqual(dBA, b'\x01')
 
-    def test_BA666Empty(self):
+    def test_BA6666Empty(self):
         # test call with non-existent mode
         with self.assertRaises(viDataException):
             vd.create('BA', b'\x66\x66')

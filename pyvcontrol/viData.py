@@ -138,13 +138,13 @@ class viDataBA(viData):
     def _create_from_value(self, opmode):
         if opmode in self.operatingmodes.values():
             opcode = next(key for key, value in self.operatingmodes.items() if value == opmode)
-            super().extend(opcode.to_bytes(1, 'big'))
+            super().extend(opcode.to_bytes(1, 'little'))
         else:
             raise viDataException(f'Unknown operating mode {opmode}. Options are {self.operatingmodes.values()}')
 
     def _create_from_raw(self, value):
         # set raw value directly
-        if int.from_bytes(value, 'big') in self.operatingmodes.keys():
+        if int.from_bytes(value, 'little') in self.operatingmodes.keys():
             super().extend(value)
         else:
             raise viDataException(f'Unknown operating mode {value.hex()}')
@@ -152,7 +152,7 @@ class viDataBA(viData):
     @property
     def value(self):
         # returns decoded value
-        return self.operatingmodes[int.from_bytes(self, 'big')]
+        return self.operatingmodes[int.from_bytes(self, 'little')]
 
 
 class viDataES(viData):
