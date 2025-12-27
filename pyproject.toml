@@ -1,7 +1,7 @@
 [project]
 name = "pyvcontrol"
 version = "0.1.0"
-description = "Add your description here"
+description = "Communication with Viessmann heating via Optolink interface."
 readme = "README.md"
 authors = [
     { name = "Jochen Schmähling", email = "js1157@gmail.com" }
