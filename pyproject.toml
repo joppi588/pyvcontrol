@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Communication with Viessmann heating via Optolink interface."
 readme = "README.md"
 authors = [
-    { name = "Jochen Schmähling", email = "js1157@gmail.com" }
+    { name = "Jochen Schmähling", email = "j_ochen_573@freenet.de" }
 ]
 requires-python = ">=3.12"
 dependencies = [

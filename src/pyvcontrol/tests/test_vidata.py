@@ -25,59 +25,59 @@ from pyvcontrol.viData import viData as vd
 from pyvcontrol.viData import viDataException
 
 
-class viDataTestCaseBA:
-    def test_BAEmpty():
+class Test_viDataBA:
+    def test_BAEmpty(self):
         # create empty class and check mode
         dBA = vd.create("BA")
         assert dBA.value == "OFF"  # defaults to mode 'OFF'
 
-    def test_BA02raw():
+    def test_BA02raw(self):
         # create class with defined operation mode from raw byte
         dBA = vd.create("BA", b"\x02")
         assert dBA.value == "HEATING_WW"
 
-    def test_BA01():
+    def test_BA01(self):
         # create class with constructor and parameter
         dBA = vd.create("BA", "WW")
         assert dBA == b"\x01"
 
-    def test_BA6666Empty():
+    def test_BA6666Empty(self):
         # test call with non-existent mode
         with pytest.raises(viDataException):
             vd.create("BA", b"\x66\x66")
 
-    def test_BAfoobar():
+    def test_BAfoobar(self):
         # test call with non-existent mode
         with pytest.raises(viDataException):
             vd.create("BA", "foobar")
 
 
-class viDataTestCaseDT:
-    def test_DTempty():
+class Test_viDataDT:
+    def test_DTempty(self):
         # initialize empty device type (standard)
         dDT = vd.create("DT")
         assert dDT.value == "unknown"
 
-    def test_DTraw():
+    def test_DTraw(self):
         # initialize from raw data
         dDT = vd.create("DT", b"\x20\x4d")
         assert dDT.value, "V200WO1C== Protokoll: P300"
 
-    def test_DTstr():
+    def test_DTstr(self):
         dDT = vd.create("DT", "unknown")
         assert dDT == b"\x00\x00"
 
 
-class viDataTestCaseIS10:
-    def test_IS10():
+class Test_viDataIS10:
+    def test_IS10(self):
         dIS10 = vd.create("IS10", 10.15)
         assert dIS10.value == 10.1
 
-    def test_IS10raw():
+    def test_IS10raw(self):
         dIS10 = vd.create("IS10", b"e\x00")
         assert dIS10.value == 10.1
 
-    def test_IS10minus():
+    def test_IS10minus(self):
         f = -9.856
         dIS10 = vd.create("IS10", f)
         print(f"Hex representation of {f} is {dIS10.hex()}")
@@ -86,40 +86,40 @@ class viDataTestCaseIS10:
     # TODO add test playing with different len arguments and limit values
 
 
-class viDataTestCaseIUNON:
-    def test_IUNON():
+class Test_viDataIUNON:
+    def test_IUNON(self):
         f = 415
         dIUNON = vd.create("IUNON", f)
         print(f"Hex representation of {f} is {dIUNON.hex()}")
         assert dIUNON.value == f
 
-    def test_IUNONraw():
+    def test_IUNONraw(self):
         dIUNON = vd.create("IUNON", b"\x9f\x01")
         assert dIUNON.value == 415
 
 
-class viDataTestCaseOO:
-    def test_OO():
+class Test_viDataOO:
+    def test_OO(self):
         f = "On"
         dOO = vd.create("OO", f)
         print(f"Hex representation of {f} is {dOO.hex()}")
         assert dOO.value == f
 
-    def test_OOraw():
+    def test_OOraw(self):
         dOO = vd.create("OO", b"\x02")
         assert dOO.value == "On"
 
-    def test_OO_unknown_value():
+    def test_OO_unknown_value(self):
         with pytest.raises(viDataException):
             dOO = vd.create("OO", "foo")  # noqa: F841
 
-    def test_OO_default_value():
+    def test_OO_default_value(self):
         dOO = vd.create("OO")
         assert dOO.value == "Off"
 
 
-class viDataTestCaseEnergy:
-    def test_default():
+class Test_viDataEnergy:
+    def test_default(self):
         data_energy = vd.create("F_E")
         assert data_energy.day == 0
         assert data_energy.week == 0
@@ -131,7 +131,7 @@ class viDataTestCaseEnergy:
         assert data_energy.heating_electrical_energy == 0
         assert data_energy.cooling_electrical_energy == 0
 
-    def test_typical_values():
+    def test_typical_values(self):
         example_data = bytes.fromhex("02 02 16 09 92 03 aa 00 99 00 2d 00 00 00 00 00")
 
         data_energy = vd.create("F_E", example_data)
@@ -152,7 +152,7 @@ class viDataTestCaseEnergy:
 
         assert value_dictionary == reference_dictionary
 
-    def test_failed_init():
+    def test_failed_init(self):
         example_data = 1.2
         with pytest.raises(viDataException):
             vd.create("F_E", example_data)
