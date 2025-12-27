@@ -1,5 +1,5 @@
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
-# Copyright 2021 Jochen Schmähling
+# Copyright 2021-2025 Jochen Schmähling
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 #  Tools for communication with viControl heatings using the serial Optolink interface
 #
@@ -17,17 +17,18 @@
 #  along with this program. If not, see <http://www.gnu.org/licenses/>.
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
-from pyvcontrol.viControl import viControl, viTelegram, ctrlcode, viControlException
-import logging
 import curses
+import logging
 import time
+
+from pyvcontrol.viControl import ctrlcode, viControl, viControlException, viTelegram
 
 
 def viscancommands(addressrange):
     # brute force command scanner
     # hilft v.a. um die richtige Payload-Länge für bekannte Kommandos herauszufinden
 
-    logging.basicConfig(filename='scancommands.log', filemode='w', level=logging.DEBUG)
+    logging.basicConfig(filename="scancommands.log", filemode="w", level=logging.DEBUG)
 
     vo = viControl()
     vo.initialize_communication()
@@ -35,34 +36,33 @@ def viscancommands(addressrange):
     for addr in addressrange:
         for kk in range(1, 5):
             # TODO: Inneren Teil ausschneiden und in separate Funktion? ("low level read command")
-            logging.debug(f'---{hex(addr)}-{kk}------------------')
-            vc = addr.to_bytes(2, 'big') + kk.to_bytes(1, 'big')
-            vt = viTelegram(vc, 'read')  # create read Telegram
+            logging.debug(f"---{hex(addr)}-{kk}------------------")
+            vc = addr.to_bytes(2, "big") + kk.to_bytes(1, "big")
+            vt = viTelegram(vc, "read")  # create read Telegram
             vo.vs.send(vt)  # send Telegram
-            logging.debug(f'Send telegram {vt.hex()}')
+            logging.debug(f"Send telegram {vt.hex()}")
 
             try:
                 # Check if sending was successfull
                 ack = vo.vs.read(1)
-                if ack != ctrlcode['acknowledge']:
-                    logging.debug(f'Viessmann returned {ack.hex()}')
+                if ack != ctrlcode["acknowledge"]:
+                    logging.debug(f"Viessmann returned {ack.hex()}")
                     vo.initialize_communication()
-                    raise viControlException(f'Expected acknowledge byte, received {ack}')
+                    raise viControlException(f"Expected acknowledge byte, received {ack}")
 
                 # Receive response and evaluate data
                 vr1 = vo.vs.read(2)  # receive response
                 vr2 = vo.vs.read(vr1[1] + 1)  # read rest of telegram
                 # FIXME: create Telegram instead of low-level access (for better readability)
-                logging.debug(f'received telegram {vr1.hex()} {vr2.hex()}')
+                logging.debug(f"received telegram {vr1.hex()} {vr2.hex()}")
 
-                if vr2[0].to_bytes(1, 'little') == viTelegram.tTypes['response']:
-                    v = int.from_bytes(vr2[-1 - kk:-1], 'little')
-                    print(f'Found working command 0x{hex(addr)}, payload length {kk}, value {v}')
-
+                if vr2[0].to_bytes(1, "little") == viTelegram.tTypes["response"]:
+                    v = int.from_bytes(vr2[-1 - kk : -1], "little")
+                    print(f"Found working command 0x{hex(addr)}, payload length {kk}, value {v}")
 
             except Exception as e:
                 logging.error({e})
-                print(f'An exception occurred: {e}')
+                print(f"An exception occurred: {e}")
 
 
 def vimonitor(command_list, updateinterval=30):
@@ -75,7 +75,7 @@ def vimonitor(command_list, updateinterval=30):
         # wrap single commands into a list
         command_list = [command_list]
 
-    logging.basicConfig(filename='Monitor.log', filemode='w', level=logging.DEBUG)
+    logging.basicConfig(filename="Monitor.log", filemode="w", level=logging.DEBUG)
     vo = viControl()
 
     standard_screen = curses.initscr()
@@ -86,7 +86,7 @@ def vimonitor(command_list, updateinterval=30):
     loop_monitor = True
     while loop_monitor:
         standard_screen.clear()
-        standard_screen.addstr(0, 0, 'Reading values...')
+        standard_screen.addstr(0, 0, "Reading values...")
         standard_screen.refresh()
         standard_screen.addstr(1, 0, "--- Viessmann monitor ---\n")
         try:
@@ -96,9 +96,9 @@ def vimonitor(command_list, updateinterval=30):
                 standard_screen.addstr(f"{c}: ", curses.A_BOLD)
                 standard_screen.addstr(f"{v}\n")
         except Exception as e:
-            standard_screen.addstr(f'Error: {e}')
+            standard_screen.addstr(f"Error: {e}")
 
-        standard_screen.addstr('\n-----------------------\nPress any key to abort')
+        standard_screen.addstr("\n-----------------------\nPress any key to abort")
         for k in range(updateinterval):
             time.sleep(1)
             standard_screen.addstr(0, 0, f"[Update in {updateinterval - k}s]       ")
@@ -125,4 +125,4 @@ def vi_scan_function_call(commandname, functionrange):
                 print(vo.execFunctionCall(commandname, func, day).valueScan)
             except Exception as e:
                 logging.error({e})
-                print(f'Day {day}: An exception occurred: {e}')
+                print(f"Day {day}: An exception occurred: {e}")

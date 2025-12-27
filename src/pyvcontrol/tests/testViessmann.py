@@ -1,5 +1,5 @@
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
-# Copyright 2021 Jochen Schmähling
+# Copyright 2021-2025 Jochen Schmähling
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 #  Python Module for communication with viControl heatings using the serial Optolink interface
 #
@@ -19,10 +19,11 @@
 
 # Tests the connection to Viessmann. Needs a physical connection
 
-import unittest
 import logging
-from pyvcontrol.viControl import viControl
+import unittest
+
 from pyvcontrol.viCommand import viCommand
+from pyvcontrol.viControl import viControl
 
 
 class MyTestCase(unittest.TestCase):
@@ -32,7 +33,7 @@ class MyTestCase(unittest.TestCase):
 
         for cmd in viCommand.command_set.keys():
             vd = vo.execReadCmd(cmd)
-            print(f'{cmd} : {vd.value}')
+            print(f"{cmd} : {vd.value}")
 
     def test_readonly(self):
         pass
@@ -41,20 +42,20 @@ class MyTestCase(unittest.TestCase):
         # Ändert einen Datensatz und stellt ursprüngl. Wert wieder her
         vo = viControl()
         vo.initialize_communication()
-        cmd = 'RaumsolltempParty'
+        cmd = "RaumsolltempParty"
         v_orig = vo.execReadCmd(cmd).value
 
         vdw = vo.execWriteCmd(cmd, v_orig + 1)
         vdr = vo.execReadCmd(cmd)
-        print(f'Read {cmd} : {vdr.value}')
+        print(f"Read {cmd} : {vdr.value}")
         self.assertEqual(v_orig + 1, vdr.value)
 
         vdw = vo.execWriteCmd(cmd, v_orig)
         vdr = vo.execReadCmd(cmd)
-        print(f'Read {cmd} : {vdr.value}')
+        print(f"Read {cmd} : {vdr.value}")
         self.assertEqual(v_orig, vdr.value)
 
 
-if __name__ == '__main__':
-    logging.basicConfig(filename='testViessmann.log', filemode='w', level=logging.DEBUG)
+if __name__ == "__main__":
+    logging.basicConfig(filename="testViessmann.log", filemode="w", level=logging.DEBUG)
     unittest.main()

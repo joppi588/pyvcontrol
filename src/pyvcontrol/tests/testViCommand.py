@@ -17,49 +17,49 @@
 #  along with this program. If not, see <http://www.gnu.org/licenses/>.
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
-import unittest
-from pyvcontrol.viCommand import viCommand,viCommandException
-from pyvcontrol.viData import viData
+
+from pyvcontrol.viCommand import viCommand, viCommandException
 
 
-class testViCommand(unittest.TestCase):
+def test_vicmdnomatch(self):
+    # Command not existing
+    with self.assertRaises(viCommandException):
+        vc = viCommand._from_bytes(b"\xf1\x00")
+    with self.assertRaises(viCommandException):
+        vc = viCommand("foo")
 
-    def test_vicmdnomatch(self):
-        # Command not existing
-        with self.assertRaises(viCommandException):
-            vc = viCommand._from_bytes(b'\xF1\x00')
-        with self.assertRaises(viCommandException):
-            vc = viCommand('foo')
 
-    def test_vicmdfrombytes(self):
-        # create command from raw bytes
-        vc = viCommand._from_bytes(b'\x00\xf8')
-        self.assertEqual(vc.command_name, 'Anlagentyp')
+def test_vicmdfrombytes(self):
+    # create command from raw bytes
+    vc = viCommand._from_bytes(b"\x00\xf8")
+    self.assertEqual(vc.command_name, "Anlagentyp")
 
-    def test_vicmdAnlagentyp(self):
-        # create command from string
-        vc = viCommand('Anlagentyp')
-        self.assertEqual(vc.hex(), '00f804')
 
-    def test_vicmdWWeinmal(self):
-        # create command from string
-        vc = viCommand('WWeinmal')
-        self.assertEqual(vc.hex(), 'b02001')
+def test_vicmdAnlagentyp(self):
+    # create command from string
+    vc = viCommand("Anlagentyp")
+    self.assertEqual(vc.hex(), "00f804")
 
-    def test_vicmdAussentemperatur(self):
-        # create command from string
-        vc = viCommand('Aussentemperatur')
-        self.assertEqual(vc.hex(), '010102')
 
-    def test_vicmdWarmwassertemperatur(self):
-        # create command from string
-        vc = viCommand('Warmwassertemperatur')
-        self.assertEqual(vc.hex(), '010d02')
+def test_vicmdWWeinmal(self):
+    # create command from string
+    vc = viCommand("WWeinmal")
+    self.assertEqual(vc.hex(), "b02001")
 
-    def test_vicmdBetriebsmodus(self):
-        #Given: When: Then: Correct viData is returned
-        vc = viCommand('Betriebsmodus')
-        self.assertEqual(vc.unit,'BA')
 
-if __name__ == '__main__':
-    unittest.main()
+def test_vicmdAussentemperatur(self):
+    # create command from string
+    vc = viCommand("Aussentemperatur")
+    self.assertEqual(vc.hex(), "010102")
+
+
+def test_vicmdWarmwassertemperatur(self):
+    # create command from string
+    vc = viCommand("Warmwassertemperatur")
+    self.assertEqual(vc.hex(), "010d02")
+
+
+def test_vicmdBetriebsmodus(self):
+    # Given: When: Then: Correct viData is returned
+    vc = viCommand("Betriebsmodus")
+    self.assertEqual(vc.unit, "BA")
