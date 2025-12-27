@@ -17,45 +17,35 @@
 #  along with this program. If not, see <http://www.gnu.org/licenses/>.
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
-# Tests the connection to Viessmann. Needs a physical connection
-
-import logging
-import unittest
+"""Tests the connection to Viessmann. Needs a physical connection."""
 
 from pyvcontrol.viCommand import viCommand
 from pyvcontrol.viControl import viControl
 
 
-class MyTestCase(unittest.TestCase):
-    def test_readsequence(self):
-        vo = viControl()
-        vo.initialize_communication()
+def test_readsequence():
+    # Read all defined commands
+    vc = viControl()
+    vc.initialize_communication()
 
-        for cmd in viCommand.command_set.keys():
-            vd = vo.execReadCmd(cmd)
-            print(f"{cmd} : {vd.value}")
-
-    def test_readonly(self):
-        pass
-
-    def test_writesequence(self):
-        # Ändert einen Datensatz und stellt ursprüngl. Wert wieder her
-        vo = viControl()
-        vo.initialize_communication()
-        cmd = "RaumsolltempParty"
-        v_orig = vo.execReadCmd(cmd).value
-
-        vdw = vo.execWriteCmd(cmd, v_orig + 1)
-        vdr = vo.execReadCmd(cmd)
-        print(f"Read {cmd} : {vdr.value}")
-        self.assertEqual(v_orig + 1, vdr.value)
-
-        vdw = vo.execWriteCmd(cmd, v_orig)
-        vdr = vo.execReadCmd(cmd)
-        print(f"Read {cmd} : {vdr.value}")
-        self.assertEqual(v_orig, vdr.value)
+    for cmd in viCommand.command_set.keys():
+        vd = vc.execReadCmd(cmd)
+        print(f"{cmd} : {vd.value}")
 
 
-if __name__ == "__main__":
-    logging.basicConfig(filename="testViessmann.log", filemode="w", level=logging.DEBUG)
-    unittest.main()
+def test_writesequence():
+    # Ändert einen Datensatz und stellt ursprüngl. Wert wieder her
+    vc = viControl()
+    vc.initialize_communication()
+    cmd = "RaumsolltempParty"
+    v_orig = vc.execReadCmd(cmd).value
+
+    vc.execWriteCmd(cmd, v_orig + 1)
+    vdr = vc.execReadCmd(cmd)
+    print(f"Read {cmd} : {vdr.value}")
+    assert v_orig + 1 == vdr.value
+
+    vc.execWriteCmd(cmd, v_orig)
+    vdr = vc.execReadCmd(cmd)
+    print(f"Read {cmd} : {vdr.value}")
+    assert v_orig == vdr.value

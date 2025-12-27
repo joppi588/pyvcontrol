@@ -17,12 +17,13 @@ Motivation:
 - Python-Modul um direkt auf die Viessmann-Heizung zugreifen zu können (ohne Umweg über vcontrold)
 
 Einschränkungen/known issues:
- - Die Parameter (z.B. Kommandodefinitionen) sind Teil der Klassen und nicht mehr zentral abgelegt.
-   Nachteil ist die geringere Anwenderfreundlichkeit - Konfigurationen sollten eigentlich vom Code getrennt sein
+ - Die Parameter (z.B. Kommandodefinitionen) sind hard coded.
  - nur V200WO1C/P300 implementiert. 
 
-Beispielcode:
-- testViessmann.py: führt einen Lesezugriff für alle definierten Kommandos durch.
+Beispielcode: test_viessmann.py: 
+ - führt einen Lesezugriff für alle definierten Kommandos aus.
+ - führt einen Schreibzugriff aus
+
 
 [vcontrold]: https://github.com/openv (vcontrold)
 [SHNGpyPlugin]: https://github.com/sisamiwe/myplugins/tree/master/viessmann (SmartHomeNG python Plugin)
