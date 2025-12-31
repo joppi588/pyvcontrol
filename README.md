@@ -20,7 +20,7 @@ Einschränkungen/known issues:
  - Die Parameter (z.B. Kommandodefinitionen) sind hard coded.
  - nur V200WO1C/P300 implementiert. 
 
-Beispielcode: test_viessmann.py: 
+Beispielcode / Getting started: test_viessmann.py: 
  - führt einen Lesezugriff für alle definierten Kommandos aus.
  - führt einen Schreibzugriff aus
 
