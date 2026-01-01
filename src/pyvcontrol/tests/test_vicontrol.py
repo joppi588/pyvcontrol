@@ -23,11 +23,11 @@ from unittest.mock import patch
 
 import pytest
 
-from pyvcontrol.vi_mocks import MockViSerial
+from pyvcontrol.vi_mocks import ViSerialMock
 from pyvcontrol.viControl import ctrlcode, viControl, viControlException
 
 
-@patch("pyvcontrol.viControl.viSerial", return_value=MockViSerial())
+@patch("pyvcontrol.viControl.viSerial", return_value=ViSerialMock())
 def test_exec_forbidden_write_command(mock_vi_serial):
     mock_vi_serial.return_value.source = ctrlcode["acknowledge"] + bytes.fromhex("41 07 01 01 01 0d 02 65 00 7e")
     vc = viControl()
@@ -35,14 +35,14 @@ def test_exec_forbidden_write_command(mock_vi_serial):
         vc.execute_write_command("Warmwassertemperatur", 5)
 
 
-@patch("pyvcontrol.viControl.viSerial", return_value=MockViSerial())
+@patch("pyvcontrol.viControl.viSerial", return_value=ViSerialMock())
 def test_exec_write_command(mock_vi_serial):
     mock_vi_serial.return_value.source = ctrlcode["acknowledge"] + bytes.fromhex("41 07 01 01 01 0d 02 19 00 7e")
     vc = viControl()
     vc.execute_write_command("SolltempWarmwasser", 35)
 
 
-@patch("pyvcontrol.viControl.viSerial", return_value=MockViSerial())
+@patch("pyvcontrol.viControl.viSerial", return_value=ViSerialMock())
 def test_exec_read_command(mock_vi_serial):
     mock_vi_serial.return_value.source = ctrlcode["acknowledge"] + bytes.fromhex("41 07 01 01 01 0d 02 65 00 7e")
     vc = viControl()
@@ -51,12 +51,12 @@ def test_exec_read_command(mock_vi_serial):
 
 
 @pytest.mark.skip("Function calls not implemented.")
-@patch("pyvcontrol.viControl.viSerial", return_value=MockViSerial())
+@patch("pyvcontrol.viControl.viSerial", return_value=ViSerialMock())
 def test_exec_function_call(mock_vi_serial):
     vc = viControl()  # noqa: F841
 
 
-@patch("pyvcontrol.viControl.viSerial", return_value=MockViSerial())
+@patch("pyvcontrol.viControl.viSerial", return_value=ViSerialMock())
 def test_exec_forbidden_function_call(mock_vi_serial):
     mock_vi_serial.return_value.source = ctrlcode["acknowledge"] + bytes.fromhex("41 07 01 01 01 0d 02 65 00 7e")
     vc = viControl()

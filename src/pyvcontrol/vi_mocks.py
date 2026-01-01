@@ -69,7 +69,7 @@ class ViControlMock(NonCallableMock):
 
     def _execute_write_command(self, cmdName, value):
         if cmdName == "Betriebsmodus":
-            self.Betriebsmodus = viDataBA(value)
+            value = viDataBA(value)
         vc = viCommand(cmdName)
         self.vi_data[cmdName] = viData.create(vc.unit, value)
         return None
