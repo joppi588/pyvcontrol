@@ -1,5 +1,5 @@
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
-# Copyright 2022-2025 Jochen Schmähling
+# Copyright 2022 Jochen Schmähling
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 #  Python Module for communication with viControl heatings using the serial Optolink interface
 #
@@ -19,12 +19,39 @@
 
 """Test cases for class viControl."""
 
-from unittest.mock import patch
+from unittest.mock import NonCallableMock, patch
 
 import pytest
 
-from pyvcontrol.vi_mocks import MockViSerial
-from pyvcontrol.viControl import ctrlcode, viControl, viControlException
+from pyvcontrol.viControl import control_set, ctrlcode, viControl, viControlException
+
+
+class MockViSerial(NonCallableMock):
+    def __init__(self):
+        super().__init__(spec=viControl)
+        self._connected = False
+        self._control_set = control_set
+        self._serial_port = ""
+        self._serial = []
+        self.sink = bytearray(0)
+        self.source = bytearray(0)
+        self.source_cursor = 0
+
+    def connect(self):
+        self._connected = True
+        self.sink = bytearray(0)
+
+    def disconnect(self):
+        self._connected = False
+
+    def send(self, payload):
+        self.sink = self.sink + bytearray(payload)
+        print(f"received {payload}, in total received {self.sink}")
+
+    def read(self, length):
+        answer = self.source[self.source_cursor : self.source_cursor + length]
+        self.source_cursor += length
+        return answer
 
 
 @patch("pyvcontrol.viControl.viSerial", return_value=MockViSerial())
