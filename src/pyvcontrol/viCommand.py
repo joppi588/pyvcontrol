@@ -20,6 +20,8 @@
 
 import logging
 
+logger = logging.getLogger(name="pyvcontrol")
+
 ACCESS_MODE = "access_mode"
 UNIT = "unit"
 LENGTH = "length"
@@ -85,7 +87,7 @@ VITOCAL_WO1C = {
 
 
 class viCommandException(Exception):
-    pass
+    """Indicates an error during command execution."""
 
 
 class viCommand(bytearray):
@@ -98,12 +100,11 @@ class viCommand(bytearray):
     # =============================================================
 
     def __init__(self, command_name):
-        """initialize object using the attributes of the chosen command."""
-
+        """Initialize object using the attributes of the chosen command."""
         try:
             command = self.command_set[command_name]
-        except:
-            raise viCommandException(f"Unknown command {command_name}")
+        except Exception as error:
+            raise viCommandException(f"Unknown command {command_name}") from error
         self._command_code = command[ADDRESS]
         self._value_bytes = command[LENGTH]
         self.unit = command[UNIT]
@@ -115,19 +116,18 @@ class viCommand(bytearray):
         super().__init__(b)
 
     def _get_access_mode(self, command):
-        if ACCESS_MODE in command.keys():
+        if ACCESS_MODE in command:
             return command[ACCESS_MODE]
-        else:
-            return "read"
+        return "read"
 
     @classmethod
     def _from_bytes(cls, b: bytearray):
         """Create command from address b given as byte, only the first two bytes of b are evaluated."""
         try:
-            logging.debug(f"Convert {b.hex()} to command")
+            logger.debug("Convert %s to command.", b.hex())
             command_name = next(key for key, value in cls.command_set.items() if value[ADDRESS].lower() == b[0:2].hex())
-        except:
-            raise viCommandException(f"No Command matching {b[0:2].hex()}")
+        except Exception as error:
+            raise viCommandException(f"No Command matching {b[0:2].hex()}") from error
         return viCommand(command_name)
 
     def response_length(self, access_mode="read"):
@@ -138,8 +138,7 @@ class viCommand(bytearray):
         # x 'Wert'
         if access_mode.lower() == "read":
             return 3 + self._value_bytes
-        elif access_mode.lower() == "write":
+        if access_mode.lower() == "write":
             # in write mode the written values are not returned
             return 3
-        else:
-            return 3 + self._value_bytes
+        return 3 + self._value_bytes
