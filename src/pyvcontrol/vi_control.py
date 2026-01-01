@@ -56,7 +56,7 @@ class viControl:
     # class to connect to viControl heating directly via Optolink
     # only supports WO1C with protocol P300
     def __init__(self, port="/dev/ttyUSB0"):
-        self.vs = viSerial(control_set, port)
+        self.vs = ViSerial(control_set, port)
         self.vs.connect()
         self.is_initialized = False
 
@@ -148,7 +148,7 @@ class viControl:
         return True
 
 
-class viSerial:
+class ViSerial:
     # low-level communication interface
     # TODO: control sets nicht übernommen
     _viessmann_lock = Lock()
