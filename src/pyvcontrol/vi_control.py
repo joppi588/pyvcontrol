@@ -1,7 +1,7 @@
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 # Copyright 2021-2025 Jochen Schmähling
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
-#  Python Module for communication with viControl heatings using the serial Optolink interface
+#  Python Module for communication with ViControl heatings using the serial Optolink interface
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -23,9 +23,9 @@ from threading import Lock
 
 import serial
 
-from pyvcontrol.viCommand import viCommand
-from pyvcontrol.viData import viData
-from pyvcontrol.viTelegram import viTelegram
+from pyvcontrol.vi_command import ViCommand
+from pyvcontrol.vi_data import ViData
+from pyvcontrol.vi_telegram import ViTelegram
 
 logger = logging.getLogger(name="pyvcontrol")
 
@@ -45,52 +45,53 @@ ctrlcode = {
 }
 
 
-class viControlException(Exception):
+class ViControlError(Exception):
     """Indicates an error during ViControl."""
 
     def __init__(self, msg):
         super().__init__(msg)
 
 
-class viControl:
-    # class to connect to viControl heating directly via Optolink
-    # only supports WO1C with protocol P300
+class ViControl:
+    """Class to connect to ViControl heating directly via Optolink.
+
+    Only supports WO1C with protocol P300.
+    """
+
     def __init__(self, port="/dev/ttyUSB0"):
-        self.vs = viSerial(control_set, port)
+        self.vs = ViSerial(control_set, port)
         self.vs.connect()
         self.is_initialized = False
 
     def __del__(self):
-        # destructor, releases serial port
+        """destructor, releases serial port."""
         self.vs.disconnect()
 
-    def execute_read_command(self, command_name) -> viData:
+    def execute_read_command(self, command_name) -> ViData:
         """Sends a read command and gets the response."""
-        vc = viCommand(command_name)
+        vc = ViCommand(command_name)
         return self.execute_command(vc, "read")
 
-    def execute_write_command(self, command_name, value) -> viData:
+    def execute_write_command(self, command_name, value) -> ViData:
         """Sends a write command and gets the response."""
-        vc = viCommand(command_name)
-        vd = viData.create(vc.unit, value)
+        vc = ViCommand(command_name)
+        vd = ViData.create(vc.unit, value)
         return self.execute_command(vc, "write", payload=vd)
 
-    def execute_function_call(self, command_name, *function_args) -> viData:
+    def execute_function_call(self, command_name, *function_args) -> ViData:
         """Sends a function call command and gets response."""
         payload = bytearray((len(function_args), *function_args))
-        vc = viCommand(command_name)
+        vc = ViCommand(command_name)
         return self.execute_command(vc, "call", payload=payload)
 
-    def execute_command(self, vc, access_mode, payload=bytes(0)) -> viData:
+    def execute_command(self, vc, access_mode, payload=bytes(0)) -> ViData:
         # prepare command
         allowed_access_mode = {"read": ["read"], "write": ["read", "write"], "call": ["call"]}
         if access_mode not in allowed_access_mode[vc.access_mode]:
-            raise viControlException(
-                f"command {vc.command_name} allows only {allowed_access_mode[vc.access_mode]} access"
-            )
+            raise ViControlError(f"command {vc.command_name} allows only {allowed_access_mode[vc.access_mode]} access")
 
         # send Telegram
-        vt = viTelegram(vc, access_mode, payload=payload)
+        vt = ViTelegram(vc, access_mode, payload=payload)
         logger.debug("Send telegram %s", vt.hex())
         self.vs.send(vt)
 
@@ -98,21 +99,21 @@ class viControl:
         ack = self.vs.read(1)
         logger.debug("Received %s", ack.hex())
         if ack != ctrlcode["acknowledge"]:
-            raise viControlException(f"Expected acknowledge byte, received {ack}")
+            raise ViControlError(f"Expected acknowledge byte, received {ack}")
 
         # Receive response and evaluate data
         vr = self.vs.read(vt.response_length)  # receive response
-        vt = viTelegram.from_bytes(vr)
+        vt = ViTelegram.from_bytes(vr)
         logger.debug("Requested %s bytes. Received telegram {vr.hex()}", vt.response_length)
-        if vt.tType == viTelegram.tTypes["error"]:
-            raise viControlException(f"{access_mode} command returned an error")
+        if vt.tType == ViTelegram.tTypes["error"]:
+            raise ViControlError(f"{access_mode} command returned an error")
         self.vs.send(ctrlcode["acknowledge"])  # send acknowledge
 
-        # return viData object from payload
-        return viData.create(vt.vicmd.unit, vt.payload)
+        # return ViData object from payload
+        return ViData.create(vt.vicmd.unit, vt.payload)
 
     def initialize_communication(self):
-        logger.debug("Init Communication to viControl....")
+        logger.debug("Init Communication to ViControl....")
         self.is_initialized = False
 
         # loop cases
@@ -124,12 +125,14 @@ class viControl:
             # loop until interface is initialized
             read_byte = self.vs.read(1)
             if read_byte == ctrlcode["acknowledge"]:
-                # Schnittstelle hat auf den Initialisierungsstring mit OK geantwortet. Die Abfrage von Werten kann beginnen.
+                # Schnittstelle hat auf den Initialisierungsstring mit OK geantwortet.
+                # Die Abfrage von Werten kann beginnen.
                 logger.debug("Step %s: Initialization successful", ii)
                 self.is_initialized = True
                 break
             if read_byte == ctrlcode["not_init"]:
-                # Schnittstelle ist zurückgesetzt und wartet auf Daten; Antwort b'\x05' = Warten auf Initialisierungsstring
+                # Schnittstelle ist zurückgesetzt und wartet auf Daten;
+                # Antwort b'\x05' = Warten auf Initialisierungsstring
                 logger.debug("Step %s: Viessmann ready, not initialized, send sync", ii)
                 self.vs.send(ctrlcode["sync_cmd"])
             elif read_byte == ctrlcode["error"]:
@@ -144,18 +147,20 @@ class viControl:
 
         if not self.is_initialized:
             # initialisation not successful
-            raise viControlException("Could not initialize communication")
+            raise ViControlError("Could not initialize communication")
 
         logger.debug("Communication initialized")
         return True
 
 
-class viSerial:
+class ViSerial:
+    """Serial port."""
+
     # low-level communication interface
     # TODO: control sets nicht übernommen
     _viessmann_lock = Lock()
 
-    # viControl socket: implement raw communication
+    # ViControl socket: implement raw communication
     def __init__(self, control_set, port):
         self._connected = False
         self._control_set = control_set
@@ -163,8 +168,10 @@ class viSerial:
         self._serial = serial.Serial()
 
     def connect(self):
-        # setup serial connection
-        # if not connected, try to acquire lock
+        """Setup serial connection.
+
+        if not connected, try to acquire lock.
+        """
         if self._connected:
             # do nothing
             logger.debug("Connect: Already connected")
@@ -190,22 +197,22 @@ class viSerial:
             logger.error("Could not acquire lock")
 
     def disconnect(self):
-        # release serial line and lock
+        """Release serial line and lock."""
         self._serial.close()
         self._serial = None
         self._viessmann_lock.release()
         self._connected = False
-        logger.debug("Disconnected from viControl")
+        logger.debug("Disconnected from ViControl")
 
     def send(self, packet):
-        # if connected send the packet
+        """If connected send the packet."""
         if self._connected:
             self._serial.write(packet)
             return True
         return False
 
     def read(self, length):
-        # read bytes from serial connection
+        """Read bytes from serial connection."""
         total_read_bytes = bytearray(0)
         failed_count = 0
         # TODO: read length bytes and try ten times if nothing received

@@ -1,7 +1,7 @@
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 # Copyright 2021-2025 Jochen Schmähling
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
-#  Python Module for communication with viControl heatings using the serial Optolink interface
+#  Python Module for communication with ViControl heatings using the serial Optolink interface
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -18,121 +18,121 @@
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
 # ruff: noqa: N802,N806
-"""Test cases for class viData."""
+"""Test cases for class ViData."""
 
 import pytest
 
-from pyvcontrol.viData import viData, viDataException
+from pyvcontrol.vi_data import ViData, ViDataError
 
 
-class Test_viDataBA:
+class Test_ViDataBA:
     """Group tests for data type BA."""
 
     def test_BAEmpty(self):
-        # create empty class and check mode
-        dBA = viData.create("BA")
+        """Create empty class and check mode."""
+        dBA = ViData.create("BA")
         assert dBA.value == "OFF"  # defaults to mode 'OFF'
 
     def test_BA02raw(self):
-        # create class with defined operation mode from raw byte
-        dBA = viData.create("BA", b"\x02")
+        """Create class with defined operation mode from raw byte."""
+        dBA = ViData.create("BA", b"\x02")
         assert dBA.value == "HEATING_WW"
 
     def test_BA01(self):
-        # create class with constructor and parameter
-        dBA = viData.create("BA", "WW")
+        """Create class with constructor and parameter."""
+        dBA = ViData.create("BA", "WW")
         assert dBA == b"\x01"
 
     def test_BA6666Empty(self):
-        # test call with non-existent mode
-        with pytest.raises(viDataException):
-            viData.create("BA", b"\x66\x66")
+        """Test call with non-existent mode."""
+        with pytest.raises(ViDataError):
+            ViData.create("BA", b"\x66\x66")
 
     def test_BAfoobar(self):
-        # test call with non-existent mode
-        with pytest.raises(viDataException):
-            viData.create("BA", "foobar")
+        """Test call with non-existent mode."""
+        with pytest.raises(ViDataError):
+            ViData.create("BA", "foobar")
 
 
-class Test_viDataDT:
+class Test_ViDataDT:
     """Group tests for data type DT."""
 
     def test_DTempty(self):
-        # initialize empty device type (standard)
-        dDT = viData.create("DT")
+        """Initialize empty device type (standard)."""
+        dDT = ViData.create("DT")
         assert dDT.value == "unknown"
 
     def test_DTraw(self):
-        # initialize from raw data
-        dDT = viData.create("DT", b"\x20\x4d")
+        """Initialize from raw data."""
+        dDT = ViData.create("DT", b"\x20\x4d")
         assert dDT.value, "V200WO1C== Protokoll: P300"
 
     def test_DTstr(self):
-        dDT = viData.create("DT", "unknown")
+        dDT = ViData.create("DT", "unknown")
         assert dDT == b"\x00\x00"
 
 
-class Test_viDataIS10:
+class Test_ViDataIS10:
     """Group tests for data type IS10."""
 
     def test_IS10(self):
-        dIS10 = viData.create("IS10", 10.15)
+        dIS10 = ViData.create("IS10", 10.15)
         assert dIS10.value == 10.1
 
     def test_IS10raw(self):
-        dIS10 = viData.create("IS10", b"e\x00")
+        dIS10 = ViData.create("IS10", b"e\x00")
         assert dIS10.value == 10.1
 
     def test_IS10minus(self):
         f = -9.856
-        dIS10 = viData.create("IS10", f)
+        dIS10 = ViData.create("IS10", f)
         print(f"Hex representation of {f} is {dIS10.hex()}")
         assert dIS10.value == -9.8
 
     # TODO add test playing with different len arguments and limit values
 
 
-class Test_viDataIUNON:
+class Test_ViDataIUNON:
     """Group tests for data type IUNON."""
 
     def test_IUNON(self):
         f = 415
-        dIUNON = viData.create("IUNON", f)
+        dIUNON = ViData.create("IUNON", f)
         print(f"Hex representation of {f} is {dIUNON.hex()}")
         assert dIUNON.value == f
 
     def test_IUNONraw(self):
-        dIUNON = viData.create("IUNON", b"\x9f\x01")
+        dIUNON = ViData.create("IUNON", b"\x9f\x01")
         assert dIUNON.value == 415
 
 
-class Test_viDataOO:
+class Test_ViDataOO:
     """Group tests for data type OO."""
 
     def test_OO(self):
         f = "On"
-        dOO = viData.create("OO", f)
+        dOO = ViData.create("OO", f)
         print(f"Hex representation of {f} is {dOO.hex()}")
         assert dOO.value == f
 
     def test_OOraw(self):
-        dOO = viData.create("OO", b"\x02")
+        dOO = ViData.create("OO", b"\x02")
         assert dOO.value == "On"
 
     def test_OO_unknown_value(self):
-        with pytest.raises(viDataException):
-            dOO = viData.create("OO", "foo")  # noqa: F841
+        with pytest.raises(ViDataError):
+            dOO = ViData.create("OO", "foo")  # noqa: F841
 
     def test_OO_default_value(self):
-        dOO = viData.create("OO")
+        dOO = ViData.create("OO")
         assert dOO.value == "Off"
 
 
-class Test_viDataEnergy:
+class Test_ViDataEnergy:
     """Group tests for data type Energy."""
 
     def test_default(self):
-        data_energy = viData.create("F_E")
+        data_energy = ViData.create("F_E")
         assert data_energy.day == 0
         assert data_energy.week == 0
         assert data_energy.year == 2000
@@ -146,7 +146,7 @@ class Test_viDataEnergy:
     def test_typical_values(self):
         example_data = bytes.fromhex("02 02 16 09 92 03 aa 00 99 00 2d 00 00 00 00 00")
 
-        data_energy = viData.create("F_E", example_data)
+        data_energy = ViData.create("F_E", example_data)
         value_dictionary = data_energy.value
         reference_dictionary = {
             "day": 2,
@@ -166,5 +166,5 @@ class Test_viDataEnergy:
 
     def test_failed_init(self):
         example_data = 1.2
-        with pytest.raises(viDataException):
-            viData.create("F_E", example_data)
+        with pytest.raises(ViDataError):
+            ViData.create("F_E", example_data)

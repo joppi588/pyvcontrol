@@ -1,7 +1,7 @@
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 # Copyright 2021-2025 Jochen Schmähling
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
-#  Python Module for communication with viControl heatings using the serial Optolink interface
+#  Python Module for communication with ViControl heatings using the serial Optolink interface
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -86,11 +86,11 @@ VITOCAL_WO1C = {
 }
 
 
-class viCommandException(Exception):
+class ViCommandError(Exception):
     """Indicates an error during command execution."""
 
 
-class viCommand(bytearray):
+class ViCommand(bytearray):
     """Representation of a command. Object value is a bytearray of address and length."""
 
     # =============================================================
@@ -104,7 +104,7 @@ class viCommand(bytearray):
         try:
             command = self.command_set[command_name]
         except Exception as error:
-            raise viCommandException(f"Unknown command {command_name}") from error
+            raise ViCommandError(f"Unknown command {command_name}") from error
         self._command_code = command[ADDRESS]
         self._value_bytes = command[LENGTH]
         self.unit = command[UNIT]
@@ -127,15 +127,17 @@ class viCommand(bytearray):
             logger.debug("Convert %s to command.", b.hex())
             command_name = next(key for key, value in cls.command_set.items() if value[ADDRESS].lower() == b[0:2].hex())
         except Exception as error:
-            raise viCommandException(f"No Command matching {b[0:2].hex()}") from error
-        return viCommand(command_name)
+            raise ViCommandError(f"No Command matching {b[0:2].hex()}") from error
+        return ViCommand(command_name)
 
     def response_length(self, access_mode="read"):
-        """Returns the number of bytes in the response."""
-        # request_response:
-        # 2 'address'
-        # 1 'Anzahl der Bytes des Wertes'
-        # x 'Wert'
+        """Returns the number of bytes in the response.
+
+        request_response:
+        2 'address'
+        1 'Anzahl der Bytes des Wertes'
+        x 'Wert'.
+        """
         if access_mode.lower() == "read":
             return 3 + self._value_bytes
         if access_mode.lower() == "write":

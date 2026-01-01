@@ -1,7 +1,7 @@
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 # Copyright 2021-2025 Jochen Schmähling
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
-#  Tools for communication with viControl heatings using the serial Optolink interface
+#  Tools for communication with ViControl heatings using the serial Optolink interface
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -21,18 +21,18 @@ import curses
 import logging
 import time
 
-from pyvcontrol.viControl import ctrlcode, viControl, viControlException, viTelegram
+from pyvcontrol.vi_control import ViControl, ViControlError, ViTelegram, ctrlcode
 
 logger = logging.getLogger(name="pyvcontrol")
 
 
 def viscancommands(addressrange):
-    # brute force command scanner
+    """Brute force command scanner."""
     # hilft v.a. um die richtige Payload-Länge für bekannte Kommandos herauszufinden
 
     logging.basicConfig(filename="scancommands.log", filemode="w", level=logger.debug)
 
-    vo = viControl()
+    vo = ViControl()
     vo.initialize_communication()
 
     for addr in addressrange:
@@ -40,7 +40,7 @@ def viscancommands(addressrange):
             # TODO: Inneren Teil ausschneiden und in separate Funktion? ("low level read command")
             logger.debug("---%s-{kk}------------------", hex(addr))
             vc = addr.to_bytes(2, "big") + kk.to_bytes(1, "big")
-            vt = viTelegram(vc, "read")  # create read Telegram
+            vt = ViTelegram(vc, "read")  # create read Telegram
             vo.vs.send(vt)  # send Telegram
             logger.debug("Send telegram %s", vt.hex())
 
@@ -50,7 +50,7 @@ def viscancommands(addressrange):
                 if ack != ctrlcode["acknowledge"]:
                     logger.debug("Viessmann returned %s", ack.hex())
                     vo.initialize_communication()
-                    raise viControlException(f"Expected acknowledge byte, received {ack}")
+                    raise ViControlError(f"Expected acknowledge byte, received {ack}")
 
                 # Receive response and evaluate data
                 vr1 = vo.vs.read(2)  # receive response
@@ -58,19 +58,18 @@ def viscancommands(addressrange):
                 # TODO: create Telegram instead of low-level access (for better readability)
                 logger.debug("received telegram %s {vr2.hex()}", vr1.hex())
 
-                if vr2[0].to_bytes(1, "little") == viTelegram.tTypes["response"]:
+                if vr2[0].to_bytes(1, "little") == ViTelegram.tTypes["response"]:
                     v = int.from_bytes(vr2[-1 - kk : -1], "little")
                     print(f"Found working command 0x{hex(addr)}, payload length {kk}, value {v}")
-
-            except Exception as e:
-                logger.exception({e})
-                print(f"An exception occurred: {e}")
+            except Exception:
+                logger.exception("An exception occured.")
 
 
 def vimonitor(command_list, updateinterval=30):
-    # repeatedly executes commands
-    # commandlist is a list of strings (command names from viCommand)
+    """Repeatedly executes commands.
 
+    commandlist is a list of strings (command names from ViCommand)
+    """
     # TODO: accept also addresses & length as commands
     # Option 1) "Generic command" based on addr and length 2) add command to command set first
     if not isinstance(command_list, list):
@@ -78,7 +77,7 @@ def vimonitor(command_list, updateinterval=30):
         command_list = [command_list]
 
     logging.basicConfig(filename="Monitor.log", filemode="w", level=logger.debug)
-    vo = viControl()
+    vo = ViControl()
 
     standard_screen = curses.initscr()
     curses.noecho()
@@ -115,9 +114,8 @@ def vimonitor(command_list, updateinterval=30):
 
 
 def vi_scan_function_call(commandname, functionrange):
-    # scans the function call with all parameters and print HEX and decoded OUTPUT in terminal
-
-    vo = viControl()
+    """Scans the function call with all parameters and print HEX and decoded OUTPUT in terminal."""
+    vo = ViControl()
     vo.initialize_communication()
 
     for func in functionrange:  # First Parameter is Byte
