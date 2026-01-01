@@ -26,6 +26,8 @@ from pyvcontrol.viData import viData, viDataException
 
 
 class Test_viDataBA:
+    """Group tests for data type BA."""
+
     def test_BAEmpty(self):
         # create empty class and check mode
         dBA = viData.create("BA")
@@ -53,6 +55,8 @@ class Test_viDataBA:
 
 
 class Test_viDataDT:
+    """Group tests for data type DT."""
+
     def test_DTempty(self):
         # initialize empty device type (standard)
         dDT = viData.create("DT")
@@ -69,6 +73,8 @@ class Test_viDataDT:
 
 
 class Test_viDataIS10:
+    """Group tests for data type IS10."""
+
     def test_IS10(self):
         dIS10 = viData.create("IS10", 10.15)
         assert dIS10.value == 10.1
@@ -87,6 +93,8 @@ class Test_viDataIS10:
 
 
 class Test_viDataIUNON:
+    """Group tests for data type IUNON."""
+
     def test_IUNON(self):
         f = 415
         dIUNON = viData.create("IUNON", f)
@@ -99,6 +107,8 @@ class Test_viDataIUNON:
 
 
 class Test_viDataOO:
+    """Group tests for data type OO."""
+
     def test_OO(self):
         f = "On"
         dOO = viData.create("OO", f)
@@ -119,6 +129,8 @@ class Test_viDataOO:
 
 
 class Test_viDataEnergy:
+    """Group tests for data type Energy."""
+
     def test_default(self):
         data_energy = viData.create("F_E")
         assert data_energy.day == 0
