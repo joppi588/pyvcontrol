@@ -21,7 +21,7 @@ import curses
 import logging
 import time
 
-from pyvcontrol.vi_control import ctrlcode, viControl, viControlException, viTelegram
+from pyvcontrol.vi_control import ctrlcode, viControl, viControlError, viTelegram
 
 logger = logging.getLogger(name="pyvcontrol")
 
@@ -50,7 +50,7 @@ def viscancommands(addressrange):
                 if ack != ctrlcode["acknowledge"]:
                     logger.debug("Viessmann returned %s", ack.hex())
                     vo.initialize_communication()
-                    raise viControlException(f"Expected acknowledge byte, received {ack}")
+                    raise viControlError(f"Expected acknowledge byte, received {ack}")
 
                 # Receive response and evaluate data
                 vr1 = vo.vs.read(2)  # receive response

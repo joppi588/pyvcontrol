@@ -25,7 +25,7 @@ from pyvcontrol.vi_command import viCommand
 logger = logging.getLogger(name="pyvcontrol")
 
 
-class viTelegramException(Exception):
+class viTelegramError(Exception):
     pass
 
 
@@ -156,12 +156,12 @@ class viTelegram(bytearray):
 
         # validate checksum
         if b[-1:] != viTelegram._checksum_byte(b[0:-1]):
-            raise viTelegramException(
+            raise viTelegramError(
                 f"Checksum not valid. Expected {b[-1:]}, Calculated {viTelegram._checksum_byte(b[0:-1])}"
             )
         # validate Startbyte
         if b[0:1] != cls.tStartByte:
-            raise viTelegramException("Startbyte not found")
+            raise viTelegramError("Startbyte not found")
 
         header = b[0:4]
         logger.debug(

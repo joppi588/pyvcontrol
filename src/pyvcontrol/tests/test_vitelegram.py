@@ -22,7 +22,7 @@ import pytest
 
 from pyvcontrol.vi_command import viCommand
 from pyvcontrol.vi_data import viData
-from pyvcontrol.vi_telegram import viTelegram, viTelegramException
+from pyvcontrol.vi_telegram import viTelegram, viTelegramError
 
 
 def test_read_telegram():
@@ -49,7 +49,7 @@ def test_checksum_startbyte():
 
 def test_wrongchecksum():
     b = bytes.fromhex("4105000100f80201")
-    with pytest.raises(viTelegramException):
+    with pytest.raises(viTelegramError):
         _ = viTelegram.from_bytes(b)
 
 

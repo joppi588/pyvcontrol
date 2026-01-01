@@ -45,7 +45,7 @@ ctrlcode = {
 }
 
 
-class viControlException(Exception):
+class viControlError(Exception):
     """Indicates an error during ViControl."""
 
     def __init__(self, msg):
@@ -85,9 +85,7 @@ class viControl:
         # prepare command
         allowed_access_mode = {"read": ["read"], "write": ["read", "write"], "call": ["call"]}
         if access_mode not in allowed_access_mode[vc.access_mode]:
-            raise viControlException(
-                f"command {vc.command_name} allows only {allowed_access_mode[vc.access_mode]} access"
-            )
+            raise viControlError(f"command {vc.command_name} allows only {allowed_access_mode[vc.access_mode]} access")
 
         # send Telegram
         vt = viTelegram(vc, access_mode, payload=payload)
@@ -98,14 +96,14 @@ class viControl:
         ack = self.vs.read(1)
         logger.debug("Received %s", ack.hex())
         if ack != ctrlcode["acknowledge"]:
-            raise viControlException(f"Expected acknowledge byte, received {ack}")
+            raise viControlError(f"Expected acknowledge byte, received {ack}")
 
         # Receive response and evaluate data
         vr = self.vs.read(vt.response_length)  # receive response
         vt = viTelegram.from_bytes(vr)
         logger.debug("Requested %s bytes. Received telegram {vr.hex()}", vt.response_length)
         if vt.tType == viTelegram.tTypes["error"]:
-            raise viControlException(f"{access_mode} command returned an error")
+            raise viControlError(f"{access_mode} command returned an error")
         self.vs.send(ctrlcode["acknowledge"])  # send acknowledge
 
         # return viData object from payload
@@ -144,7 +142,7 @@ class viControl:
 
         if not self.is_initialized:
             # initialisation not successful
-            raise viControlException("Could not initialize communication")
+            raise viControlError("Could not initialize communication")
 
         logger.debug("Communication initialized")
         return True

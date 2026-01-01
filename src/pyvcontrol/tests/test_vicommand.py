@@ -20,14 +20,14 @@
 
 import pytest
 
-from pyvcontrol.vi_command import viCommand, viCommandException
+from pyvcontrol.vi_command import viCommand, viCommandError
 
 
 def test_vicommand_nomatch():
     # Command not existing
-    with pytest.raises(viCommandException):
+    with pytest.raises(viCommandError):
         _ = viCommand._from_bytes(b"\xf1\x00")
-    with pytest.raises(viCommandException):
+    with pytest.raises(viCommandError):
         _ = viCommand("foo")
 
 

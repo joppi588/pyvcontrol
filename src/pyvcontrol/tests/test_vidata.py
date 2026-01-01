@@ -22,7 +22,7 @@
 
 import pytest
 
-from pyvcontrol.vi_data import viData, viDataException
+from pyvcontrol.vi_data import viData, viDataError
 
 
 class Test_viDataBA:
@@ -45,12 +45,12 @@ class Test_viDataBA:
 
     def test_BA6666Empty(self):
         # test call with non-existent mode
-        with pytest.raises(viDataException):
+        with pytest.raises(viDataError):
             viData.create("BA", b"\x66\x66")
 
     def test_BAfoobar(self):
         # test call with non-existent mode
-        with pytest.raises(viDataException):
+        with pytest.raises(viDataError):
             viData.create("BA", "foobar")
 
 
@@ -120,7 +120,7 @@ class Test_viDataOO:
         assert dOO.value == "On"
 
     def test_OO_unknown_value(self):
-        with pytest.raises(viDataException):
+        with pytest.raises(viDataError):
             dOO = viData.create("OO", "foo")  # noqa: F841
 
     def test_OO_default_value(self):
@@ -166,5 +166,5 @@ class Test_viDataEnergy:
 
     def test_failed_init(self):
         example_data = 1.2
-        with pytest.raises(viDataException):
+        with pytest.raises(viDataError):
             viData.create("F_E", example_data)
