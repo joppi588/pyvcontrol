@@ -1,5 +1,5 @@
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
-# Copyright 2021 Jochen Schmähling
+# Copyright 2021-2025 Jochen Schmähling
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 #  Python Module for communication with viControl heatings using the serial Optolink interface
 #
@@ -18,6 +18,7 @@
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
 import logging
+
 from pyvcontrol.viCommand import viCommand
 
 
@@ -86,16 +87,16 @@ class viTelegram(bytearray):
     # --> Antwort: 0x00EF = 239 = 23.9°
 
     # Telegram type
-    tTypes = {'request': b'\x00',
-              'response': b'\x01',
-              'error': b'\x03', }
+    tTypes = {
+        "request": b"\x00",
+        "response": b"\x01",
+        "error": b"\x03",
+    }
     # Telegram mode
-    tModes = {'read': b'\x01',
-              'write': b'\x02',
-              'call': b'\x07'}
-    tStartByte = b'\x41'
+    tModes = {"read": b"\x01", "write": b"\x02", "call": b"\x07"}
+    tStartByte = b"\x41"
 
-    def __init__(self, vc: viCommand, tMode='Read', tType='Request', payload=bytearray(0)):
+    def __init__(self, vc: viCommand, tMode="Read", tType="Request", payload=bytearray(0)):
         # creates a telegram for sending as a combination of header, viCommand, payload and checksum
         # payload is optional, usually of type viData
         # tType and tMode must be strings or bytes. Be careful when extracting from bytearray b - b[x] will be int not byte!
@@ -110,13 +111,13 @@ class viTelegram(bytearray):
         super().__init__(b + self._checksum_byte(b))
 
     def _header(self):
-        """ Create viTelegram header"""
+        """Create viTelegram header"""
         # 1 byte - type
         # 1 byte - mode
         #
         # Data length (bytes): type (1), mode (1), command code (x), payload viData (x)
         data_length = 2 + len(self.vicmd) + len(self.payload)
-        return self.tStartByte + data_length.to_bytes(1, 'big') + self.tType + self.tMode
+        return self.tStartByte + data_length.to_bytes(1, "big") + self.tType + self.tMode
 
     @property
     def response_length(self):
@@ -149,14 +150,16 @@ class viTelegram(bytearray):
         # validate checksum
         if b[-1:] != viTelegram._checksum_byte(b[0:-1]):
             raise viTelegramException(
-                f'Checksum not valid. Expected {b[-1:]}, Calculated {viTelegram._checksum_byte(b[0:-1])}')
+                f"Checksum not valid. Expected {b[-1:]}, Calculated {viTelegram._checksum_byte(b[0:-1])}"
+            )
         # validate Startbyte
         if b[0:1] != cls.tStartByte:
-            raise viTelegramException('Startbyte not found')
+            raise viTelegramException("Startbyte not found")
 
         header = b[0:4]
         logging.debug(
-            f'Header: {header.hex()}, tType={header[2:3].hex()}, tMode={header[3:4].hex()}, payload={b[7:-1].hex()}')
+            f"Header: {header.hex()}, tType={header[2:3].hex()}, tMode={header[3:4].hex()}, payload={b[7:-1].hex()}"
+        )
         vicmd = viCommand._from_bytes(b[4:6])
         vt = viTelegram(vicmd, tType=header[2:3], tMode=header[3:4], payload=b[7:-1])
         return vt
@@ -166,9 +169,9 @@ class viTelegram(bytearray):
         # checksum is the last byte of the sum of all bytes in packet
         checksum = 0
         if len(packet) == 0:
-            logging.error('No bytes received to calculate checksum')
+            logging.error("No bytes received to calculate checksum")
         elif packet[0:1] != cls.tStartByte:
-            logging.error('bytes to calculate checksum from does not start with start byte')
+            logging.error("bytes to calculate checksum from does not start with start byte")
         else:
             checksum = sum(packet[1:]) % 256
-        return checksum.to_bytes(1, 'big')
+        return checksum.to_bytes(1, "big")

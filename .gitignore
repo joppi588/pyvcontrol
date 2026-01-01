@@ -1,2 +1,6 @@
 /deploy_pi
 /tests/Monitor.log
+/.vscode
+/.venv
+__pycache__
+/utils
