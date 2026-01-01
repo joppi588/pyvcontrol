@@ -20,89 +20,93 @@
 
 import pytest
 
-from pyvcontrol import viCommand as c
-from pyvcontrol import viControl as v
-from pyvcontrol.viData import viData as d
-from pyvcontrol.viTelegram import viTelegramException
+from pyvcontrol.viCommand import viCommand
+from pyvcontrol.viData import viData
+from pyvcontrol.viTelegram import viTelegram, viTelegramException
 
 
-class Test_vitTelegram:
-    def test_read_telegram(self):
-        vc = c.viCommand("Anlagentyp")
-        vt = v.viTelegram(vc, "read")
-        assert "4105000100f80402" == vt.hex()
-        vc = c.viCommand("Warmwassertemperatur")
-        vt = v.viTelegram(vc, "read")
-        assert "41050001010d0216" == vt.hex()
-
-    def test_checksumEmpty(self):
-        # raise error
-        b = bytes(0)
-        c = v.viTelegram._checksum_byte(b)
-        assert b"\x00" == c
-
-    def test_checksumStartbyte(self):
-        # raise error
-        c = v.viTelegram._checksum_byte(b"\x42\x41")
-        assert b"\x00" == c
+def test_read_telegram():
+    vc = viCommand("Anlagentyp")
+    vt = viTelegram(vc, "read")
+    assert vt.hex() == "4105000100f80402"
+    vc = viCommand("Warmwassertemperatur")
+    vt = viTelegram(vc, "read")
+    assert vt.hex() == "41050001010d0216"
 
 
-class Test_viTelegram_resp:
-    def test_wrongchecksum(self):
-        b = bytes.fromhex("4105000100f80201")
-        with pytest.raises(viTelegramException):
-            _ = v.viTelegram.from_bytes(b)
+def test_checksum_empty():
+    # raise error
+    b = bytes(0)
+    c = viTelegram._checksum_byte(b)
+    assert c == b"\x00"
 
-    def test_telegram_mode(self):
-        b = bytes.fromhex("41 05 00 01 01 0d 02 00 00 16")
-        vt = v.viTelegram.from_bytes(b)
-        assert vt.telegram_mode == "read"
 
-        b = bytes.fromhex("41 05 00 02 01 0d 02 00 00 17")
-        vt = v.viTelegram.from_bytes(b)
-        assert vt.telegram_mode == "write"
+def test_checksum_startbyte():
+    # raise error
+    c = viTelegram._checksum_byte(b"\x42\x41")
+    assert c == b"\x00"
 
-        b = bytes.fromhex("41 05 00 07 01 0d 02 00 00 1c")
-        vt = v.viTelegram.from_bytes(b)
-        assert vt.telegram_mode == "call"
 
-    def test_telegram_type(self):
-        b = bytes.fromhex("41 05 00 01 01 0d 02 00 00 16")
-        vt = v.viTelegram.from_bytes(b)
-        assert vt.telegram_type == "request"
+def test_wrongchecksum():
+    b = bytes.fromhex("4105000100f80201")
+    with pytest.raises(viTelegramException):
+        _ = viTelegram.from_bytes(b)
 
-        b = bytes.fromhex("41 05 01 02 01 0d 02 00 00 18")
-        vt = v.viTelegram.from_bytes(b)
-        assert vt.telegram_type == "response"
 
-        b = bytes.fromhex("41 05 03 07 01 0d 02 00 00 1f")
-        vt = v.viTelegram.from_bytes(b)
-        assert vt.telegram_type == "error"
+def test_telegram_mode():
+    b = bytes.fromhex("41 05 00 01 01 0d 02 00 00 16")
+    vt = viTelegram.from_bytes(b)
+    assert vt.telegram_mode == "read"
 
-    def test_telegramdata1(self):
-        b = bytes.fromhex("41 07 01 01 01 0d 02 65 00 7e")
-        vt = v.viTelegram.from_bytes(b)
-        vd = d.create(vt.vicmd.unit, vt.payload)
-        assert vt.vicmd.unit == "IS10"
-        assert vd.value == 10.1
+    b = bytes.fromhex("41 05 00 02 01 0d 02 00 00 17")
+    vt = viTelegram.from_bytes(b)
+    assert vt.telegram_mode == "write"
 
-    def test_telegramdata2(self):
-        # 'Read' telegram
-        b = bytes.fromhex("41 09 01 01 16 50 04 e4 29 00 00 82")
-        vt = v.viTelegram.from_bytes(b)
-        vd = d.create(vt.vicmd.unit, vt.payload)
-        assert "read" == vt.telegram_mode
-        assert 12 == vt.response_length
-        assert vt.vicmd.command_name == "WWwaerme"
-        assert vt.vicmd.unit == "IUNON"
-        assert vd.value == 10724
+    b = bytes.fromhex("41 05 00 07 01 0d 02 00 00 1c")
+    vt = viTelegram.from_bytes(b)
+    assert vt.telegram_mode == "call"
 
-    def test_telegramdata3(self):
-        # 'write' telegram
-        b = bytes.fromhex("41 09 01 02 16 50 04 76")
-        vt = v.viTelegram.from_bytes(b)
-        _ = d.create(vt.vicmd.unit, vt.payload)
-        assert "write" == vt.telegram_mode
-        assert 8 == vt.response_length
-        assert vt.vicmd.command_name == "WWwaerme"
-        assert vt.vicmd.unit == "IUNON"
+
+def test_telegram_type():
+    b = bytes.fromhex("41 05 00 01 01 0d 02 00 00 16")
+    vt = viTelegram.from_bytes(b)
+    assert vt.telegram_type == "request"
+
+    b = bytes.fromhex("41 05 01 02 01 0d 02 00 00 18")
+    vt = viTelegram.from_bytes(b)
+    assert vt.telegram_type == "response"
+
+    b = bytes.fromhex("41 05 03 07 01 0d 02 00 00 1f")
+    vt = viTelegram.from_bytes(b)
+    assert vt.telegram_type == "error"
+
+
+def test_telegramdata1():
+    b = bytes.fromhex("41 07 01 01 01 0d 02 65 00 7e")
+    vt = viTelegram.from_bytes(b)
+    vd = viData.create(vt.vicmd.unit, vt.payload)
+    assert vt.vicmd.unit == "IS10"
+    assert vd.value == 10.1
+
+
+def test_telegramdata2():
+    # 'Read' telegram
+    b = bytes.fromhex("41 09 01 01 16 50 04 e4 29 00 00 82")
+    vt = viTelegram.from_bytes(b)
+    vd = viData.create(vt.vicmd.unit, vt.payload)
+    assert vt.telegram_mode == "read"
+    assert vt.response_length == 12
+    assert vt.vicmd.command_name == "WWwaerme"
+    assert vt.vicmd.unit == "IUNON"
+    assert vd.value == 10724
+
+
+def test_telegramdata3():
+    # 'write' telegram
+    b = bytes.fromhex("41 09 01 02 16 50 04 76")
+    vt = viTelegram.from_bytes(b)
+    _ = viData.create(vt.vicmd.unit, vt.payload)
+    assert vt.telegram_mode == "write"
+    assert vt.response_length == 8
+    assert vt.vicmd.command_name == "WWwaerme"
+    assert vt.vicmd.unit == "IUNON"

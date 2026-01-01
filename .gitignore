@@ -4,3 +4,4 @@
 /.venv
 __pycache__
 /utils
+ruff.toml

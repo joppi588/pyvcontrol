@@ -52,7 +52,7 @@ def test_exec_read_command(mock_vi_serial):
 
 @pytest.mark.skip("Function calls not implemented.")
 @patch("pyvcontrol.viControl.viSerial", return_value=ViSerialMock())
-def test_exec_function_call(mock_vi_serial):
+def test_exec_function_call(mock_vi_serial):  # noqa: ARG001
     vc = viControl()  # noqa: F841
 
 
