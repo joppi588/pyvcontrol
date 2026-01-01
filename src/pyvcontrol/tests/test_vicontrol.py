@@ -23,8 +23,8 @@ from unittest.mock import patch
 
 import pytest
 
+from pyvcontrol.vi_control import ctrlcode, viControl, viControlException
 from pyvcontrol.vi_mocks import ViSerialMock
-from pyvcontrol.viControl import ctrlcode, viControl, viControlException
 
 
 @patch("pyvcontrol.viControl.viSerial", return_value=ViSerialMock())

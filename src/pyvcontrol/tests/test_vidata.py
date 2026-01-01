@@ -22,7 +22,7 @@
 
 import pytest
 
-from pyvcontrol.viData import viData, viDataException
+from pyvcontrol.vi_data import viData, viDataException
 
 
 class Test_viDataBA:

@@ -19,8 +19,8 @@
 
 """Tests the connection to Viessmann. Needs a physical connection."""
 
-from pyvcontrol.viCommand import viCommand
-from pyvcontrol.viControl import viControl
+from pyvcontrol.vi_command import viCommand
+from pyvcontrol.vi_control import viControl
 
 
 def test_readsequence():

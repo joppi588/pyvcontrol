@@ -20,9 +20,9 @@
 
 from unittest.mock import NonCallableMock
 
-from pyvcontrol.viCommand import viCommand
-from pyvcontrol.viControl import control_set, viControl
-from pyvcontrol.viData import viData
+from pyvcontrol.vi_command import viCommand
+from pyvcontrol.vi_control import control_set, viControl
+from pyvcontrol.vi_data import viData
 
 
 class ViSerialMock(NonCallableMock):

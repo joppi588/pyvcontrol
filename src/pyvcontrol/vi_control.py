@@ -23,9 +23,9 @@ from threading import Lock
 
 import serial
 
-from pyvcontrol.viCommand import viCommand
-from pyvcontrol.viData import viData
-from pyvcontrol.viTelegram import viTelegram
+from pyvcontrol.vi_command import viCommand
+from pyvcontrol.vi_data import viData
+from pyvcontrol.vi_telegram import viTelegram
 
 logger = logging.getLogger(name="pyvcontrol")
 

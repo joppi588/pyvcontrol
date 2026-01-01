@@ -20,7 +20,7 @@
 
 import pytest
 
-from pyvcontrol.viCommand import viCommand, viCommandException
+from pyvcontrol.vi_command import viCommand, viCommandException
 
 
 def test_vicommand_nomatch():

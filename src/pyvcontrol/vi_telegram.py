@@ -20,7 +20,7 @@
 
 import logging
 
-from pyvcontrol.viCommand import viCommand
+from pyvcontrol.vi_command import viCommand
 
 logger = logging.getLogger(name="pyvcontrol")
 

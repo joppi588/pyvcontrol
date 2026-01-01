@@ -21,7 +21,7 @@ import curses
 import logging
 import time
 
-from pyvcontrol.viControl import ctrlcode, viControl, viControlException, viTelegram
+from pyvcontrol.vi_control import ctrlcode, viControl, viControlException, viTelegram
 
 logger = logging.getLogger(name="pyvcontrol")
 
