@@ -1,7 +1,7 @@
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 # Copyright 2021-2025 Jochen Schmähling
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
-#  Python Module for communication with viControl heatings using the serial Optolink interface
+#  Python Module for communication with ViControl heatings using the serial Optolink interface
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@
 from unittest.mock import NonCallableMock
 
 from pyvcontrol.vi_command import ViCommand
-from pyvcontrol.vi_control import control_set, viControl
+from pyvcontrol.vi_control import ViControl, control_set
 from pyvcontrol.vi_data import viData
 
 
@@ -29,7 +29,7 @@ class ViSerialMock(NonCallableMock):
     """Mock for serial interface."""
 
     def __init__(self):
-        super().__init__(spec=viControl)
+        super().__init__(spec=ViControl)
         self._connected = False
         self._control_set = control_set
         self._serial_port = ""
@@ -57,7 +57,7 @@ class ViSerialMock(NonCallableMock):
 
 class ViControlMock(NonCallableMock):
     def __init__(self, vi_data=None):
-        super().__init__(spec=viControl)
+        super().__init__(spec=ViControl)
         self.vi_data = vi_data or {}
         self.initialize_communication.side_effect = self._initialize_communication
         self.execute_read_command.side_effect = self._execute_read_command

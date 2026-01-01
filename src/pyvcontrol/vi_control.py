@@ -1,7 +1,7 @@
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 # Copyright 2021-2025 Jochen Schmähling
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
-#  Python Module for communication with viControl heatings using the serial Optolink interface
+#  Python Module for communication with ViControl heatings using the serial Optolink interface
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -45,15 +45,15 @@ ctrlcode = {
 }
 
 
-class viControlError(Exception):
+class ViControlError(Exception):
     """Indicates an error during ViControl."""
 
     def __init__(self, msg):
         super().__init__(msg)
 
 
-class viControl:
-    # class to connect to viControl heating directly via Optolink
+class ViControl:
+    # class to connect to ViControl heating directly via Optolink
     # only supports WO1C with protocol P300
     def __init__(self, port="/dev/ttyUSB0"):
         self.vs = ViSerial(control_set, port)
@@ -85,7 +85,7 @@ class viControl:
         # prepare command
         allowed_access_mode = {"read": ["read"], "write": ["read", "write"], "call": ["call"]}
         if access_mode not in allowed_access_mode[vc.access_mode]:
-            raise viControlError(f"command {vc.command_name} allows only {allowed_access_mode[vc.access_mode]} access")
+            raise ViControlError(f"command {vc.command_name} allows only {allowed_access_mode[vc.access_mode]} access")
 
         # send Telegram
         vt = viTelegram(vc, access_mode, payload=payload)
@@ -96,21 +96,21 @@ class viControl:
         ack = self.vs.read(1)
         logger.debug("Received %s", ack.hex())
         if ack != ctrlcode["acknowledge"]:
-            raise viControlError(f"Expected acknowledge byte, received {ack}")
+            raise ViControlError(f"Expected acknowledge byte, received {ack}")
 
         # Receive response and evaluate data
         vr = self.vs.read(vt.response_length)  # receive response
         vt = viTelegram.from_bytes(vr)
         logger.debug("Requested %s bytes. Received telegram {vr.hex()}", vt.response_length)
         if vt.tType == viTelegram.tTypes["error"]:
-            raise viControlError(f"{access_mode} command returned an error")
+            raise ViControlError(f"{access_mode} command returned an error")
         self.vs.send(ctrlcode["acknowledge"])  # send acknowledge
 
         # return viData object from payload
         return viData.create(vt.vicmd.unit, vt.payload)
 
     def initialize_communication(self):
-        logger.debug("Init Communication to viControl....")
+        logger.debug("Init Communication to ViControl....")
         self.is_initialized = False
 
         # loop cases
@@ -142,7 +142,7 @@ class viControl:
 
         if not self.is_initialized:
             # initialisation not successful
-            raise viControlError("Could not initialize communication")
+            raise ViControlError("Could not initialize communication")
 
         logger.debug("Communication initialized")
         return True
@@ -153,7 +153,7 @@ class ViSerial:
     # TODO: control sets nicht übernommen
     _viessmann_lock = Lock()
 
-    # viControl socket: implement raw communication
+    # ViControl socket: implement raw communication
     def __init__(self, control_set, port):
         self._connected = False
         self._control_set = control_set
@@ -193,7 +193,7 @@ class ViSerial:
         self._serial = None
         self._viessmann_lock.release()
         self._connected = False
-        logger.debug("Disconnected from viControl")
+        logger.debug("Disconnected from ViControl")
 
     def send(self, packet):
         # if connected send the packet

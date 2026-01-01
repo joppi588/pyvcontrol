@@ -1,7 +1,7 @@
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 # Copyright 2021-2025 Jochen Schmähling
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
-#  Python Module for communication with viControl heatings using the serial Optolink interface
+#  Python Module for communication with ViControl heatings using the serial Optolink interface
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -20,12 +20,12 @@
 """Tests the connection to Viessmann. Needs a physical connection."""
 
 from pyvcontrol.vi_command import ViCommand
-from pyvcontrol.vi_control import viControl
+from pyvcontrol.vi_control import ViControl
 
 
 def test_readsequence():
     # Read all defined commands
-    vc = viControl()
+    vc = ViControl()
     vc.initialize_communication()
 
     for cmd in ViCommand.command_set.keys():
@@ -35,7 +35,7 @@ def test_readsequence():
 
 def test_writesequence():
     # Ändert einen Datensatz und stellt ursprüngl. Wert wieder her
-    vc = viControl()
+    vc = ViControl()
     vc.initialize_communication()
     cmd = "RaumsolltempParty"
     v_orig = vc.execReadCmd(cmd).value

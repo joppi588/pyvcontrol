@@ -1,7 +1,7 @@
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 # Copyright 2021-2025 Jochen Schmähling
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
-#  Tools for communication with viControl heatings using the serial Optolink interface
+#  Tools for communication with ViControl heatings using the serial Optolink interface
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@ import curses
 import logging
 import time
 
-from pyvcontrol.vi_control import ctrlcode, viControl, viControlError, viTelegram
+from pyvcontrol.vi_control import ViControl, ViControlError, ctrlcode, viTelegram
 
 logger = logging.getLogger(name="pyvcontrol")
 
@@ -32,7 +32,7 @@ def viscancommands(addressrange):
 
     logging.basicConfig(filename="scancommands.log", filemode="w", level=logger.debug)
 
-    vo = viControl()
+    vo = ViControl()
     vo.initialize_communication()
 
     for addr in addressrange:
@@ -50,7 +50,7 @@ def viscancommands(addressrange):
                 if ack != ctrlcode["acknowledge"]:
                     logger.debug("Viessmann returned %s", ack.hex())
                     vo.initialize_communication()
-                    raise viControlError(f"Expected acknowledge byte, received {ack}")
+                    raise ViControlError(f"Expected acknowledge byte, received {ack}")
 
                 # Receive response and evaluate data
                 vr1 = vo.vs.read(2)  # receive response
@@ -78,7 +78,7 @@ def vimonitor(command_list, updateinterval=30):
         command_list = [command_list]
 
     logging.basicConfig(filename="Monitor.log", filemode="w", level=logger.debug)
-    vo = viControl()
+    vo = ViControl()
 
     standard_screen = curses.initscr()
     curses.noecho()
@@ -117,7 +117,7 @@ def vimonitor(command_list, updateinterval=30):
 def vi_scan_function_call(commandname, functionrange):
     # scans the function call with all parameters and print HEX and decoded OUTPUT in terminal
 
-    vo = viControl()
+    vo = ViControl()
     vo.initialize_communication()
 
     for func in functionrange:  # First Parameter is Byte

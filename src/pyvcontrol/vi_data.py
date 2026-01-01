@@ -1,7 +1,7 @@
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 # Copyright 2021-2025 Jochen Schmähling
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
-#  Python Module for communication with viControl heatings using the serial Optolink interface
+#  Python Module for communication with ViControl heatings using the serial Optolink interface
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@ class viDataError(Exception):
 
 
 class viData(bytearray):
-    # implements representations of viControl data types
+    # implements representations of ViControl data types
     # erzeugen eines Datentypes über benannte Klasse -> setze code und codiere Parameter als bytes
 
     # konstruktor __init__ accepts byte-encoded input or real data
