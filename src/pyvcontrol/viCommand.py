@@ -87,7 +87,7 @@ VITOCAL_WO1C = {
 
 
 class viCommandException(Exception):
-    pass
+    """Indicates an error during command execution."""
 
 
 class viCommand(bytearray):

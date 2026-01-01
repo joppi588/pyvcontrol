@@ -46,6 +46,8 @@ ctrlcode = {
 
 
 class viControlException(Exception):
+    """Indicates an error during ViControl."""
+
     def __init__(self, msg):
         super().__init__(msg)
 

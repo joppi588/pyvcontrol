@@ -55,7 +55,7 @@ def viscancommands(addressrange):
                 # Receive response and evaluate data
                 vr1 = vo.vs.read(2)  # receive response
                 vr2 = vo.vs.read(vr1[1] + 1)  # read rest of telegram
-                # FIXME: create Telegram instead of low-level access (for better readability)
+                # TODO: create Telegram instead of low-level access (for better readability)
                 logger.debug("received telegram %s {vr2.hex()}", vr1.hex())
 
                 if vr2[0].to_bytes(1, "little") == viTelegram.tTypes["response"]:
@@ -97,7 +97,7 @@ def vimonitor(command_list, updateinterval=30):
                 v = vo.execReadCmd(c).value
                 standard_screen.addstr(f"{c}: ", curses.A_BOLD)
                 standard_screen.addstr(f"{v}\n")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             standard_screen.addstr(f"Error: {e}")
 
         standard_screen.addstr("\n-----------------------\nPress any key to abort")
@@ -125,5 +125,5 @@ def vi_scan_function_call(commandname, functionrange):
         for day in range(6):
             try:
                 print(vo.execFunctionCall(commandname, func, day).valueScan)
-            except Exception:
+            except Exception:  # noqa: PERF203
                 logger.exception("Exception on day %s.", day)
