@@ -22,7 +22,7 @@ from unittest.mock import NonCallableMock
 
 from pyvcontrol.viCommand import viCommand
 from pyvcontrol.viControl import control_set, viControl
-from pyvcontrol.viData import viData, viDataBA
+from pyvcontrol.viData import viData
 
 
 class ViSerialMock(NonCallableMock):
@@ -68,8 +68,6 @@ class ViControlMock(NonCallableMock):
         return self.vi_data[cmdName]
 
     def _execute_write_command(self, cmdName, value):
-        if cmdName == "Betriebsmodus":
-            value = viDataBA(value)
         vc = viCommand(cmdName)
         self.vi_data[cmdName] = viData.create(vc.unit, value)
         return None
