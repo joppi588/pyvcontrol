@@ -69,7 +69,7 @@ def viscancommands(addressrange):
 
 def vimonitor(command_list, updateinterval=30):
     # repeatedly executes commands
-    # commandlist is a list of strings (command names from viCommand)
+    # commandlist is a list of strings (command names from ViCommand)
 
     # TODO: accept also addresses & length as commands
     # Option 1) "Generic command" based on addr and length 2) add command to command set first

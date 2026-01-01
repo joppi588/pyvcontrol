@@ -19,7 +19,7 @@
 
 """Tests the connection to Viessmann. Needs a physical connection."""
 
-from pyvcontrol.vi_command import viCommand
+from pyvcontrol.vi_command import ViCommand
 from pyvcontrol.vi_control import viControl
 
 
@@ -28,7 +28,7 @@ def test_readsequence():
     vc = viControl()
     vc.initialize_communication()
 
-    for cmd in viCommand.command_set.keys():
+    for cmd in ViCommand.command_set.keys():
         vd = vc.execReadCmd(cmd)
         print(f"{cmd} : {vd.value}")
 

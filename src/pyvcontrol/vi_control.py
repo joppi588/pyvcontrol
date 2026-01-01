@@ -23,7 +23,7 @@ from threading import Lock
 
 import serial
 
-from pyvcontrol.vi_command import viCommand
+from pyvcontrol.vi_command import ViCommand
 from pyvcontrol.vi_data import viData
 from pyvcontrol.vi_telegram import viTelegram
 
@@ -66,19 +66,19 @@ class viControl:
 
     def execute_read_command(self, command_name) -> viData:
         """Sends a read command and gets the response."""
-        vc = viCommand(command_name)
+        vc = ViCommand(command_name)
         return self.execute_command(vc, "read")
 
     def execute_write_command(self, command_name, value) -> viData:
         """Sends a write command and gets the response."""
-        vc = viCommand(command_name)
+        vc = ViCommand(command_name)
         vd = viData.create(vc.unit, value)
         return self.execute_command(vc, "write", payload=vd)
 
     def execute_function_call(self, command_name, *function_args) -> viData:
         """Sends a function call command and gets response."""
         payload = bytearray((len(function_args), *function_args))
-        vc = viCommand(command_name)
+        vc = ViCommand(command_name)
         return self.execute_command(vc, "call", payload=payload)
 
     def execute_command(self, vc, access_mode, payload=bytes(0)) -> viData:

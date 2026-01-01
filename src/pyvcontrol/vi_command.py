@@ -86,11 +86,11 @@ VITOCAL_WO1C = {
 }
 
 
-class viCommandError(Exception):
+class ViCommandError(Exception):
     """Indicates an error during command execution."""
 
 
-class viCommand(bytearray):
+class ViCommand(bytearray):
     """Representation of a command. Object value is a bytearray of address and length."""
 
     # =============================================================
@@ -104,7 +104,7 @@ class viCommand(bytearray):
         try:
             command = self.command_set[command_name]
         except Exception as error:
-            raise viCommandError(f"Unknown command {command_name}") from error
+            raise ViCommandError(f"Unknown command {command_name}") from error
         self._command_code = command[ADDRESS]
         self._value_bytes = command[LENGTH]
         self.unit = command[UNIT]
@@ -127,8 +127,8 @@ class viCommand(bytearray):
             logger.debug("Convert %s to command.", b.hex())
             command_name = next(key for key, value in cls.command_set.items() if value[ADDRESS].lower() == b[0:2].hex())
         except Exception as error:
-            raise viCommandError(f"No Command matching {b[0:2].hex()}") from error
-        return viCommand(command_name)
+            raise ViCommandError(f"No Command matching {b[0:2].hex()}") from error
+        return ViCommand(command_name)
 
     def response_length(self, access_mode="read"):
         """Returns the number of bytes in the response."""

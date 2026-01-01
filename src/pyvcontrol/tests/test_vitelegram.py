@@ -20,16 +20,16 @@
 
 import pytest
 
-from pyvcontrol.vi_command import viCommand
+from pyvcontrol.vi_command import ViCommand
 from pyvcontrol.vi_data import viData
 from pyvcontrol.vi_telegram import viTelegram, viTelegramError
 
 
 def test_read_telegram():
-    vc = viCommand("Anlagentyp")
+    vc = ViCommand("Anlagentyp")
     vt = viTelegram(vc, "read")
     assert vt.hex() == "4105000100f80402"
-    vc = viCommand("Warmwassertemperatur")
+    vc = ViCommand("Warmwassertemperatur")
     vt = viTelegram(vc, "read")
     assert vt.hex() == "41050001010d0216"
 

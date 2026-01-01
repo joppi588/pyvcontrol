@@ -20,7 +20,7 @@
 
 import logging
 
-from pyvcontrol.vi_command import viCommand
+from pyvcontrol.vi_command import ViCommand
 
 logger = logging.getLogger(name="pyvcontrol")
 
@@ -30,7 +30,7 @@ class viTelegramError(Exception):
 
 
 class viTelegram(bytearray):
-    # represents a telegram (header, viCommand, payload and checksum)
+    # represents a telegram (header, ViCommand, payload and checksum)
 
     # P300 Protokoll (thanks to M.Wenzel, SmartHomeNG plugin)
     #
@@ -99,8 +99,8 @@ class viTelegram(bytearray):
     tModes = {"read": b"\x01", "write": b"\x02", "call": b"\x07"}
     tStartByte = b"\x41"
 
-    def __init__(self, vc: viCommand, tMode="Read", tType="Request", payload=bytearray(0)):
-        # creates a telegram for sending as a combination of header, viCommand, payload and checksum
+    def __init__(self, vc: ViCommand, tMode="Read", tType="Request", payload=bytearray(0)):
+        # creates a telegram for sending as a combination of header, ViCommand, payload and checksum
         # payload is optional, usually of type viData
         # tType and tMode must be strings or bytes. Be careful when extracting from bytearray b - b[x] will be int not byte!
         self.vicmd = vc
@@ -171,7 +171,7 @@ class viTelegram(bytearray):
             header[3:4].hex(),
             b[7:-1].hex(),
         )
-        vicmd = viCommand._from_bytes(b[4:6])
+        vicmd = ViCommand._from_bytes(b[4:6])
         vt = viTelegram(vicmd, tType=header[2:3], tMode=header[3:4], payload=b[7:-1])
         return vt
 

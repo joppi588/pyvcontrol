@@ -20,48 +20,48 @@
 
 import pytest
 
-from pyvcontrol.vi_command import viCommand, viCommandError
+from pyvcontrol.vi_command import ViCommand, ViCommandError
 
 
 def test_vicommand_nomatch():
     # Command not existing
-    with pytest.raises(viCommandError):
-        _ = viCommand._from_bytes(b"\xf1\x00")
-    with pytest.raises(viCommandError):
-        _ = viCommand("foo")
+    with pytest.raises(ViCommandError):
+        _ = ViCommand._from_bytes(b"\xf1\x00")
+    with pytest.raises(ViCommandError):
+        _ = ViCommand("foo")
 
 
 def test_vicommand_frombytes():
     # create command from raw bytes
-    vc = viCommand._from_bytes(b"\x00\xf8")
+    vc = ViCommand._from_bytes(b"\x00\xf8")
     assert vc.command_name == "Anlagentyp"
 
 
 def test_vicommand_anlagentyp():
     # create command from string
-    vc = viCommand("Anlagentyp")
+    vc = ViCommand("Anlagentyp")
     assert vc.hex() == "00f804"
 
 
 def test_vicommand_wweinmal():
     # create command from string
-    vc = viCommand("WWeinmal")
+    vc = ViCommand("WWeinmal")
     assert vc.hex() == "b02001"
 
 
 def test_vicommand_aussentemperatur():
     # create command from string
-    vc = viCommand("Aussentemperatur")
+    vc = ViCommand("Aussentemperatur")
     assert vc.hex() == "010102"
 
 
 def test_vicommand_warmwassertemperatur():
     # create command from string
-    vc = viCommand("Warmwassertemperatur")
+    vc = ViCommand("Warmwassertemperatur")
     assert vc.hex() == "010d02"
 
 
 def test_vicommand_betriebsmodus():
     # Given: When: Then: Correct viData is returned
-    vc = viCommand("Betriebsmodus")
+    vc = ViCommand("Betriebsmodus")
     assert vc.unit == "BA"
