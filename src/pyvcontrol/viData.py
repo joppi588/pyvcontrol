@@ -20,6 +20,8 @@
 import logging
 from struct import unpack
 
+logger = logging.getLogger(name="pyvcontrol")
+
 
 class viDataException(Exception):
     def __init__(self, msg):
@@ -45,8 +47,8 @@ class viData(bytearray):
     # IU3600: Int unsigned, base 3600 (i.e. hours & seconds)
     # OO    : On Off,
     # RT    : Return Type
-    # FIXME: implemented all units -> create own classes
-    # FIXME: Units für Temperatur, h, etc. erzeugen
+    # TODO: implemented all units -> create own classes
+    # TODO: Units für Temperatur, h, etc. erzeugen
 
     # units not implemented so far:
     unitset = {
@@ -82,9 +84,9 @@ class viData(bytearray):
     }
 
     def __init__(self, value):
-        """to be overridden by subclass. subclass __init__ shall set default value for value and handle any extra parameters"""
+        """To be overridden by subclass. subclass __init__ shall set default value for value and handle any extra parameters."""
         super().__init__()
-        if type(value) == bytes or type(value) == bytearray:
+        if isinstance(value, (bytes, bytearray)):
             self._create_from_raw(value)
         else:
             self._create_from_value(value)
@@ -109,7 +111,7 @@ class viData(bytearray):
     def create(cls, datatype, *args):
         # select data type object based on type
         # args are passed as such to the constructor of the function
-        logging.debug(f"Data factory: request to produce Data type {datatype} with args {args}")
+        logger.debug("Data factory: request to produce Data type %s with args {args}", datatype)
         datatype_object = {
             "BA": viDataBA,
             "DT": viDataDT,
@@ -122,11 +124,10 @@ class viData(bytearray):
             "ES": viDataES,
             "F_E": viDataEnergy,
         }
-        if datatype in datatype_object.keys():
+        if datatype in datatype_object:
             return datatype_object[datatype](*args)
-        else:
-            # if unit type is not implemented
-            raise viDataException(f"Unit {datatype} not known")
+        # if unit type is not implemented
+        raise viDataException(f"Unit {datatype} not known")
 
 
 # ----------------------------------------
@@ -156,7 +157,7 @@ class viDataBA(viData):
 
     def _create_from_raw(self, value):
         # set raw value directly
-        if int.from_bytes(value, "little") in self.operatingmodes.keys():
+        if int.from_bytes(value, "little") in self.operatingmodes:
             super().extend(value)
         else:
             raise viDataException(f"Unknown operating mode {value.hex()}")
@@ -248,7 +249,7 @@ class viDataES(viData):
 
     def _create_from_raw(self, value):
         # set raw value directly
-        if int.from_bytes(value, "big") in self.errorset.keys():
+        if int.from_bytes(value, "big") in self.errorset:
             super().extend(value)
         else:
             raise viDataException(f"Unknown error code {value.hex()}")
@@ -290,7 +291,7 @@ class viDataDT(viData):
 
     def _create_from_raw(self, value):
         # set raw value directly
-        if int.from_bytes(value, "big") in self.devicetypes.keys():
+        if int.from_bytes(value, "big") in self.devicetypes:
             super().extend(value)
         else:
             raise viDataException(f"Unknown device code {value.hex()}")
@@ -320,7 +321,7 @@ class viDataIS10(viData):
 
     def _create_from_value(self, value):
         # fixed-point number given
-        # FIXME Is it ok to overwrite its own value or should a new object be returned?
+        # TODO: Is it ok to overwrite its own value or should a new object be returned?
         super().extend(int(value * 10).to_bytes(self.len, "little", signed=True))
 
     @property
@@ -402,7 +403,7 @@ class viDataRT(viData):
 
     def _create_from_raw(self, value):
         # set raw value directly
-        if int.from_bytes(value, "big") in self.returnstatus.keys():
+        if int.from_bytes(value, "big") in self.returnstatus:
             super().extend(value)
         else:
             raise viDataException(f"Unknown return status {value.hex()}")
@@ -433,7 +434,7 @@ class viDataOO(viData):
 
     def _create_from_raw(self, value):
         # set raw value directly
-        if int.from_bytes(value, "big") in self.OnOff.keys():
+        if int.from_bytes(value, "big") in self.OnOff:
             super().extend(value)
         else:
             raise viDataException(f"Unknown value {value.hex()}")
@@ -449,7 +450,7 @@ HEATING_ENERGY_FACTOR = 0.1
 
 
 class viDataEnergy(viData):
-    """Energy-Type ... Return from Function-Call B800"""
+    """Energy-Type ... Return from Function-Call B800."""
 
     unit = ({"code": "F_E", "description": "returns dictionary with energy data", "unit": ""},)
 
@@ -475,8 +476,7 @@ class viDataEnergy(viData):
 
     @property
     def value(self):
-        """decode the Result Record and return a dictionary."""
-
+        """Decode the Result Record and return a dictionary."""
         total_energy = self.heating_energy + self.water_energy + self.cooling_energy
         total_electrical_energy = (
             self.heating_electrical_energy + self.water_electrical_energy + self.cooling_electrical_energy

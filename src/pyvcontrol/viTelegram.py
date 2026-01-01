@@ -157,7 +157,7 @@ class viTelegram(bytearray):
             raise viTelegramException("Startbyte not found")
 
         header = b[0:4]
-        logging.debug(
+        logger.debug(
             f"Header: {header.hex()}, tType={header[2:3].hex()}, tMode={header[3:4].hex()}, payload={b[7:-1].hex()}"
         )
         vicmd = viCommand._from_bytes(b[4:6])

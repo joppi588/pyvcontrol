@@ -22,11 +22,12 @@ import logging
 from threading import Lock
 
 import serial
-from deprecated import deprecated
 
 from pyvcontrol.viCommand import viCommand
 from pyvcontrol.viData import viData
 from pyvcontrol.viTelegram import viTelegram
+
+logger = logging.getLogger(name="pyvcontrol")
 
 control_set = {
     "Baudrate": 4800,
@@ -61,35 +62,19 @@ class viControl:
         # destructor, releases serial port
         self.vs.disconnect()
 
-    @deprecated(version="1.3", reason="replaced by execute_read_command")
-    def execReadCmd(self, cmdname) -> viData:
-        """sends a read command and gets the response."""
-        return self.execute_read_command(cmdname)
-
     def execute_read_command(self, command_name) -> viData:
-        """sends a read command and gets the response."""
+        """Sends a read command and gets the response."""
         vc = viCommand(command_name)
         return self.execute_command(vc, "read")
 
-    @deprecated(version="1.3", reason="replaced by execute_write_command")
-    def execWriteCmd(self, cmdname, value) -> viData:
-        """sends a write command and gets the response."""
-        return self.execute_write_command(cmdname, value=value)
-
     def execute_write_command(self, command_name, value) -> viData:
-        """sends a write command and gets the response."""
+        """Sends a write command and gets the response."""
         vc = viCommand(command_name)
         vd = viData.create(vc.unit, value)
         return self.execute_command(vc, "write", payload=vd)
 
-    @deprecated(version="1.3", reason="replaced by execute_write_command")
-    def execFunctionCall(self, cmdname, *function_args) -> viData:
-        """sends a function call command and gets response."""
-        payload = bytearray((len(function_args), *function_args))
-        return self.execute_command(cmdname, "call", payload=payload)
-
     def execute_function_call(self, command_name, *function_args) -> viData:
-        """sends a function call command and gets response."""
+        """Sends a function call command and gets response."""
         payload = bytearray((len(function_args), *function_args))
         vc = viCommand(command_name)
         return self.execute_command(vc, "call", payload=payload)
@@ -104,19 +89,19 @@ class viControl:
 
         # send Telegram
         vt = viTelegram(vc, access_mode, payload=payload)
-        logging.debug(f"Send telegram {vt.hex()}")
+        logger.debug("Send telegram %s", vt.hex())
         self.vs.send(vt)
 
         # Check if sending was successful
         ack = self.vs.read(1)
-        logging.debug(f"Received  {ack.hex()}")
+        logger.debug("Received %s", ack.hex())
         if ack != ctrlcode["acknowledge"]:
             raise viControlException(f"Expected acknowledge byte, received {ack}")
 
         # Receive response and evaluate data
         vr = self.vs.read(vt.response_length)  # receive response
         vt = viTelegram.from_bytes(vr)
-        logging.debug(f"Requested {vt.response_length} bytes. Received telegram {vr.hex()}")
+        logger.debug("Requested %s bytes. Received telegram {vr.hex()}", vt.response_length)
         if vt.tType == viTelegram.tTypes["error"]:
             raise viControlException(f"{access_mode} command returned an error")
         self.vs.send(ctrlcode["acknowledge"])  # send acknowledge
@@ -124,12 +109,8 @@ class viControl:
         # return viData object from payload
         return viData.create(vt.vicmd.unit, vt.payload)
 
-    @deprecated(version="1.3", reason="replaced by initialize_communication.")
-    def initComm(self):
-        self.initialize_communication()
-
     def initialize_communication(self):
-        logging.debug("Init Communication to viControl....")
+        logger.debug("Init Communication to viControl....")
         self.is_initialized = False
 
         # loop cases
@@ -137,39 +118,39 @@ class viControl:
         # 1 - ii=0: error -> send reset / ii=1: not_init, send sync / ii=2:  Initialization successful
         # 2 - ... ii=10: exit loop, give up
 
-        for ii in range(0, 10):
+        for ii in range(10):
             # loop until interface is initialized
             read_byte = self.vs.read(1)
             if read_byte == ctrlcode["acknowledge"]:
                 # Schnittstelle hat auf den Initialisierungsstring mit OK geantwortet. Die Abfrage von Werten kann beginnen.
-                logging.debug(f"Step {ii}: Initialization successful")
+                logger.debug("Step %s: Initialization successful", ii)
                 self.is_initialized = True
                 break
-            elif read_byte == ctrlcode["not_init"]:
+            if read_byte == ctrlcode["not_init"]:
                 # Schnittstelle ist zurückgesetzt und wartet auf Daten; Antwort b'\x05' = Warten auf Initialisierungsstring
-                logging.debug(f"Step {ii}: Viessmann ready, not initialized, send sync")
+                logger.debug("Step %s: Viessmann ready, not initialized, send sync", ii)
                 self.vs.send(ctrlcode["sync_cmd"])
             elif read_byte == ctrlcode["error"]:
                 # in case of error try to reset
-                logging.error(f"The interface has reported an error (\x15), loop increment {ii}")
-                logging.debug(f"Step {ii}: Send reset")
+                logger.error("The interface has reported an error, loop increment %s", ii)
+                logger.debug("Step %s: Send reset", ii)
                 self.vs.send(ctrlcode["reset_cmd"])
             else:
                 # send reset
-                logging.debug(f"Received [{read_byte}]. Step {ii}: Send reset")
+                logger.debug("Received [%s]. Step {ii}: Send reset", read_byte)
                 self.vs.send(ctrlcode["reset_cmd"])
 
         if not self.is_initialized:
             # initialisation not successful
             raise viControlException("Could not initialize communication")
 
-        logging.debug("Communication initialized")
+        logger.debug("Communication initialized")
         return True
 
 
 class viSerial:
     # low-level communication interface
-    # FIXME: control sets nicht übernommen
+    # TODO: control sets nicht übernommen
     _viessmann_lock = Lock()
 
     # viControl socket: implement raw communication
@@ -184,12 +165,12 @@ class viSerial:
         # if not connected, try to acquire lock
         if self._connected:
             # do nothing
-            logging.debug("Connect: Already connected")
+            logger.debug("Connect: Already connected")
             return
         if self._viessmann_lock.acquire(timeout=10):
             try:
                 # initialize serial connection
-                logging.debug("Connecting ...")
+                logger.debug("Connecting ...")
                 self._serial.baudrate = self._control_set["Baudrate"]
                 self._serial.parity = self._control_set["Parity"]
                 self._serial.bytesize = self._control_set["Bytesize"]
@@ -198,13 +179,13 @@ class viSerial:
                 self._serial.timeout = 0.25  # read method will try 10 times -> 2.5s max waiting time
                 self._serial.open()
                 self._connected = True
-                logging.debug("Connected to {}".format(self._serial_port))
-            except Exception as e:
-                logging.error("Could not connect to {}; Error: {}".format(self._serial_port, e))
+                logger.debug("Connected to %s", self._serial_port)
+            except Exception:
+                logger.exception("Could not connect to %s.", self._serial_port)
                 self._viessmann_lock.release()
                 self._connected = False
         else:
-            logging.error("Could not acquire lock")
+            logger.error("Could not acquire lock")
 
     def disconnect(self):
         # release serial line and lock
@@ -212,21 +193,20 @@ class viSerial:
         self._serial = None
         self._viessmann_lock.release()
         self._connected = False
-        logging.debug("Disconnected from viControl")
+        logger.debug("Disconnected from viControl")
 
     def send(self, packet):
         # if connected send the packet
         if self._connected:
             self._serial.write(packet)
             return True
-        else:
-            return False
+        return False
 
     def read(self, length):
         # read bytes from serial connection
         total_read_bytes = bytearray(0)
         failed_count = 0
-        # FIXME: read length bytes and try ten times if nothing received
+        # TODO: read length bytes and try ten times if nothing received
         while failed_count < 10:
             # try to get one or more bytes
             read_byte = self._serial.read()
@@ -237,6 +217,6 @@ class viSerial:
             if len(read_byte) == 0:
                 # if nothing received, wait and retry
                 failed_count += 1
-                logging.debug(f"Serial read: retry ({failed_count})")
-        logging.debug(f"Received {len(total_read_bytes)}/{length} bytes")
+                logger.debug("Serial read: retry (%s)", failed_count)
+        logger.debug("Received %s/{length} bytes", len(total_read_bytes))
         return bytes(total_read_bytes)

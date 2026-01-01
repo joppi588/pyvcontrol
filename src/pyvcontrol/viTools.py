@@ -23,12 +23,14 @@ import time
 
 from pyvcontrol.viControl import ctrlcode, viControl, viControlException, viTelegram
 
+logger = logging.getLogger(name="pyvcontrol")
+
 
 def viscancommands(addressrange):
     # brute force command scanner
     # hilft v.a. um die richtige Payload-Länge für bekannte Kommandos herauszufinden
 
-    logging.basicConfig(filename="scancommands.log", filemode="w", level=logging.DEBUG)
+    logging.basicConfig(filename="scancommands.log", filemode="w", level=logger.debug)
 
     vo = viControl()
     vo.initialize_communication()
@@ -36,17 +38,17 @@ def viscancommands(addressrange):
     for addr in addressrange:
         for kk in range(1, 5):
             # TODO: Inneren Teil ausschneiden und in separate Funktion? ("low level read command")
-            logging.debug(f"---{hex(addr)}-{kk}------------------")
+            logger.debug("---%s-{kk}------------------", hex(addr))
             vc = addr.to_bytes(2, "big") + kk.to_bytes(1, "big")
             vt = viTelegram(vc, "read")  # create read Telegram
             vo.vs.send(vt)  # send Telegram
-            logging.debug(f"Send telegram {vt.hex()}")
+            logger.debug("Send telegram %s", vt.hex())
 
             try:
                 # Check if sending was successfull
                 ack = vo.vs.read(1)
                 if ack != ctrlcode["acknowledge"]:
-                    logging.debug(f"Viessmann returned {ack.hex()}")
+                    logger.debug("Viessmann returned %s", ack.hex())
                     vo.initialize_communication()
                     raise viControlException(f"Expected acknowledge byte, received {ack}")
 
@@ -54,14 +56,14 @@ def viscancommands(addressrange):
                 vr1 = vo.vs.read(2)  # receive response
                 vr2 = vo.vs.read(vr1[1] + 1)  # read rest of telegram
                 # FIXME: create Telegram instead of low-level access (for better readability)
-                logging.debug(f"received telegram {vr1.hex()} {vr2.hex()}")
+                logger.debug("received telegram %s {vr2.hex()}", vr1.hex())
 
                 if vr2[0].to_bytes(1, "little") == viTelegram.tTypes["response"]:
                     v = int.from_bytes(vr2[-1 - kk : -1], "little")
                     print(f"Found working command 0x{hex(addr)}, payload length {kk}, value {v}")
 
             except Exception as e:
-                logging.error({e})
+                logging.exception({e})
                 print(f"An exception occurred: {e}")
 
 
@@ -75,7 +77,7 @@ def vimonitor(command_list, updateinterval=30):
         # wrap single commands into a list
         command_list = [command_list]
 
-    logging.basicConfig(filename="Monitor.log", filemode="w", level=logging.DEBUG)
+    logging.basicConfig(filename="Monitor.log", filemode="w", level=logger.debug)
     vo = viControl()
 
     standard_screen = curses.initscr()
@@ -120,9 +122,9 @@ def vi_scan_function_call(commandname, functionrange):
 
     for func in functionrange:  # First Parameter is Byte
         print(f"==========Function # {func}===========")
-        for day in range(0, 6):
+        for day in range(6):
             try:
                 print(vo.execFunctionCall(commandname, func, day).valueScan)
             except Exception as e:
-                logging.error({e})
+                logging.exception({e})
                 print(f"Day {day}: An exception occurred: {e}")
