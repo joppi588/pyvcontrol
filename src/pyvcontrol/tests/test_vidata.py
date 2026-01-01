@@ -17,69 +17,69 @@
 #  along with this program. If not, see <http://www.gnu.org/licenses/>.
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
+
 """Test cases for class viData."""
 
 import pytest
 
-from pyvcontrol.viData import viData as vd
-from pyvcontrol.viData import viDataException
+from pyvcontrol.viData import viData, viDataException
 
 
 class Test_viDataBA:
     def test_BAEmpty(self):
         # create empty class and check mode
-        dBA = vd.create("BA")
+        dBA = viData.create("BA")
         assert dBA.value == "OFF"  # defaults to mode 'OFF'
 
     def test_BA02raw(self):
         # create class with defined operation mode from raw byte
-        dBA = vd.create("BA", b"\x02")
+        dBA = viData.create("BA", b"\x02")
         assert dBA.value == "HEATING_WW"
 
     def test_BA01(self):
         # create class with constructor and parameter
-        dBA = vd.create("BA", "WW")
+        dBA = viData.create("BA", "WW")
         assert dBA == b"\x01"
 
     def test_BA6666Empty(self):
         # test call with non-existent mode
         with pytest.raises(viDataException):
-            vd.create("BA", b"\x66\x66")
+            viData.create("BA", b"\x66\x66")
 
     def test_BAfoobar(self):
         # test call with non-existent mode
         with pytest.raises(viDataException):
-            vd.create("BA", "foobar")
+            viData.create("BA", "foobar")
 
 
 class Test_viDataDT:
     def test_DTempty(self):
         # initialize empty device type (standard)
-        dDT = vd.create("DT")
+        dDT = viData.create("DT")
         assert dDT.value == "unknown"
 
     def test_DTraw(self):
         # initialize from raw data
-        dDT = vd.create("DT", b"\x20\x4d")
+        dDT = viData.create("DT", b"\x20\x4d")
         assert dDT.value, "V200WO1C== Protokoll: P300"
 
     def test_DTstr(self):
-        dDT = vd.create("DT", "unknown")
+        dDT = viData.create("DT", "unknown")
         assert dDT == b"\x00\x00"
 
 
 class Test_viDataIS10:
     def test_IS10(self):
-        dIS10 = vd.create("IS10", 10.15)
+        dIS10 = viData.create("IS10", 10.15)
         assert dIS10.value == 10.1
 
     def test_IS10raw(self):
-        dIS10 = vd.create("IS10", b"e\x00")
+        dIS10 = viData.create("IS10", b"e\x00")
         assert dIS10.value == 10.1
 
     def test_IS10minus(self):
         f = -9.856
-        dIS10 = vd.create("IS10", f)
+        dIS10 = viData.create("IS10", f)
         print(f"Hex representation of {f} is {dIS10.hex()}")
         assert dIS10.value == -9.8
 
@@ -89,38 +89,38 @@ class Test_viDataIS10:
 class Test_viDataIUNON:
     def test_IUNON(self):
         f = 415
-        dIUNON = vd.create("IUNON", f)
+        dIUNON = viData.create("IUNON", f)
         print(f"Hex representation of {f} is {dIUNON.hex()}")
         assert dIUNON.value == f
 
     def test_IUNONraw(self):
-        dIUNON = vd.create("IUNON", b"\x9f\x01")
+        dIUNON = viData.create("IUNON", b"\x9f\x01")
         assert dIUNON.value == 415
 
 
 class Test_viDataOO:
     def test_OO(self):
         f = "On"
-        dOO = vd.create("OO", f)
+        dOO = viData.create("OO", f)
         print(f"Hex representation of {f} is {dOO.hex()}")
         assert dOO.value == f
 
     def test_OOraw(self):
-        dOO = vd.create("OO", b"\x02")
+        dOO = viData.create("OO", b"\x02")
         assert dOO.value == "On"
 
     def test_OO_unknown_value(self):
         with pytest.raises(viDataException):
-            dOO = vd.create("OO", "foo")  # noqa: F841
+            dOO = viData.create("OO", "foo")  # noqa: F841
 
     def test_OO_default_value(self):
-        dOO = vd.create("OO")
+        dOO = viData.create("OO")
         assert dOO.value == "Off"
 
 
 class Test_viDataEnergy:
     def test_default(self):
-        data_energy = vd.create("F_E")
+        data_energy = viData.create("F_E")
         assert data_energy.day == 0
         assert data_energy.week == 0
         assert data_energy.year == 2000
@@ -134,7 +134,7 @@ class Test_viDataEnergy:
     def test_typical_values(self):
         example_data = bytes.fromhex("02 02 16 09 92 03 aa 00 99 00 2d 00 00 00 00 00")
 
-        data_energy = vd.create("F_E", example_data)
+        data_energy = viData.create("F_E", example_data)
         value_dictionary = data_energy.value
         reference_dictionary = {
             "day": 2,
@@ -155,4 +155,4 @@ class Test_viDataEnergy:
     def test_failed_init(self):
         example_data = 1.2
         with pytest.raises(viDataException):
-            vd.create("F_E", example_data)
+            viData.create("F_E", example_data)

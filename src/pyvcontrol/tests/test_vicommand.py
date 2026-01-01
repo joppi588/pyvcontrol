@@ -37,31 +37,31 @@ def test_vicommand_frombytes():
     assert vc.command_name == "Anlagentyp"
 
 
-def test_vicommand_Anlagentyp():
+def test_vicommand_anlagentyp():
     # create command from string
     vc = viCommand("Anlagentyp")
     assert vc.hex() == "00f804"
 
 
-def test_vicommand_WWeinmal():
+def test_vicommand_wweinmal():
     # create command from string
     vc = viCommand("WWeinmal")
     assert vc.hex() == "b02001"
 
 
-def test_vicommand_Aussentemperatur():
+def test_vicommand_aussentemperatur():
     # create command from string
     vc = viCommand("Aussentemperatur")
     assert vc.hex() == "010102"
 
 
-def test_vicommand_Warmwassertemperatur():
+def test_vicommand_warmwassertemperatur():
     # create command from string
     vc = viCommand("Warmwassertemperatur")
     assert vc.hex() == "010d02"
 
 
-def test_vicommand_Betriebsmodus():
+def test_vicommand_betriebsmodus():
     # Given: When: Then: Correct viData is returned
     vc = viCommand("Betriebsmodus")
     assert vc.unit == "BA"
