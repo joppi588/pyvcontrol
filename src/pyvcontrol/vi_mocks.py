@@ -26,6 +26,8 @@ from pyvcontrol.viData import viData
 
 
 class ViSerialMock(NonCallableMock):
+    """Mock for serial interface."""
+
     def __init__(self):
         super().__init__(spec=viControl)
         self._connected = False
@@ -54,7 +56,7 @@ class ViSerialMock(NonCallableMock):
 
 
 class ViControlMock(NonCallableMock):
-    def __init__(self, vi_data=None, **kwargs):
+    def __init__(self, vi_data=None):
         super().__init__(spec=viControl)
         self.vi_data = vi_data or {}
         self.initialize_communication.side_effect = self._initialize_communication
@@ -64,10 +66,9 @@ class ViControlMock(NonCallableMock):
     def _initialize_communication(self):
         return True
 
-    def _execute_read_command(self, cmdName):
-        return self.vi_data[cmdName]
+    def _execute_read_command(self, command: str):
+        return self.vi_data[command]
 
-    def _execute_write_command(self, cmdName, value):
-        vc = viCommand(cmdName)
-        self.vi_data[cmdName] = viData.create(vc.unit, value)
-        return None
+    def _execute_write_command(self, command: str, value):
+        vc = viCommand(command)
+        self.vi_data[command] = viData.create(vc.unit, value)
