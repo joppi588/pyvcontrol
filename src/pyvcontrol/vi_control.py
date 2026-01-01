@@ -25,7 +25,7 @@ import serial
 
 from pyvcontrol.vi_command import ViCommand
 from pyvcontrol.vi_data import viData
-from pyvcontrol.vi_telegram import viTelegram
+from pyvcontrol.vi_telegram import ViTelegram
 
 logger = logging.getLogger(name="pyvcontrol")
 
@@ -88,7 +88,7 @@ class ViControl:
             raise ViControlError(f"command {vc.command_name} allows only {allowed_access_mode[vc.access_mode]} access")
 
         # send Telegram
-        vt = viTelegram(vc, access_mode, payload=payload)
+        vt = ViTelegram(vc, access_mode, payload=payload)
         logger.debug("Send telegram %s", vt.hex())
         self.vs.send(vt)
 
@@ -100,9 +100,9 @@ class ViControl:
 
         # Receive response and evaluate data
         vr = self.vs.read(vt.response_length)  # receive response
-        vt = viTelegram.from_bytes(vr)
+        vt = ViTelegram.from_bytes(vr)
         logger.debug("Requested %s bytes. Received telegram {vr.hex()}", vt.response_length)
-        if vt.tType == viTelegram.tTypes["error"]:
+        if vt.tType == ViTelegram.tTypes["error"]:
             raise ViControlError(f"{access_mode} command returned an error")
         self.vs.send(ctrlcode["acknowledge"])  # send acknowledge
 

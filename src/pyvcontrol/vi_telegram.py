@@ -25,11 +25,11 @@ from pyvcontrol.vi_command import ViCommand
 logger = logging.getLogger(name="pyvcontrol")
 
 
-class viTelegramError(Exception):
+class ViTelegramError(Exception):
     pass
 
 
-class viTelegram(bytearray):
+class ViTelegram(bytearray):
     # represents a telegram (header, ViCommand, payload and checksum)
 
     # P300 Protokoll (thanks to M.Wenzel, SmartHomeNG plugin)
@@ -118,7 +118,7 @@ class viTelegram(bytearray):
         super().__init__(b + self._checksum_byte(b))
 
     def _header(self):
-        """Create viTelegram header."""
+        """Create ViTelegram header."""
         # 1 byte - type
         # 1 byte - mode
         #
@@ -155,13 +155,13 @@ class viTelegram(bytearray):
         # header bytes are [0]-> Startbyte, [1]:total value byte length,[2]: type, [3] mode
 
         # validate checksum
-        if b[-1:] != viTelegram._checksum_byte(b[0:-1]):
-            raise viTelegramError(
-                f"Checksum not valid. Expected {b[-1:]}, Calculated {viTelegram._checksum_byte(b[0:-1])}"
+        if b[-1:] != ViTelegram._checksum_byte(b[0:-1]):
+            raise ViTelegramError(
+                f"Checksum not valid. Expected {b[-1:]}, Calculated {ViTelegram._checksum_byte(b[0:-1])}"
             )
         # validate Startbyte
         if b[0:1] != cls.tStartByte:
-            raise viTelegramError("Startbyte not found")
+            raise ViTelegramError("Startbyte not found")
 
         header = b[0:4]
         logger.debug(
@@ -172,7 +172,7 @@ class viTelegram(bytearray):
             b[7:-1].hex(),
         )
         vicmd = ViCommand._from_bytes(b[4:6])
-        vt = viTelegram(vicmd, tType=header[2:3], tMode=header[3:4], payload=b[7:-1])
+        vt = ViTelegram(vicmd, tType=header[2:3], tMode=header[3:4], payload=b[7:-1])
         return vt
 
     @classmethod

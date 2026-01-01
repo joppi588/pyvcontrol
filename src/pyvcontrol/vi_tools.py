@@ -21,7 +21,7 @@ import curses
 import logging
 import time
 
-from pyvcontrol.vi_control import ViControl, ViControlError, ctrlcode, viTelegram
+from pyvcontrol.vi_control import ViControl, ViControlError, ViTelegram, ctrlcode
 
 logger = logging.getLogger(name="pyvcontrol")
 
@@ -40,7 +40,7 @@ def viscancommands(addressrange):
             # TODO: Inneren Teil ausschneiden und in separate Funktion? ("low level read command")
             logger.debug("---%s-{kk}------------------", hex(addr))
             vc = addr.to_bytes(2, "big") + kk.to_bytes(1, "big")
-            vt = viTelegram(vc, "read")  # create read Telegram
+            vt = ViTelegram(vc, "read")  # create read Telegram
             vo.vs.send(vt)  # send Telegram
             logger.debug("Send telegram %s", vt.hex())
 
@@ -58,7 +58,7 @@ def viscancommands(addressrange):
                 # TODO: create Telegram instead of low-level access (for better readability)
                 logger.debug("received telegram %s {vr2.hex()}", vr1.hex())
 
-                if vr2[0].to_bytes(1, "little") == viTelegram.tTypes["response"]:
+                if vr2[0].to_bytes(1, "little") == ViTelegram.tTypes["response"]:
                     v = int.from_bytes(vr2[-1 - kk : -1], "little")
                     print(f"Found working command 0x{hex(addr)}, payload length {kk}, value {v}")
 
