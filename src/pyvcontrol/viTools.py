@@ -63,7 +63,7 @@ def viscancommands(addressrange):
                     print(f"Found working command 0x{hex(addr)}, payload length {kk}, value {v}")
 
             except Exception as e:
-                logging.exception({e})
+                logger.exception({e})
                 print(f"An exception occurred: {e}")
 
 
@@ -125,6 +125,5 @@ def vi_scan_function_call(commandname, functionrange):
         for day in range(6):
             try:
                 print(vo.execFunctionCall(commandname, func, day).valueScan)
-            except Exception as e:
-                logging.exception({e})
-                print(f"Day {day}: An exception occurred: {e}")
+            except Exception:
+                logger.exception("Exception on day %s.", day)
