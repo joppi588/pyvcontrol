@@ -17,7 +17,7 @@
 #  along with this program. If not, see <http://www.gnu.org/licenses/>.
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
-
+# ruff: noqa: N802,N806
 """Test cases for class viData."""
 
 import pytest
