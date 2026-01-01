@@ -101,7 +101,7 @@ class ViTelegram(bytearray):
 
     def __init__(self, vc: ViCommand, tMode="Read", tType="Request", payload=bytearray(0)):
         # creates a telegram for sending as a combination of header, ViCommand, payload and checksum
-        # payload is optional, usually of type viData
+        # payload is optional, usually of type ViData
         # tType and tMode must be strings or bytes. Be careful when extracting from bytearray b - b[x] will be int not byte!
         self.vicmd = vc
         self.tType = (
@@ -122,7 +122,7 @@ class ViTelegram(bytearray):
         # 1 byte - type
         # 1 byte - mode
         #
-        # Data length (bytes): type (1), mode (1), command code (x), payload viData (x)
+        # Data length (bytes): type (1), mode (1), command code (x), payload ViData (x)
         data_length = 2 + len(self.vicmd) + len(self.payload)
         return self.tStartByte + data_length.to_bytes(1, "big") + self.tType + self.tMode
 

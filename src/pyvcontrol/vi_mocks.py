@@ -22,7 +22,7 @@ from unittest.mock import NonCallableMock
 
 from pyvcontrol.vi_command import ViCommand
 from pyvcontrol.vi_control import ViControl, control_set
-from pyvcontrol.vi_data import viData
+from pyvcontrol.vi_data import ViData
 
 
 class ViSerialMock(NonCallableMock):
@@ -71,4 +71,4 @@ class ViControlMock(NonCallableMock):
 
     def _execute_write_command(self, command: str, value):
         vc = ViCommand(command)
-        self.vi_data[command] = viData.create(vc.unit, value)
+        self.vi_data[command] = ViData.create(vc.unit, value)

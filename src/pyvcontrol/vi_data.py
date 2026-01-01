@@ -23,12 +23,12 @@ from struct import unpack
 logger = logging.getLogger(name="pyvcontrol")
 
 
-class viDataError(Exception):
+class ViDataError(Exception):
     def __init__(self, msg):
         super().__init__(msg)
 
 
-class viData(bytearray):
+class ViData(bytearray):
     # implements representations of ViControl data types
     # erzeugen eines Datentypes über benannte Klasse -> setze code und codiere Parameter als bytes
 
@@ -113,28 +113,28 @@ class viData(bytearray):
         # args are passed as such to the constructor of the function
         logger.debug("Data factory: request to produce Data type %s with args {args}", datatype)
         datatype_object = {
-            "BA": viDataBA,
-            "DT": viDataDT,
-            "IS10": viDataIS10,
-            "IU10": viDataIU10,
-            "IU3600": viDataIU3600,
-            "IUNON": viDataIUNON,
-            "RT": viDataRT,
-            "OO": viDataOO,
-            "ES": viDataES,
-            "F_E": viDataEnergy,
+            "BA": ViDataBA,
+            "DT": ViDataDT,
+            "IS10": ViDataIS10,
+            "IU10": ViDataIU10,
+            "IU3600": ViDataIU3600,
+            "IUNON": ViDataIUNON,
+            "RT": ViDataRT,
+            "OO": ViDataOO,
+            "ES": ViDataES,
+            "F_E": ViDataEnergy,
         }
         if datatype in datatype_object:
             return datatype_object[datatype](*args)
         # if unit type is not implemented
-        raise viDataError(f"Unit {datatype} not known")
+        raise ViDataError(f"Unit {datatype} not known")
 
 
 # ----------------------------------------
 # Below are the class definitions for each unit
 
 
-class viDataBA(viData):
+class ViDataBA(ViData):
     # Betriebsart
     unit = {"code": "BA", "description": "Betriebsart", "unit": ""}
     # operating mode codes are hex numbers
@@ -153,14 +153,14 @@ class viDataBA(viData):
             opcode = next(key for key, value in self.operatingmodes.items() if value == opmode)
             super().extend(opcode.to_bytes(1, "little"))
         else:
-            raise viDataError(f"Unknown operating mode {opmode}. Options are {self.operatingmodes.values()}")
+            raise ViDataError(f"Unknown operating mode {opmode}. Options are {self.operatingmodes.values()}")
 
     def _create_from_raw(self, value):
         # set raw value directly
         if int.from_bytes(value, "little") in self.operatingmodes:
             super().extend(value)
         else:
-            raise viDataError(f"Unknown operating mode {value.hex()}")
+            raise ViDataError(f"Unknown operating mode {value.hex()}")
 
     @property
     def value(self):
@@ -168,7 +168,7 @@ class viDataBA(viData):
         return self.operatingmodes[int.from_bytes(self, "little")]
 
 
-class viDataES(viData):
+class ViDataES(ViData):
     # ERROR states
     unit = {"code": "ES", "description": "Error", "unit": ""}
     # error codes are hex numbers
@@ -252,7 +252,7 @@ class viDataES(viData):
         if int.from_bytes(value, "big") in self.errorset:
             super().extend(value)
         else:
-            raise viDataError(f"Unknown error code {value.hex()}")
+            raise ViDataError(f"Unknown error code {value.hex()}")
 
     @property
     def value(self):
@@ -260,7 +260,7 @@ class viDataES(viData):
         return self.errorset[int.from_bytes(self, "big")]
 
 
-class viDataDT(viData):
+class ViDataDT(ViData):
     # device types
     unit = {"description": "DeviceType", "code": "DT", "unit": ""}  # vito unit: DT
     devicetypes = {
@@ -294,7 +294,7 @@ class viDataDT(viData):
         if int.from_bytes(value, "big") in self.devicetypes:
             super().extend(value)
         else:
-            raise viDataError(f"Unknown device code {value.hex()}")
+            raise ViDataError(f"Unknown device code {value.hex()}")
 
     def _create_from_value(self, devicename):
         # devicename given as string
@@ -302,7 +302,7 @@ class viDataDT(viData):
             devcode = next(key for key, value in self.devicetypes.items() if value == devicename)
             super().extend(devcode.to_bytes(2, "big"))
         else:
-            raise viDataError(f"Unknown device name {devicename}")
+            raise ViDataError(f"Unknown device name {devicename}")
 
     @property
     def value(self):
@@ -310,7 +310,7 @@ class viDataDT(viData):
         return self.devicetypes[int.from_bytes(self, "big")]
 
 
-class viDataIS10(viData):
+class ViDataIS10(ViData):
     # IS10 - signed fixed-point integer, 1 decimal
     unit = {"code": "IS10", "description": "INT signed 10", "unit": ""}
 
@@ -329,7 +329,7 @@ class viDataIS10(viData):
         return int.from_bytes(self, "little", signed=True) / 10
 
 
-class viDataIU10(viData):
+class ViDataIU10(ViData):
     # IS10 - signed fixed-point integer, 1 decimal
     unit = {"code": "IU10", "description": "INT unsigned 10", "unit": ""}
 
@@ -347,7 +347,7 @@ class viDataIU10(viData):
         return int.from_bytes(self, "little", signed=False) / 10
 
 
-class viDataIU3600(viData):
+class ViDataIU3600(ViData):
     # IU3600 - signed fixed-point integer, 1 decimal
     unit = {"code": "IS10", "description": "INT signed 10", "unit": "h"}
 
@@ -366,7 +366,7 @@ class viDataIU3600(viData):
         return int.from_bytes(self, "little", signed=True) / 3600
 
 
-class viDataIUNON(viData):
+class ViDataIUNON(ViData):
     # IUNON - unsigned int
     unit = ({"code": "IUNON", "description": "INT unsigned non", "unit": ""},)  # vito unit: UTI, CO
 
@@ -384,7 +384,7 @@ class viDataIUNON(viData):
         return int.from_bytes(self, "little", signed=False)
 
 
-class viDataRT(viData):
+class ViDataRT(ViData):
     unit = {"code": "RT", "description": "ReturnStatus", "unit": ""}
     # operating mode codes are hex numbers
     returnstatus = {0x00: "0", 0x01: "1", 0x03: "2", 0xAA: "Not OK"}
@@ -399,21 +399,21 @@ class viDataRT(viData):
             opcode = next(key for key, value in self.returnstatus.items() if value == status)
             super().extend(opcode.to_bytes(1, "big"))
         else:
-            raise viDataError(f"Unknown return status {status}. Options are {self.returnstatus.values()}")
+            raise ViDataError(f"Unknown return status {status}. Options are {self.returnstatus.values()}")
 
     def _create_from_raw(self, value):
         # set raw value directly
         if int.from_bytes(value, "big") in self.returnstatus:
             super().extend(value)
         else:
-            raise viDataError(f"Unknown return status {value.hex()}")
+            raise ViDataError(f"Unknown return status {value.hex()}")
 
     @property
     def value(self):
         return self.returnstatus[int.from_bytes(self, "big")]
 
 
-class viDataOO(viData):
+class ViDataOO(ViData):
     unit = {"code": "OO", "description": "OnOff", "unit": ""}
     # operating mode codes are hex numbers
     OnOff = {
@@ -430,14 +430,14 @@ class viDataOO(viData):
             opcode = next(key for key, value in self.OnOff.items() if value == onoff)
             super().extend(opcode.to_bytes(1, "big"))
         else:
-            raise viDataError(f"Unknown value {onoff}. Options are {self.OnOff.values()}")
+            raise ViDataError(f"Unknown value {onoff}. Options are {self.OnOff.values()}")
 
     def _create_from_raw(self, value):
         # set raw value directly
         if int.from_bytes(value, "big") in self.OnOff:
             super().extend(value)
         else:
-            raise viDataError(f"Unknown value {value.hex()}")
+            raise ViDataError(f"Unknown value {value.hex()}")
 
     @property
     def value(self):
@@ -449,7 +449,7 @@ MILLENIUM = 2000
 HEATING_ENERGY_FACTOR = 0.1
 
 
-class viDataEnergy(viData):
+class ViDataEnergy(ViData):
     """Energy-Type ... Return from Function-Call B800."""
 
     unit = ({"code": "F_E", "description": "returns dictionary with energy data", "unit": ""},)
@@ -472,7 +472,7 @@ class viDataEnergy(viData):
         self.cooling_electrical_energy = raw_data[5] * HEATING_ENERGY_FACTOR
 
     def _create_from_value(self, value):
-        raise viDataError("viDataEnergy can only be created from bytes.")
+        raise ViDataError("ViDataEnergy can only be created from bytes.")
 
     @property
     def value(self):

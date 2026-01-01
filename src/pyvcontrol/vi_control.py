@@ -24,7 +24,7 @@ from threading import Lock
 import serial
 
 from pyvcontrol.vi_command import ViCommand
-from pyvcontrol.vi_data import viData
+from pyvcontrol.vi_data import ViData
 from pyvcontrol.vi_telegram import ViTelegram
 
 logger = logging.getLogger(name="pyvcontrol")
@@ -53,8 +53,11 @@ class ViControlError(Exception):
 
 
 class ViControl:
-    # class to connect to ViControl heating directly via Optolink
-    # only supports WO1C with protocol P300
+    """Class to connect to ViControl heating directly via Optolink.
+
+    Only supports WO1C with protocol P300.
+    """
+
     def __init__(self, port="/dev/ttyUSB0"):
         self.vs = ViSerial(control_set, port)
         self.vs.connect()
@@ -64,24 +67,24 @@ class ViControl:
         # destructor, releases serial port
         self.vs.disconnect()
 
-    def execute_read_command(self, command_name) -> viData:
+    def execute_read_command(self, command_name) -> ViData:
         """Sends a read command and gets the response."""
         vc = ViCommand(command_name)
         return self.execute_command(vc, "read")
 
-    def execute_write_command(self, command_name, value) -> viData:
+    def execute_write_command(self, command_name, value) -> ViData:
         """Sends a write command and gets the response."""
         vc = ViCommand(command_name)
-        vd = viData.create(vc.unit, value)
+        vd = ViData.create(vc.unit, value)
         return self.execute_command(vc, "write", payload=vd)
 
-    def execute_function_call(self, command_name, *function_args) -> viData:
+    def execute_function_call(self, command_name, *function_args) -> ViData:
         """Sends a function call command and gets response."""
         payload = bytearray((len(function_args), *function_args))
         vc = ViCommand(command_name)
         return self.execute_command(vc, "call", payload=payload)
 
-    def execute_command(self, vc, access_mode, payload=bytes(0)) -> viData:
+    def execute_command(self, vc, access_mode, payload=bytes(0)) -> ViData:
         # prepare command
         allowed_access_mode = {"read": ["read"], "write": ["read", "write"], "call": ["call"]}
         if access_mode not in allowed_access_mode[vc.access_mode]:
@@ -106,8 +109,8 @@ class ViControl:
             raise ViControlError(f"{access_mode} command returned an error")
         self.vs.send(ctrlcode["acknowledge"])  # send acknowledge
 
-        # return viData object from payload
-        return viData.create(vt.vicmd.unit, vt.payload)
+        # return ViData object from payload
+        return ViData.create(vt.vicmd.unit, vt.payload)
 
     def initialize_communication(self):
         logger.debug("Init Communication to ViControl....")
@@ -122,12 +125,14 @@ class ViControl:
             # loop until interface is initialized
             read_byte = self.vs.read(1)
             if read_byte == ctrlcode["acknowledge"]:
-                # Schnittstelle hat auf den Initialisierungsstring mit OK geantwortet. Die Abfrage von Werten kann beginnen.
+                # Schnittstelle hat auf den Initialisierungsstring mit OK geantwortet.
+                # Die Abfrage von Werten kann beginnen.
                 logger.debug("Step %s: Initialization successful", ii)
                 self.is_initialized = True
                 break
             if read_byte == ctrlcode["not_init"]:
-                # Schnittstelle ist zurückgesetzt und wartet auf Daten; Antwort b'\x05' = Warten auf Initialisierungsstring
+                # Schnittstelle ist zurückgesetzt und wartet auf Daten;
+                # Antwort b'\x05' = Warten auf Initialisierungsstring
                 logger.debug("Step %s: Viessmann ready, not initialized, send sync", ii)
                 self.vs.send(ctrlcode["sync_cmd"])
             elif read_byte == ctrlcode["error"]:
@@ -149,6 +154,8 @@ class ViControl:
 
 
 class ViSerial:
+    """Serial port."""
+
     # low-level communication interface
     # TODO: control sets nicht übernommen
     _viessmann_lock = Lock()

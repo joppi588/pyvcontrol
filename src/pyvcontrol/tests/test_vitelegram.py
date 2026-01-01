@@ -21,7 +21,7 @@
 import pytest
 
 from pyvcontrol.vi_command import ViCommand
-from pyvcontrol.vi_data import viData
+from pyvcontrol.vi_data import ViData
 from pyvcontrol.vi_telegram import ViTelegram, ViTelegramError
 
 
@@ -84,7 +84,7 @@ def test_telegram_type():
 def test_telegramdata1():
     b = bytes.fromhex("41 07 01 01 01 0d 02 65 00 7e")
     vt = ViTelegram.from_bytes(b)
-    vd = viData.create(vt.vicmd.unit, vt.payload)
+    vd = ViData.create(vt.vicmd.unit, vt.payload)
     assert vt.vicmd.unit == "IS10"
     assert vd.value == 10.1
 
@@ -93,7 +93,7 @@ def test_telegramdata2():
     # 'Read' telegram
     b = bytes.fromhex("41 09 01 01 16 50 04 e4 29 00 00 82")
     vt = ViTelegram.from_bytes(b)
-    vd = viData.create(vt.vicmd.unit, vt.payload)
+    vd = ViData.create(vt.vicmd.unit, vt.payload)
     assert vt.telegram_mode == "read"
     assert vt.response_length == 12
     assert vt.vicmd.command_name == "WWwaerme"
@@ -105,7 +105,7 @@ def test_telegramdata3():
     # 'write' telegram
     b = bytes.fromhex("41 09 01 02 16 50 04 76")
     vt = ViTelegram.from_bytes(b)
-    _ = viData.create(vt.vicmd.unit, vt.payload)
+    _ = ViData.create(vt.vicmd.unit, vt.payload)
     assert vt.telegram_mode == "write"
     assert vt.response_length == 8
     assert vt.vicmd.command_name == "WWwaerme"

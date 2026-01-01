@@ -62,6 +62,6 @@ def test_vicommand_warmwassertemperatur():
 
 
 def test_vicommand_betriebsmodus():
-    # Given: When: Then: Correct viData is returned
+    # Given: When: Then: Correct ViData is returned
     vc = ViCommand("Betriebsmodus")
     assert vc.unit == "BA"
