@@ -1,0 +1,92 @@
+line-length = 120
+respect-gitignore = true  # paths from .gitignore are always excluded
+target-version = "py310"
+extend-exclude = [
+    "landing_zone/*",
+    "prototype/common/*",
+    "prototype/fusion/*",
+    "components/roadgraph_nonseries/libhorizon_data_interface/*",
+    "components/roadgraph_nonseries/liblocalize_data_interface/*",
+    "prototype/tools/*",
+]
+
+[lint]
+select = [ "ALL" ]
+exclude = [  # extend default exclude list
+    # single-path patterns (any directory or file with this name)
+    "*.pyi",  # for backwards compatibility in our repo
+    "*.ipynb",  # Romain said *.ipynb shall only be formatted. Why?
+
+    # relative patterns (from the root of the repository)
+    "docs/infrastructure_documentation/aos/import/*",
+    "prototype/main_function/situation_interpretation/input_processing/scripts/*",
+    "prototype/main_function/situation_interpretation/scene_utilities/scene_interface/doc/*",
+    "tools/documentation/src/yaaa2sphinx_needs/*",
+    "tools/evaluation/fusion_*",
+    "tools/pacealyze/pacealyze/bytesoup/aggregated_static_log_data/*",
+]
+
+ignore = [
+    "ANN", # type annotations
+    "COM812", # missing-trailing-comma, handled by formatter
+    "CPY", # Missing copyright notice  # configure and activate when out of preview
+    "D100", # Missing docstring in public module
+    "D102", # Missing docstring in public method
+    "D103", # Missing docstring in public function
+    "D104", # Missing docstring in public package
+    "D105", # Missing docstring in magic method
+    "D107", # Missing docstring in __init__
+    "DOC501", # Raised exception {id} missing from docstring
+    "EM", # error messages for exceptions
+    "ERA001", # commented-out-code
+    "FA100", # Could add 'from __future__ import annotations' to file for improving type hints
+    "FBT", # boolean trap  # too many violations
+    "FIX", # line-contains-fixme/todo/xxx/hack
+    "INP", # missing __init__.py files
+    "ISC001", # single-line-implicit-string-concatenation, handled by formatter
+    "PGH003", # Check for type: ignore annotations that suppress all type warnings
+    "PLR0912", # too-many-branches, checked by C901 (McCabe complexity)
+    "PLR2004", # magic-value-comparison
+    "PT006", # pytest-parametrize-names-wrong-type, too many violations, only unsafe fixes
+    "PT007", # pytest-parametrize-values-wrong-type, too many violations, only unsafe fixes
+    "PTH", # use pathlib instead of os.path, too many violations
+    "RET504", # Unnecessary assignment before return statement
+    "RUF009", # Do not perform function call {name} in dataclass defaults
+    "RUF010", # Use explicit conversion flag
+    "RUF012", # Mutable class attributes should be annotated with typing.ClassVar
+    "S101", # Use of assert
+    "S320", # Using `lxml` to parse untrusted data is known to be vulnerable to XML attacks - removed in newer ruff versions
+    "S603", # subprocess-without-shell-equals-true, accepted risk
+    "T20", # forbid print/pprint statements
+    "TD002", # missing-todo-author
+    "TD003", # missing-todo-link
+    "TRY003", # Checks for long exception messages that are not defined in the exception class itself.
+    "UP006", # Use stdlib generics (List -> list) for typing. Omit until Python 3.10 is used
+    "UP007", # Use new Union syntax for typing (X | Y). Omit until Python 3.10 is used
+]
+
+[lint.per-file-ignores]
+"__init__.py" = [
+    "F401", # unused-import
+]
+"test_*.py" = [
+    "ASYNC", # problematic async usage
+    "N801", # invalid-class-name (allow non CamelCase test classes)
+    "PLC2701", # import-private-name
+    "SLF001", # private-member-access
+]
+
+[lint.flake8-type-checking]
+runtime-evaluated-base-classes = ["pydantic.BaseModel"]
+# discuss - unsafe fixes available, see https://docs.astral.sh/ruff/settings/#lint_flake8-type-checking_quote-annotations
+# quote-annotations = true
+
+[lint.flake8-pytest-style]
+fixture-parentheses = false
+mark-parentheses = false
+
+[lint.pydocstyle]
+convention = "google"
+
+[lint.isort]
+known-third-party = ["docker"]
