@@ -131,11 +131,13 @@ class ViCommand(bytearray):
         return ViCommand(command_name)
 
     def response_length(self, access_mode="read"):
-        """Returns the number of bytes in the response."""
-        # request_response:
-        # 2 'address'
-        # 1 'Anzahl der Bytes des Wertes'
-        # x 'Wert'
+        """Returns the number of bytes in the response.
+
+        request_response:
+        2 'address'
+        1 'Anzahl der Bytes des Wertes'
+        x 'Wert'.
+        """
         if access_mode.lower() == "read":
             return 3 + self._value_bytes
         if access_mode.lower() == "write":

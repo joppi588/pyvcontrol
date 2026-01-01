@@ -56,6 +56,8 @@ class ViSerialMock(NonCallableMock):
 
 
 class ViControlMock(NonCallableMock):
+    """Mock ViControl."""
+
     def __init__(self, vi_data=None):
         super().__init__(spec=ViControl)
         self.vi_data = vi_data or {}

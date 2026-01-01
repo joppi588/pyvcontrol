@@ -29,27 +29,27 @@ class Test_ViDataBA:
     """Group tests for data type BA."""
 
     def test_BAEmpty(self):
-        # create empty class and check mode
+        """Create empty class and check mode."""
         dBA = ViData.create("BA")
         assert dBA.value == "OFF"  # defaults to mode 'OFF'
 
     def test_BA02raw(self):
-        # create class with defined operation mode from raw byte
+        """Create class with defined operation mode from raw byte."""
         dBA = ViData.create("BA", b"\x02")
         assert dBA.value == "HEATING_WW"
 
     def test_BA01(self):
-        # create class with constructor and parameter
+        """Create class with constructor and parameter."""
         dBA = ViData.create("BA", "WW")
         assert dBA == b"\x01"
 
     def test_BA6666Empty(self):
-        # test call with non-existent mode
+        """Test call with non-existent mode."""
         with pytest.raises(ViDataError):
             ViData.create("BA", b"\x66\x66")
 
     def test_BAfoobar(self):
-        # test call with non-existent mode
+        """Test call with non-existent mode."""
         with pytest.raises(ViDataError):
             ViData.create("BA", "foobar")
 
@@ -58,12 +58,12 @@ class Test_ViDataDT:
     """Group tests for data type DT."""
 
     def test_DTempty(self):
-        # initialize empty device type (standard)
+        """Initialize empty device type (standard)."""
         dDT = ViData.create("DT")
         assert dDT.value == "unknown"
 
     def test_DTraw(self):
-        # initialize from raw data
+        """Initialize from raw data."""
         dDT = ViData.create("DT", b"\x20\x4d")
         assert dDT.value, "V200WO1C== Protokoll: P300"
 

@@ -24,17 +24,17 @@ from pyvcontrol.vi_control import ViControl
 
 
 def test_readsequence():
-    # Read all defined commands
+    """Read all defined commands."""
     vc = ViControl()
     vc.initialize_communication()
 
-    for cmd in ViCommand.command_set.keys():
+    for cmd in ViCommand.command_set:
         vd = vc.execReadCmd(cmd)
         print(f"{cmd} : {vd.value}")
 
 
 def test_writesequence():
-    # Ändert einen Datensatz und stellt ursprüngl. Wert wieder her
+    """Ändert einen Datensatz und stellt ursprüngl. Wert wieder her."""
     vc = ViControl()
     vc.initialize_communication()
     cmd = "RaumsolltempParty"

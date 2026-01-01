@@ -26,68 +26,81 @@ logger = logging.getLogger(name="pyvcontrol")
 
 
 class ViTelegramError(Exception):
-    pass
+    """Error in Telegram."""
 
 
 class ViTelegram(bytearray):
-    # represents a telegram (header, ViCommand, payload and checksum)
+    """Represents a telegram (header, ViCommand, payload and checksum).
 
-    # P300 Protokoll (thanks to M.Wenzel, SmartHomeNG plugin)
-    #
-    # Beispiel
-    #
-    # Senden        41 5 0 1 55 25 2 82
-    # Read Request  -- - - - ----- - --
-    #                | | | |   |   |  +------- Prüfsumme (Summe über alley Bytes ohne die 41; [hex]5+0+1+55+25+2 = [dez]5+0+1+(5x16)+5+(2x16)+5+2 = 130dez = 82hex
-    #                | | | |   |   +---------- XX Anzahl der Bytes, die in der Antwort erwartet werden
-    #                | | | |   +-------------- XX XX 2 byte Adresse der Daten oder Prozedur
-    #                | | | +------------------ XX 01 = ReadData, 02 = WriteData, 07 = Function Call
-    #                | | +-------------------- XX 00 = Anfrage, 01 = Antwort, 03 = Fehler
-    #                | +---------------------- Länge der Nutzdaten (Anzahl der Bytes zwischen dem Telegramm-Start-Byte (0x41) und der Prüfsumme)
-    #                +------------------------ Telegramm-Start-Byte
-    #
-    # Empfangen   :  6 ----------------------- OK (Antwort auf 0x16 0x00 0x00 und auf korrekt empfangene Telegramme)
-    #                5 ----------------------- Schnittstelle ist aktiv und wartet auf eine Initialisierung
-    #               15 ----------------------- Schnittstelle meldet einen Fehler zurück
-    #
-    #               41 7 1 1 55 25 2 EF 0 74
-    #               -- - - - ----- - ---- --
-    #                | | | |   |   |   |   +-- Prüfsumme (Summe über alley Bytes ohne die 41; [hex]7+1+1+55+25+2+EF+0 = [dez]7+1+1+(5x16)+5+(2x16)+5+2+(14*16)+(15*16)+0 = [dez]7+1+1+(80)+5+(32)+5+2+(224)+(15)+0 = 372dez = 1.74hex)
-    #                | | | |   |   |   +------ Wert
-    #                | | | |   |   +---------- XX Anzahl der Bytes, die in der Antwort erwartet werden
-    #                | | | |   +-------------- XX XX 2 byte Adresse der Daten oder Prozedur
-    #                | | | +------------------ XX 01 = ReadData, 02 = WriteData, 07 = Function Call
-    #                | | +-------------------- XX 00 = Anfrage, 01 = Antwort, 03 = Fehler
-    #                | +---------------------- Länge der Nutzdaten (Anzahl der Bytes zwischen dem Telegramm-Start-Byte (0x41) und der Prüfsumme)
-    #                +------------------------ Telegramm-Start-Byte
+    P300 Protokoll (thanks to M.Wenzel, SmartHomeNG plugin)
 
-    # Kommunikationsbeispiele
-    # Information Kessel Außentemperatur read 2-Byte -60..60 0x5525
-    # DATA TX: 41 5 0 1 55 25 2 82
-    # DATA RX: 41 7 1 1 55 25 2 EF 0 74 --> 00EF = 239 --> 23.9°C (Faktor 0.1)
-    # --> Senden   41 5 0 1 55 25 2 82
-    #              -- - - - ----- - --
-    #               | | | |   |   |  +-- Prüfsumme (Summe über alley Bytes ohne die 41; [hex]5+0+1+55+25+2 = [dez]5+0+1+(5x16)+5+(2x16)+5+2 = 130dez = 82hex
-    #               | | | |   |   +----- XX Anzahl der Bytes, die in der Antwort erwartet werden
-    #               | | | |   +--------- XX XX 2 byte Adresse der Daten oder Prozedur
-    #               | | | +------------- XX 01 = ReadData, 02 = WriteData, 07 = Function Call
-    #               | | +--------------- XX 00 = Anfrage, 01 = Antwort, 03 = Fehler
-    #               | +----------------- Länge der Nutzdaten (Anzahl der Bytes zwischen dem Telegramm-Start-Byte (0x41) und der Prüfsumme)
-    #               +------------------- Telegramm-Start-Byte
-    #
-    # --> Empfangen 6 41 7 1 1 55 25 2 EF 0 74
-    #               - -- - - - ----- - ---- --
-    #               |  | | | |   |   |   |   +-- Prüfsumme (Summe über alley Bytes ohne die 41; [hex]7+1+1+55+25+2+EF+0 = [dez]7+1+1+(5x16)+5+(2x16)+5+2+(14*16)+(15*16)+0 = [dez]7+1+1+(80)+5+(32)+5+2+(224)+(15)+0 = 372dez = 1.74hex)
-    #               |  | | | |   |   |   +------ Wert
-    #               |  | | | |   |   +---------- XX Anzahl der Bytes, die in der Antwort erwartet werden
-    #               |  | | | |   +-------------- XX XX 2 byte Adresse der Daten oder Prozedur
-    #               |  | | | +------------------ XX 01 = ReadData, 02 = WriteData, 07 = Function Call
-    #               |  | | +-------------------- XX 00 = Anfrage, 01 = Antwort, 03 = Fehler
-    #               |  | +---------------------- Länge der Nutzdaten (Anzahl der Bytes zwischen dem Telegramm-Start-Byte (0x41) und der Prüfsumme)
-    #               |  +------------------------ Telegramm-Start-Byte
-    #               +--------------------------- OK (Antwort auf 0x16 0x00 0x00 und auf korrekt empfangene Telegramme)
-    #
-    # --> Antwort: 0x00EF = 239 = 23.9°
+    Beispiel
+
+    Senden        41 5 0 1 55 25 2 82
+    Read Request  -- - - - ----- - --
+                   | | | |   |   |  +------- Prüfsumme (Summe über alley Bytes ohne die 41;
+                                             [hex]5+0+1+55+25+2 = [dez]5+0+1+(5x16)+5+(2x16)+5+2 = 130dez = 82hex
+                   | | | |   |   +---------- XX Anzahl der Bytes, die in der Antwort erwartet werden
+                   | | | |   +-------------- XX XX 2 byte Adresse der Daten oder Prozedur
+                   | | | +------------------ XX 01 = ReadData, 02 = WriteData, 07 = Function Call
+                   | | +-------------------- XX 00 = Anfrage, 01 = Antwort, 03 = Fehler
+                   | +---------------------- Länge der Nutzdaten (Anzahl der Bytes zwischen dem Telegramm-Start-Byte
+                                             (0x41) und der Prüfsumme)
+                   +------------------------ Telegramm-Start-Byte
+
+    Empfangen   :  6 ----------------------- OK (Antwort auf 0x16 0x00 0x00 und auf korrekt empfangene Telegramme)
+                   5 ----------------------- Schnittstelle ist aktiv und wartet auf eine Initialisierung
+                  15 ----------------------- Schnittstelle meldet einen Fehler zurück
+
+                  41 7 1 1 55 25 2 EF 0 74
+                  -- - - - ----- - ---- --
+                   | | | |   |   |   |   +-- Prüfsumme (Summe über alley Bytes ohne die 41;
+                   | | | |   |   |   |       [hex]7+1+1+55+25+2+EF+0 =
+                   | | | |   |   |   |       [dez]7+1+1+(5x16)+5+(2x16)+5+2+(14*16)+(15*16)+0 =
+                   | | | |   |   |   |       [dez]7+1+1+(80)+5+(32)+5+2+(224)+(15)+0 = 372dez = 1.74hex)
+                   | | | |   |   |   +------ Wert
+                   | | | |   |   +---------- XX Anzahl der Bytes, die in der Antwort erwartet werden
+                   | | | |   +-------------- XX XX 2 byte Adresse der Daten oder Prozedur
+                   | | | +------------------ XX 01 = ReadData, 02 = WriteData, 07 = Function Call
+                   | | +-------------------- XX 00 = Anfrage, 01 = Antwort, 03 = Fehler
+                   | +---------------------- Länge der Nutzdaten (Anzahl der Bytes zwischen dem Telegramm-Start-Byte
+                                             (0x41) und der Prüfsumme)
+                   +------------------------ Telegramm-Start-Byte
+
+    Kommunikationsbeispiele
+    Information Kessel Außentemperatur read 2-Byte -60..60 0x5525
+    DATA TX: 41 5 0 1 55 25 2 82
+    DATA RX: 41 7 1 1 55 25 2 EF 0 74 --> 00EF = 239 --> 23.9°C (Faktor 0.1)
+    --> Senden   41 5 0 1 55 25 2 82
+                 -- - - - ----- - --
+                  | | | |   |   |  +-- Prüfsumme (Summe über alley Bytes ohne die 41;
+                                       [hex]5+0+1+55+25+2 = [dez]5+0+1+(5x16)+5+(2x16)+5+2 = 130dez = 82hex
+                  | | | |   |   +----- XX Anzahl der Bytes, die in der Antwort erwartet werden
+                  | | | |   +--------- XX XX 2 byte Adresse der Daten oder Prozedur
+                  | | | +------------- XX 01 = ReadData, 02 = WriteData, 07 = Function Call
+                  | | +--------------- XX 00 = Anfrage, 01 = Antwort, 03 = Fehler
+                  | +----------------- Länge der Nutzdaten (Anzahl der Bytes zwischen dem Telegramm-Start-Byte (0x41)
+                                       und der Prüfsumme)
+                  +------------------- Telegramm-Start-Byte
+
+    --> Empfangen 6 41 7 1 1 55 25 2 EF 0 74
+                  - -- - - - ----- - ---- --
+                  |  | | | |   |   |   |   +-- Prüfsumme (Summe über alley Bytes ohne die 41;
+                  |  | | | |   |   |   |       [hex]7+1+1+55+25+2+EF+0 =
+                  |  | | | |   |   |   |       [dez]7+1+1+(5x16)+5+(2x16)+5+2+(14*16)+(15*16)+0 =
+                  |  | | | |   |   |   |       [dez]7+1+1+(80)+5+(32)+5+2+(224)+(15)+0 = 372dez = 1.74hex)
+                  |  | | | |   |   |   +------ Wert
+                  |  | | | |   |   +---------- XX Anzahl der Bytes, die in der Antwort erwartet werden
+                  |  | | | |   +-------------- XX XX 2 byte Adresse der Daten oder Prozedur
+                  |  | | | +------------------ XX 01 = ReadData, 02 = WriteData, 07 = Function Call
+                  |  | | +-------------------- XX 00 = Anfrage, 01 = Antwort, 03 = Fehler
+                  |  | +---------------------- Länge der Nutzdaten (Anzahl der Bytes zwischen dem Telegramm-Start-Byte
+                                               (0x41) und der Prüfsumme)
+                  |  +------------------------ Telegramm-Start-Byte
+                  +--------------------------- OK (Antwort auf 0x16 0x00 0x00 und auf korrekt empfangene Telegramme)
+
+    --> Antwort: 0x00EF = 239 = 23.9°.
+    """
 
     # Telegram type
     tTypes = {
@@ -100,9 +113,12 @@ class ViTelegram(bytearray):
     tStartByte = b"\x41"
 
     def __init__(self, vc: ViCommand, tMode="Read", tType="Request", payload=bytearray(0)):
-        # creates a telegram for sending as a combination of header, ViCommand, payload and checksum
-        # payload is optional, usually of type ViData
-        # tType and tMode must be strings or bytes. Be careful when extracting from bytearray b - b[x] will be int not byte!
+        """Creates a telegram for sending as a combination of header, ViCommand, payload and checksum.
+
+        payload is optional, usually of type ViData
+        tType and tMode must be strings or bytes.
+        Be careful when extracting from bytearray b - b[x] will be int not byte!
+        """
         self.vicmd = vc
         self.tType = (
             self.tTypes[tType.lower()] if isinstance(tType, str) else tType
@@ -118,42 +134,47 @@ class ViTelegram(bytearray):
         super().__init__(b + self._checksum_byte(b))
 
     def _header(self):
-        """Create ViTelegram header."""
-        # 1 byte - type
-        # 1 byte - mode
-        #
-        # Data length (bytes): type (1), mode (1), command code (x), payload ViData (x)
+        """Create ViTelegram header.
+
+        1 byte - type
+        1 byte - mode
+
+        Data length (bytes): type (1), mode (1), command code (x), payload ViData (x).
+        """
         data_length = 2 + len(self.vicmd) + len(self.payload)
         return self.tStartByte + data_length.to_bytes(1, "big") + self.tType + self.tMode
 
     @property
     def response_length(self):
-        # length of response telegram in bytes
-        # 1 - Startbyte
-        # 1 - length of data from (excluding) startbyte until (excluding) checksum
-        # 1 - type
-        # 1 - mode
-        # x - command
-        # 1 - checksum
+        """Length of response telegram in bytes.
+
+        1 - Startbyte
+        1 - length of data from (excluding) startbyte until (excluding) checksum
+        1 - type
+        1 - mode
+        x - command
+        1 - checksum.
+        """
         return 4 + self.vicmd.response_length(self.telegram_mode) + 1
 
     @property
     def telegram_mode(self):
-        # returns mode (read, write, function call)
+        """Returns mode (read, write, function call)."""
         return next(key for key, value in self.tModes.items() if value == self.tMode)
 
     @property
     def telegram_type(self):
-        # Request/response/Error
+        """Request/response/Error."""
         return next(key for key, value in self.tTypes.items() if value == self.tType)
 
     @classmethod
     def from_bytes(cls, b: bytearray):
-        # parses a byte array and returns the corresponding telegram with properties vicmd etc.
-        # when parsing a response telegram, the first byte (ACK Acknowledge) must be stripped first
-        # Telegram bytes are [0:4]->header, [4:6]->command code, [6]->payload length, [7:-2]-> payload, [-1]:-> checksum
-        # header bytes are [0]-> Startbyte, [1]:total value byte length,[2]: type, [3] mode
+        """Parses a byte array and returns the corresponding telegram with properties vicmd etc.
 
+        when parsing a response telegram, the first byte (ACK Acknowledge) must be stripped first
+        Telegram bytes are [0:4]->header, [4:6]->command code, [6]->payload length, [7:-2]-> payload, [-1]:-> checksum
+        header bytes are [0]-> Startbyte, [1]:total value byte length,[2]: type, [3] mode.
+        """
         # validate checksum
         if b[-1:] != ViTelegram._checksum_byte(b[0:-1]):
             raise ViTelegramError(
@@ -177,7 +198,7 @@ class ViTelegram(bytearray):
 
     @classmethod
     def _checksum_byte(cls, packet):
-        # checksum is the last byte of the sum of all bytes in packet
+        """Checksum is the last byte of the sum of all bytes in packet."""
         checksum = 0
         if len(packet) == 0:
             logger.error("No bytes received to calculate checksum")

@@ -35,14 +35,14 @@ def test_read_telegram():
 
 
 def test_checksum_empty():
-    # raise error
+    """Raise error."""
     b = bytes(0)
     c = ViTelegram._checksum_byte(b)
     assert c == b"\x00"
 
 
 def test_checksum_startbyte():
-    # raise error
+    """Raise error."""
     c = ViTelegram._checksum_byte(b"\x42\x41")
     assert c == b"\x00"
 
@@ -90,7 +90,7 @@ def test_telegramdata1():
 
 
 def test_telegramdata2():
-    # 'Read' telegram
+    """'Read' telegram."""
     b = bytes.fromhex("41 09 01 01 16 50 04 e4 29 00 00 82")
     vt = ViTelegram.from_bytes(b)
     vd = ViData.create(vt.vicmd.unit, vt.payload)
@@ -102,7 +102,7 @@ def test_telegramdata2():
 
 
 def test_telegramdata3():
-    # 'write' telegram
+    """'write' telegram."""
     b = bytes.fromhex("41 09 01 02 16 50 04 76")
     vt = ViTelegram.from_bytes(b)
     _ = ViData.create(vt.vicmd.unit, vt.payload)

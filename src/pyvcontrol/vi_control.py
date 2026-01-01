@@ -64,7 +64,7 @@ class ViControl:
         self.is_initialized = False
 
     def __del__(self):
-        # destructor, releases serial port
+        """destructor, releases serial port."""
         self.vs.disconnect()
 
     def execute_read_command(self, command_name) -> ViData:
@@ -168,8 +168,10 @@ class ViSerial:
         self._serial = serial.Serial()
 
     def connect(self):
-        # setup serial connection
-        # if not connected, try to acquire lock
+        """Setup serial connection.
+
+        if not connected, try to acquire lock.
+        """
         if self._connected:
             # do nothing
             logger.debug("Connect: Already connected")
@@ -195,7 +197,7 @@ class ViSerial:
             logger.error("Could not acquire lock")
 
     def disconnect(self):
-        # release serial line and lock
+        """Release serial line and lock."""
         self._serial.close()
         self._serial = None
         self._viessmann_lock.release()
@@ -203,14 +205,14 @@ class ViSerial:
         logger.debug("Disconnected from ViControl")
 
     def send(self, packet):
-        # if connected send the packet
+        """If connected send the packet."""
         if self._connected:
             self._serial.write(packet)
             return True
         return False
 
     def read(self, length):
-        # read bytes from serial connection
+        """Read bytes from serial connection."""
         total_read_bytes = bytearray(0)
         failed_count = 0
         # TODO: read length bytes and try ten times if nothing received

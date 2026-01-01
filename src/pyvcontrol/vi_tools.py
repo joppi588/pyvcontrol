@@ -27,7 +27,7 @@ logger = logging.getLogger(name="pyvcontrol")
 
 
 def viscancommands(addressrange):
-    # brute force command scanner
+    """Brute force command scanner."""
     # hilft v.a. um die richtige Payload-Länge für bekannte Kommandos herauszufinden
 
     logging.basicConfig(filename="scancommands.log", filemode="w", level=logger.debug)
@@ -61,16 +61,15 @@ def viscancommands(addressrange):
                 if vr2[0].to_bytes(1, "little") == ViTelegram.tTypes["response"]:
                     v = int.from_bytes(vr2[-1 - kk : -1], "little")
                     print(f"Found working command 0x{hex(addr)}, payload length {kk}, value {v}")
-
-            except Exception as e:
-                logger.exception({e})
-                print(f"An exception occurred: {e}")
+            except Exception:
+                logger.exception("An exception occured.")
 
 
 def vimonitor(command_list, updateinterval=30):
-    # repeatedly executes commands
-    # commandlist is a list of strings (command names from ViCommand)
+    """Repeatedly executes commands.
 
+    commandlist is a list of strings (command names from ViCommand)
+    """
     # TODO: accept also addresses & length as commands
     # Option 1) "Generic command" based on addr and length 2) add command to command set first
     if not isinstance(command_list, list):
@@ -115,8 +114,7 @@ def vimonitor(command_list, updateinterval=30):
 
 
 def vi_scan_function_call(commandname, functionrange):
-    # scans the function call with all parameters and print HEX and decoded OUTPUT in terminal
-
+    """Scans the function call with all parameters and print HEX and decoded OUTPUT in terminal."""
     vo = ViControl()
     vo.initialize_communication()
 
