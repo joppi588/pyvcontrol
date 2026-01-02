@@ -72,13 +72,15 @@ class ViData(bytearray):
     """
 
     unit = ""
+    length = 1
 
-    def __init__(self, value=b"\x00"):
+    def __init__(self, value=b"\x00", length=1):
         """Create ViData.
 
         To set a different default value, override subclass constructors.
         """
         super().__init__()
+        self.length = length
         if isinstance(value, (bytes, bytearray)):
             self._create_from_raw(value)
         else:
@@ -87,7 +89,6 @@ class ViData(bytearray):
     def _create_from_raw(self, value):
         """Fill using byte values."""
         super().extend(value)
-        self.len = len(value)
 
     @abstractmethod
     def _create_from_value(self, value):
@@ -153,10 +154,8 @@ class ViDataBA(ViData):
 
 
 class ViDataES(ViData):
-    """ERROR states."""
+    """Error states."""
 
-    unit = {"code": "ES", "description": "Error", "unit": ""}
-    # error codes are hex numbers
     errorset = {
         0x00: "Regelbetrieb (kein Fehler)",
         0x0F: "Wartung (fuer Reset Codieradresse 24 auf 0 stellen)",
@@ -225,10 +224,6 @@ class ViDataES(ViData):
         0xFF: "Starkes Stoerfeld (EMV) in der Naehe oder interner Fehler",
     }
 
-    def __init__(self, value=b"\x00"):
-        """Default is no error."""
-        super().__init__(value)
-
     def __fromtype__(self, errstr):
         """Only created by the heating system."""
         raise NotImplementedError
@@ -247,10 +242,9 @@ class ViDataES(ViData):
 
 
 class ViDataDT(ViData):
-    """device types."""
+    """Device types."""
 
-    unit = {"description": "DeviceType", "code": "DT", "unit": ""}  # vito unit: DT
-    devicetypes = {
+    device_types = {
         0x2098: "V200KW2, Protokoll: KW2",
         0x2053: "GWG_VBEM, Protokoll: GWG",
         0x20CB: "VScotHO1, Protokoll: P300",
@@ -271,46 +265,38 @@ class ViDataDT(ViData):
         0x0000: "unknown",
     }
 
-    def __init__(self, value=b"\x00\x00"):
-        """Sets device name (hex code). Either give value as bytearray/bytes or as device name string."""
-        # usually this class would be initialized without arguments
-        super().__init__(value)
-
     def _create_from_raw(self, value):
         """Set raw value directly."""
-        if int.from_bytes(value, "big") in self.devicetypes:
+        if int.from_bytes(value, "big") in self.device_types:
             super().extend(value)
         else:
             raise ViDataError(f"Unknown device code {value.hex()}")
 
-    def _create_from_value(self, devicename):
+    def _create_from_value(self, device_name):
         """Devicename given as string."""
-        if devicename in self.devicetypes.values():
-            devcode = next(key for key, value in self.devicetypes.items() if value == devicename)
+        if device_name in self.device_types.values():
+            devcode = next(key for key, value in self.device_types.items() if value == device_name)
             super().extend(devcode.to_bytes(2, "big"))
         else:
-            raise ViDataError(f"Unknown device name {devicename}")
+            raise ViDataError(f"Unknown device name {device_name}")
 
     @property
     def value(self):
         """Return device type as string."""
-        return self.devicetypes[int.from_bytes(self, "big")]
+        return self.device_types[int.from_bytes(self, "big")]
 
 
 class ViDataIS10(ViData):
     """IS10 - signed fixed-point integer, 1 decimal."""
 
-    unit = {"code": "IS10", "description": "INT signed 10", "unit": ""}
-
-    def __init__(self, value=b"\x00\x00", len=2):
+    def __init__(self, value=b"\x00\x00"):
         """Sets int representation based on input value."""
-        self.len = len  # length in bytes
-        super().__init__(value)
+        super().__init__(value, length=2)
 
     def _create_from_value(self, value):
         """fixed-point number given."""
         # TODO: Is it ok to overwrite its own value or should a new object be returned?
-        super().extend(int(value * 10).to_bytes(self.len, "little", signed=True))
+        super().extend(int(value * 10).to_bytes(self.length, "little", signed=True))
 
     @property
     def value(self):
@@ -322,14 +308,13 @@ class ViDataIU10(ViData):
 
     unit = {"code": "IU10", "description": "INT unsigned 10", "unit": ""}
 
-    def __init__(self, value=b"\x00\x00", len=2):
+    def __init__(self, value=b"\x00\x00"):
         """Sets int representation based on input value."""
-        self.len = len  # length in bytes
-        super().__init__(value)
+        super().__init__(value, length=2)
 
     def _create_from_value(self, value):
         """fixed-point number given."""
-        super().extend(int(value * 10).to_bytes(self.len, "little", signed=False))
+        super().extend(int(value * 10).to_bytes(self.length, "little", signed=False))
 
     @property
     def value(self):
@@ -341,14 +326,13 @@ class ViDataIU3600(ViData):
 
     unit = {"code": "IS10", "description": "INT signed 10", "unit": "h"}
 
-    def __init__(self, value=b"\x00\x00", len=2):
+    def __init__(self, value=b"\x00\x00"):
         """Sets int representation based on input value."""
-        self.len = len  # length in bytes
-        super().__init__(value)
+        super().__init__(value, length=2)
 
     def _create_from_value(self, value):
         """fixed-point number given."""
-        super().extend(int(value * 3600).to_bytes(self.len, "little", signed=False))
+        super().extend(int(value * 3600).to_bytes(self.length, "little", signed=False))
 
     @property
     def value(self):
@@ -361,14 +345,13 @@ class ViDataIUNON(ViData):
 
     unit = ({"code": "IUNON", "description": "INT unsigned non", "unit": ""},)  # vito unit: UTI, CO
 
-    def __init__(self, value=b"\x00\x00", len=2):
+    def __init__(self, value=b"\x00\x00"):
         """Sets int representation based on input value."""
-        self.len = len  # length in bytes
-        super().__init__(value)
+        super().__init__(value, length=2)
 
     def _create_from_value(self, value):
         """fixed-point number given."""
-        super().extend(int(value).to_bytes(self.len, "little", signed=False))
+        super().extend(int(value).to_bytes(self.length, "little", signed=False))
 
     @property
     def value(self):
@@ -381,13 +364,6 @@ class ViDataRT(ViData):
     unit = {"code": "RT", "description": "ReturnStatus", "unit": ""}
     # operating mode codes are hex numbers
     returnstatus = {0x00: "0", 0x01: "1", 0x03: "2", 0xAA: "Not OK"}
-
-    def __init__(self, value=b"\x00"):
-        """Sets operating mode (hex) based on string opmode.
-
-        if opmode is skipped defaults to 'undefiniert'.
-        """
-        super().__init__(value)
 
     def _create_from_value(self, status):
         if status in self.returnstatus.values():
@@ -419,9 +395,6 @@ class ViDataOO(ViData):
         0x02: "On",
     }
 
-    def __init__(self, value="Off"):
-        super().__init__(value)
-
     def _create_from_value(self, onoff):
         if onoff in self.OnOff.values():
             opcode = next(key for key, value in self.OnOff.items() if value == onoff)
@@ -449,14 +422,11 @@ HEATING_ENERGY_FACTOR = 0.1
 class ViDataEnergy(ViData):
     """Energy-Type ... Return from Function-Call B800."""
 
-    unit = ({"code": "F_E", "description": "returns dictionary with energy data", "unit": ""},)
-
     def __init__(self, value=bytes(16)):
-        super().__init__(value)
+        super().__init__(value, length=16)
 
     def _create_from_raw(self, value):
         super().extend(value)
-        self.len = len(value)
         raw_data = unpack(LITTLE_ENDIAN_4_CHAR_6_SHORT, value)
         self.day = raw_data[1]
         self.year = MILLENIUM + raw_data[2]
