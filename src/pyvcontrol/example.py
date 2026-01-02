@@ -19,18 +19,7 @@
 
 """Tests the connection to Viessmann. Needs a physical connection."""
 
-from pyvcontrol.vi_command import ViCommand
 from pyvcontrol.vi_control import ViControl
-
-
-def test_readsequence():
-    """Read all defined commands."""
-    vc = ViControl()
-    vc.initialize_communication()
-
-    for cmd in ViCommand.command_set:
-        vd = vc.execReadCmd(cmd)
-        print(f"{cmd} : {vd.value}")
 
 
 def test_writesequence():
@@ -38,14 +27,19 @@ def test_writesequence():
     vc = ViControl()
     vc.initialize_communication()
     cmd = "RaumsolltempParty"
-    v_orig = vc.execReadCmd(cmd).value
+    original_value = vc.execute_read_command(cmd).value
+    print(f"Original value: {original_value}")
 
-    vc.execWriteCmd(cmd, v_orig + 1)
-    vdr = vc.execReadCmd(cmd)
-    print(f"Read {cmd} : {vdr.value}")
-    assert v_orig + 1 == vdr.value
+    vc.execute_write_command(cmd, original_value + 1)
+    new_value = vc.execute_read_command(cmd).value
+    print(f"Wrote {cmd}={original_value + 1}; result={new_value}")
+    assert original_value + 1 == new_value
 
-    vc.execWriteCmd(cmd, v_orig)
-    vdr = vc.execReadCmd(cmd)
-    print(f"Read {cmd} : {vdr.value}")
-    assert v_orig == vdr.value
+    vc.execute_write_command(cmd, original_value)
+    original_value_restored = vc.execute_read_command(cmd)
+    print(f"Restored {cmd} -> {original_value_restored}")
+    assert original_value == original_value_restored
+
+
+if __name__ == "__main__":
+    test_writesequence()
