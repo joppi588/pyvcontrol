@@ -19,10 +19,17 @@
 
 """Tests the connection to Viessmann. Needs a physical connection."""
 
+import os
+
+import pytest
+
 from pyvcontrol.vi_command import ViCommand
 from pyvcontrol.vi_control import ViControl
 
+online_test = pytest.mark.skipif(not os.environ.get("ONLINE_TEST"), reason="Skip if not running on target platform.")
 
+
+@online_test
 def test_readsequence():
     """Read all defined commands."""
     vc = ViControl()
@@ -33,6 +40,7 @@ def test_readsequence():
         print(f"{cmd} : {vd.value}")
 
 
+@online_test
 def test_writesequence():
     """Ändert einen Datensatz und stellt ursprüngl. Wert wieder her."""
     vc = ViControl()
