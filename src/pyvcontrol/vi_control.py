@@ -19,6 +19,7 @@
 
 
 import logging
+from enum import Enum
 from threading import Lock
 
 import serial
@@ -36,13 +37,15 @@ control_set = {
     "Stopbits": 2,  # 'STOPBITS_TWO',
 }
 
-ctrlcode = {
-    "reset_cmd": b"\x04",
-    "sync_cmd": b"\x16\x00\x00",
-    "acknowledge": b"\x06",
-    "not_init": b"\x05",
-    "error": b"\x15",
-}
+
+class CtrlCode(bytes, Enum):
+    """Control codes for serial communication."""
+
+    RESET_CMD = b"\x04"
+    SYNC_CMD = b"\x16\x00\x00"
+    ACKNOWLEDGE = b"\x06"
+    NOT_INIT = b"\x05"
+    ERROR = b"\x15"
 
 
 class ViControlError(Exception):
@@ -98,7 +101,7 @@ class ViControl:
         # Check if sending was successful
         ack = self.vs.read(1)
         logger.debug("Received %s", ack.hex())
-        if ack != ctrlcode["acknowledge"]:
+        if ack != CtrlCode.ACKNOWLEDGE:
             raise ViControlError(f"Expected acknowledge byte, received {ack}")
 
         # Receive response and evaluate data
@@ -107,7 +110,7 @@ class ViControl:
         logger.debug("Requested %s bytes. Received telegram {vr.hex()}", vt.response_length)
         if vt.tType == ViTelegram.tTypes["error"]:
             raise ViControlError(f"{access_mode} command returned an error")
-        self.vs.send(ctrlcode["acknowledge"])  # send acknowledge
+        self.vs.send(CtrlCode.ACKNOWLEDGE)  # send acknowledge
 
         # return ViData object from payload
         return ViData.create(vt.vicmd.unit, vt.payload)
@@ -124,26 +127,26 @@ class ViControl:
         for ii in range(10):
             # loop until interface is initialized
             read_byte = self.vs.read(1)
-            if read_byte == ctrlcode["acknowledge"]:
+            if read_byte == CtrlCode.ACKNOWLEDGE:
                 # Schnittstelle hat auf den Initialisierungsstring mit OK geantwortet.
                 # Die Abfrage von Werten kann beginnen.
                 logger.debug("Step %s: Initialization successful", ii)
                 self.is_initialized = True
                 break
-            if read_byte == ctrlcode["not_init"]:
+            if read_byte == CtrlCode.NOT_INIT:
                 # Schnittstelle ist zurückgesetzt und wartet auf Daten;
                 # Antwort b'\x05' = Warten auf Initialisierungsstring
                 logger.debug("Step %s: Viessmann ready, not initialized, send sync", ii)
-                self.vs.send(ctrlcode["sync_cmd"])
-            elif read_byte == ctrlcode["error"]:
+                self.vs.send(CtrlCode.SYNC_CMD)
+            elif read_byte == CtrlCode.ERROR:
                 # in case of error try to reset
                 logger.error("The interface has reported an error, loop increment %s", ii)
                 logger.debug("Step %s: Send reset", ii)
-                self.vs.send(ctrlcode["reset_cmd"])
+                self.vs.send(CtrlCode.RESET_CMD)
             else:
                 # send reset
                 logger.debug("Received [%s]. Step {ii}: Send reset", read_byte)
-                self.vs.send(ctrlcode["reset_cmd"])
+                self.vs.send(CtrlCode.RESET_CMD)
 
         if not self.is_initialized:
             # initialisation not successful
