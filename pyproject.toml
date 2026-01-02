@@ -16,6 +16,9 @@ dependencies = [
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[project.scripts]
+test-pyvcontrol = "pyvcontrol.example:write_read"
+
 [dependency-groups]
 dev = [
     "pytest>=8.4.2",

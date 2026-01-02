@@ -22,7 +22,7 @@
 from pyvcontrol.vi_control import ViControl
 
 
-def test_writesequence():
+def write_read():
     """Ändert einen Datensatz und stellt ursprüngl. Wert wieder her."""
     vc = ViControl()
     vc.initialize_communication()
@@ -42,4 +42,4 @@ def test_writesequence():
 
 
 if __name__ == "__main__":
-    test_writesequence()
+    write_read()
