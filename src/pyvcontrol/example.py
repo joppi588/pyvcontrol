@@ -24,22 +24,16 @@ from pyvcontrol.vi_control import ViControl
 
 def write_read():
     """Ändert einen Datensatz und stellt ursprüngl. Wert wieder her."""
-    vc = ViControl()
-    vc.initialize_communication()
-    cmd = "RaumsolltempParty"
-    original_value = vc.execute_read_command(cmd).value
-    print(f"Original value: {original_value}")
+    with ViControl() as vc:
+        cmd = "RaumsolltempParty"
+        v_orig = vc.execute_read_command(cmd).value
 
-    vc.execute_write_command(cmd, original_value + 1)
-    new_value = vc.execute_read_command(cmd).value
-    print(f"Wrote {cmd}={original_value + 1}; result={new_value}")
-    assert original_value + 1 == new_value
+        vc.execute_write_command(cmd, v_orig + 1)
+        vdr = vc.execute_read_command(cmd)
+        print(f"Read {cmd} : {vdr.value}")
+        assert v_orig + 1 == vdr.value
 
-    vc.execute_write_command(cmd, original_value)
-    original_value_restored = vc.execute_read_command(cmd)
-    print(f"Restored {cmd} -> {original_value_restored}")
-    assert original_value == original_value_restored
-
-
-if __name__ == "__main__":
-    write_read()
+        vc.execute_write_command(cmd, v_orig)
+        vdr = vc.execute_read_command(cmd)
+        print(f"Read {cmd} : {vdr.value}")
+        assert v_orig == vdr.value

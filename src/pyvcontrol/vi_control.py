@@ -24,7 +24,7 @@ from threading import Lock
 
 from serial import Serial
 
-from pyvcontrol.vi_command import ViCommand
+from pyvcontrol.vi_command import ViCommand, ViCommandError
 from pyvcontrol.vi_data import ViData
 from pyvcontrol.vi_telegram import ViTelegram
 
@@ -41,11 +41,8 @@ class CtrlCode(bytes, Enum):
     ERROR = b"\x15"
 
 
-class ViControlError(Exception):
-    """Indicates an error during ViControl."""
-
-    def __init__(self, msg):
-        super().__init__(msg)
+class ViConnectionError(Exception):
+    """Indicates a failure setting up the connection."""
 
 
 class ViControl:
@@ -54,14 +51,16 @@ class ViControl:
     Only supports WO1C with protocol P300.
     """
 
-    def __init__(self, port="/dev/ttyUSB0", baudrate=4800, bytesize=8, parity="E", stopbits=2):
-        self.vs = ViSerial(port, baudrate=baudrate, bytesize=bytesize, parity=parity, stopbits=stopbits)
-        self.vs.connect()
-        self.is_initialized = False
+    _viessmann_lock = Lock()
 
-    def __del__(self):
-        """Destructor, releases serial port."""
-        self.vs.disconnect()
+    def __init__(self, port="/dev/ttyUSB0", baudrate=4800, bytesize=8, parity="E", stopbits=2):
+        self.port = port
+        self.baudrate = baudrate
+        self.bytesize = bytesize
+        self.parity = parity
+        self.stopbits = stopbits
+
+        self.is_initialized = False
 
     def execute_read_command(self, command_name) -> ViData:
         """Sends a read command and gets the response."""
@@ -92,22 +91,36 @@ class ViControl:
         ack = self.vs.read(1)
         logger.debug("Received %s", ack.hex())
         if ack != CtrlCode.ACKNOWLEDGE:
-            raise ViControlError(f"Expected acknowledge byte, received {ack}")
+            raise ViCommandError(f"Expected acknowledge byte, received {ack}")
 
         # Receive response and evaluate data
         vr = self.vs.read(vt.response_length)  # receive response
         vt = ViTelegram.from_bytes(vr)
         logger.debug("Requested %s bytes. Received telegram {vr.hex()}", vt.response_length)
         if vt.tType == ViTelegram.tTypes["error"]:
-            raise ViControlError(f"{access_mode} command returned an error")
+            raise ViCommandError(f"{access_mode} command returned an error")
         self.vs.send(CtrlCode.ACKNOWLEDGE)  # send acknowledge
 
         # return ViData object from payload
         return ViData.create(vt.vicmd.unit, vt.payload)
 
-    def initialize_communication(self):
+    def __enter__(self):
         logger.debug("Init Communication to ViControl....")
         self.is_initialized = False
+        if not self._viessmann_lock.acquire(timeout=10):
+            raise ViConnectionError("Could not acquire lock, aborting.")
+        self._serial = Serial(
+            port=self.port,
+            baudrate=self.baudrate,
+            parity=self.parity,
+            bytesize=self.bytesize,
+            stopbits=self.stopbits,
+            timeout=0.25,  # read method will try 10 times -> 2.5s max waiting time
+        )
+        try:
+            self._serial.open()
+        except Exception as error:
+            raise ViConnectionError("Could not open serial port, aborting.") from error
 
         # loop cases
         # 1 - ii=0: read timeout -> send reset / ii=1: not_init, send sync / ii=2:  Initialization successful
@@ -116,7 +129,7 @@ class ViControl:
 
         for ii in range(10):
             # loop until interface is initialized
-            read_byte = self.vs.read(1)
+            read_byte = self._serial.read(1)
             if read_byte == CtrlCode.ACKNOWLEDGE:
                 # Schnittstelle hat auf den Initialisierungsstring mit OK geantwortet.
                 # Die Abfrage von Werten kann beginnen.
@@ -127,71 +140,29 @@ class ViControl:
                 # Schnittstelle ist zurückgesetzt und wartet auf Daten;
                 # Antwort b'\x05' = Warten auf Initialisierungsstring
                 logger.debug("Step %s: Viessmann ready, not initialized, send sync", ii)
-                self.vs.send(CtrlCode.SYNC_CMD)
+                self._serial.write(CtrlCode.SYNC_CMD)
             elif read_byte == CtrlCode.ERROR:
                 # in case of error try to reset
                 logger.error("The interface has reported an error, loop increment %s", ii)
                 logger.debug("Step %s: Send reset", ii)
-                self.vs.send(CtrlCode.RESET_CMD)
+                self._serial.write(CtrlCode.RESET_CMD)
             else:
                 # send reset
                 logger.debug("Received [%s]. Step {ii}: Send reset", read_byte)
-                self.vs.send(CtrlCode.RESET_CMD)
+                self._serial.write(CtrlCode.RESET_CMD)
 
         if not self.is_initialized:
-            # initialisation not successful
-            raise ViControlError("Could not initialize communication.")
+            raise ViConnectionError("Could not initialize communication.")
 
         logger.debug("Communication initialized")
-        return True
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self._serial.close()
+        self._viessmann_lock.release()
 
 
 class ViSerial:
     """Serial port."""
-
-    _viessmann_lock = Lock()
-
-    def __init__(self, port, baudrate, parity, bytesize, stopbits):
-        self._connected = False
-        self._serial = Serial(port=port, baudrate=baudrate, parity=parity, bytesize=bytesize, stopbits=stopbits)
-
-    def connect(self):
-        """Setup serial connection.
-
-        if not connected, try to acquire lock.
-        """
-        if self._connected:
-            # do nothing
-            logger.debug("Connect: Already connected")
-            return
-        if self._viessmann_lock.acquire(timeout=10):
-            try:
-                logger.debug("Connecting ...")
-                self._serial.timeout = 0.25  # read method will try 10 times -> 2.5s max waiting time
-                self._serial.open()
-                self._connected = True
-                logger.debug("Connected to %s", self._serial.port)
-            except Exception:
-                logger.exception("Could not connect to %s.", self._serial.port)
-                self._viessmann_lock.release()
-                self._connected = False
-        else:
-            logger.error("Could not acquire lock")
-
-    def disconnect(self):
-        """Release serial line and lock."""
-        self._serial.close()
-        self._serial = None
-        self._viessmann_lock.release()
-        self._connected = False
-        logger.debug("Disconnected from ViControl")
-
-    def send(self, packet):
-        """If connected send the packet."""
-        if self._connected:
-            self._serial.write(packet)
-            return True
-        return False
 
     def read(self, length):
         """Read bytes from serial connection."""

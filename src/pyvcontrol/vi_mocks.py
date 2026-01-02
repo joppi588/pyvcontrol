@@ -29,21 +29,17 @@ class ViSerialMock(NonCallableMock):
     """Mock for serial interface."""
 
     def __init__(self):
-        super().__init__(spec=ViControl)
-        self._connected = False
-        self._serial = []
         self.sink = bytearray(0)
         self.source = bytearray(0)
         self.source_cursor = 0
 
-    def connect(self):
-        self._connected = True
+    def open(self):
         self.sink = bytearray(0)
 
-    def disconnect(self):
-        self._connected = False
+    def close(self):
+        pass
 
-    def send(self, payload):
+    def write(self, payload):
         self.sink = self.sink + bytearray(payload)
         print(f"received {payload}, in total received {self.sink}")
 
