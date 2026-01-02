@@ -18,9 +18,42 @@
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
 import logging
+from abc import abstractmethod, abstractproperty
 from struct import unpack
 
 logger = logging.getLogger(name="pyvcontrol")
+
+UNITS_NOT_IMPLEMENTED_YET = {
+    "CT": {"description": "CycleTime", "type": "timer", "signed": False, "read_value_transform": "non"},
+    # vito unit: CT
+    "IU2": {"description": "INT unsigned 2", "type": "integer", "signed": False, "read_value_transform": "2"},
+    # vito unit: UT1U, PR1
+    "IUBOOL": {
+        "description": "INT unsigned bool",
+        "type": "integer",
+        "signed": False,
+        "read_value_transform": "bool",
+    },  # vito unit:
+    "IUINT": {"description": "INT unsigned int", "type": "integer", "signed": False, "read_value_transform": "int"},
+    # vito unit:
+    "IS2": {"description": "INT signed 2", "type": "integer", "signed": True, "read_value_transform": "2"},
+    # vito unit: UT1, PR
+    "IS100": {"description": "INT signed 100", "type": "integer", "signed": True, "read_value_transform": "100"},
+    # vito unit:
+    "IS1000": {"description": "INT signed 1000", "type": "integer", "signed": True, "read_value_transform": "1000"},
+    # vito unit:
+    "ISNON": {"description": "INT signed non", "type": "integer", "signed": True, "read_value_transform": "non"},
+    # vito unit:
+    "SC": {"description": "SystemScheme", "type": "list", "signed": False, "read_value_transform": "non"},
+    # vito unit:
+    "SN": {"description": "Sachnummer", "type": "serial", "signed": False, "read_value_transform": "non"},
+    # vito unit:
+    "SR": {"description": "SetReturnStatus", "type": "list", "signed": False, "read_value_transform": "non"},
+    # vito unit:
+    "TI": {"description": "SystemTime", "type": "datetime", "signed": False, "read_value_transform": "non"},
+    # vito unit: TI
+    "DA": {"description": "Date", "type": "date", "signed": False, "read_value_transform": "non"},  # vito unit:
+}
 
 
 class ViDataError(Exception):
@@ -32,63 +65,18 @@ class ViData(bytearray):
 
     erzeugen eines Datentypes über benannte Klasse -> setze code und codiere Parameter als bytes
 
-    konstruktor __init__ accepts byte-encoded input or real data
+    constructor __init__ accepts byte-encoded input or real data
     property value returns the decoded value (str,int,fixed-point,...)
     method _create_from_raw initializes the object with raw byte data
     method _create_from_value initializes the object with a typed value
-
-    Implemented units:
-    BA    : Betriebsart
-    ES    : Errorset
-    DT    : Devicetype
-    IS10  : Int signed, base 10 (i.e. 1 digit fixed point)
-    IU10  : Int unsigned, base 10 (i.e. 1 digit fixed point)
-    IUNON : Int unsigned, no base
-    IU3600: Int unsigned, base 3600 (i.e. hours & seconds)
-    OO    : On Off,
-    RT    : Return Type.
     """
 
-    # TODO: implemented all units -> create own classes
-    # TODO: Units für Temperatur, h, etc. erzeugen
+    unit = ""
 
-    # units not implemented so far:
-    unitset = {
-        "CT": {"description": "CycleTime", "type": "timer", "signed": False, "read_value_transform": "non"},
-        # vito unit: CT
-        "IU2": {"description": "INT unsigned 2", "type": "integer", "signed": False, "read_value_transform": "2"},
-        # vito unit: UT1U, PR1
-        "IUBOOL": {
-            "description": "INT unsigned bool",
-            "type": "integer",
-            "signed": False,
-            "read_value_transform": "bool",
-        },  # vito unit:
-        "IUINT": {"description": "INT unsigned int", "type": "integer", "signed": False, "read_value_transform": "int"},
-        # vito unit:
-        "IS2": {"description": "INT signed 2", "type": "integer", "signed": True, "read_value_transform": "2"},
-        # vito unit: UT1, PR
-        "IS100": {"description": "INT signed 100", "type": "integer", "signed": True, "read_value_transform": "100"},
-        # vito unit:
-        "IS1000": {"description": "INT signed 1000", "type": "integer", "signed": True, "read_value_transform": "1000"},
-        # vito unit:
-        "ISNON": {"description": "INT signed non", "type": "integer", "signed": True, "read_value_transform": "non"},
-        # vito unit:
-        "SC": {"description": "SystemScheme", "type": "list", "signed": False, "read_value_transform": "non"},
-        # vito unit:
-        "SN": {"description": "Sachnummer", "type": "serial", "signed": False, "read_value_transform": "non"},
-        # vito unit:
-        "SR": {"description": "SetReturnStatus", "type": "list", "signed": False, "read_value_transform": "non"},
-        # vito unit:
-        "TI": {"description": "SystemTime", "type": "datetime", "signed": False, "read_value_transform": "non"},
-        # vito unit: TI
-        "DA": {"description": "Date", "type": "date", "signed": False, "read_value_transform": "non"},  # vito unit:
-    }
+    def __init__(self, value=b"\x00"):
+        """Create ViData.
 
-    def __init__(self, value):
-        """To be overridden by subclass.
-
-        subclass __init__ shall set default value for value and handle any extra parameters.
+        To set a different default value, override subclass constructors.
         """
         super().__init__()
         if isinstance(value, (bytes, bytearray)):
@@ -101,16 +89,13 @@ class ViData(bytearray):
         super().extend(value)
         self.len = len(value)
 
+    @abstractmethod
     def _create_from_value(self, value):
         """Fill using type and value."""
-        # empty declaration, must be overridden by subclass
-        raise NotImplementedError
 
-    @property
+    @abstractproperty
     def value(self):
         """Empty declaration, must be overriden by subclass."""
-        # returns value converted from raw data
-        raise NotImplementedError
 
     @classmethod
     def create(cls, datatype, *args):
@@ -134,36 +119,29 @@ class ViData(bytearray):
         # if unit type is not implemented
         raise ViDataError(f"Unit {datatype} not known")
 
-
-# ----------------------------------------
-# Below are the class definitions for each unit
+    def __str__(self):
+        return str(self.value) + self.unit
 
 
 class ViDataBA(ViData):
     """Betriebsart."""
 
-    unit = {"code": "BA", "description": "Betriebsart", "unit": ""}
-    # operating mode codes are hex numbers
-    operatingmodes = {
+    operating_modes = {
         0x00: "OFF",
         0x01: "WW",
         0x02: "HEATING_WW",
     }
 
-    def __init__(self, value=b"\x00"):
-        """Sets operating mode (hex) based on value."""
-        super().__init__(value)
-
-    def _create_from_value(self, opmode):
-        if opmode in self.operatingmodes.values():
-            opcode = next(key for key, value in self.operatingmodes.items() if value == opmode)
+    def _create_from_value(self, opmode: str):
+        if opmode in self.operating_modes.values():
+            opcode = next(key for key, value in self.operating_modes.items() if value == opmode)
             super().extend(opcode.to_bytes(1, "little"))
         else:
-            raise ViDataError(f"Unknown operating mode {opmode}. Options are {self.operatingmodes.values()}")
+            raise ViDataError(f"Unknown operating mode {opmode}. Options are {self.operating_modes.values()}")
 
     def _create_from_raw(self, value):
         """Set raw value directly."""
-        if int.from_bytes(value, "little") in self.operatingmodes:
+        if int.from_bytes(value, "little") in self.operating_modes:
             super().extend(value)
         else:
             raise ViDataError(f"Unknown operating mode {value.hex()}")
@@ -171,7 +149,7 @@ class ViDataBA(ViData):
     @property
     def value(self):
         """Returns decoded value."""
-        return self.operatingmodes[int.from_bytes(self, "little")]
+        return self.operating_modes[int.from_bytes(self, "little")]
 
 
 class ViDataES(ViData):
