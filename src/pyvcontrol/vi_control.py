@@ -30,12 +30,6 @@ from pyvcontrol.vi_telegram import ViTelegram
 
 logger = logging.getLogger(name="pyvcontrol")
 
-control_set = {
-    "Baudrate": 4800,
-    "Bytesize": 8,  # 'EIGHTBITS'
-    "Parity": "E",  # 'PARITY_EVEN',
-    "Stopbits": 2,  # 'STOPBITS_TWO',
-}
 
 
 class CtrlCode(bytes, Enum):
@@ -61,13 +55,13 @@ class ViControl:
     Only supports WO1C with protocol P300.
     """
 
-    def __init__(self, port="/dev/ttyUSB0"):
-        self.vs = ViSerial(control_set, port)
+    def __init__(self, port="/dev/ttyUSB0", baudrate=4800, bytesize=8, parity="E", stopbits=2):
+        self.vs = ViSerial(port, baudrate=baudrate, bytesize=bytesize, parity=parity, stopbits=stopbits)
         self.vs.connect()
         self.is_initialized = False
 
     def __del__(self):
-        """destructor, releases serial port."""
+        """Destructor, releases serial port."""
         self.vs.disconnect()
 
     def execute_read_command(self, command_name) -> ViData:
@@ -150,7 +144,7 @@ class ViControl:
 
         if not self.is_initialized:
             # initialisation not successful
-            raise ViControlError("Could not initialize communication")
+            raise ViControlError("Could not initialize communication.")
 
         logger.debug("Communication initialized")
         return True
@@ -159,16 +153,11 @@ class ViControl:
 class ViSerial:
     """Serial port."""
 
-    # low-level communication interface
-    # TODO: control sets nicht übernommen
     _viessmann_lock = Lock()
 
-    # ViControl socket: implement raw communication
-    def __init__(self, control_set, port):
+    def __init__(self, port, baudrate, parity, bytesize, stopbits):
         self._connected = False
-        self._control_set = control_set
-        self._serial_port = port
-        self._serial = serial.Serial()
+        self._serial = serial.Serial(port=port, baudrate=baudrate, parity=parity, bytesize=bytesize, stopbits=stopbits)
 
     def connect(self):
         """Setup serial connection.
@@ -181,13 +170,7 @@ class ViSerial:
             return
         if self._viessmann_lock.acquire(timeout=10):
             try:
-                # initialize serial connection
                 logger.debug("Connecting ...")
-                self._serial.baudrate = self._control_set["Baudrate"]
-                self._serial.parity = self._control_set["Parity"]
-                self._serial.bytesize = self._control_set["Bytesize"]
-                self._serial.stopbits = self._control_set["Stopbits"]
-                self._serial.port = self._serial_port
                 self._serial.timeout = 0.25  # read method will try 10 times -> 2.5s max waiting time
                 self._serial.open()
                 self._connected = True
