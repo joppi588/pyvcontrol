@@ -25,34 +25,23 @@ logger = logging.getLogger(name="pyvcontrol")
 
 UNITS_NOT_IMPLEMENTED_YET = {
     "CT": {"description": "CycleTime", "type": "timer", "signed": False, "read_value_transform": "non"},
-    # vito unit: CT
     "IU2": {"description": "INT unsigned 2", "type": "integer", "signed": False, "read_value_transform": "2"},
-    # vito unit: UT1U, PR1
     "IUBOOL": {
         "description": "INT unsigned bool",
         "type": "integer",
         "signed": False,
         "read_value_transform": "bool",
-    },  # vito unit:
+    },
     "IUINT": {"description": "INT unsigned int", "type": "integer", "signed": False, "read_value_transform": "int"},
-    # vito unit:
     "IS2": {"description": "INT signed 2", "type": "integer", "signed": True, "read_value_transform": "2"},
-    # vito unit: UT1, PR
     "IS100": {"description": "INT signed 100", "type": "integer", "signed": True, "read_value_transform": "100"},
-    # vito unit:
     "IS1000": {"description": "INT signed 1000", "type": "integer", "signed": True, "read_value_transform": "1000"},
-    # vito unit:
     "ISNON": {"description": "INT signed non", "type": "integer", "signed": True, "read_value_transform": "non"},
-    # vito unit:
     "SC": {"description": "SystemScheme", "type": "list", "signed": False, "read_value_transform": "non"},
-    # vito unit:
     "SN": {"description": "Sachnummer", "type": "serial", "signed": False, "read_value_transform": "non"},
-    # vito unit:
     "SR": {"description": "SetReturnStatus", "type": "list", "signed": False, "read_value_transform": "non"},
-    # vito unit:
     "TI": {"description": "SystemTime", "type": "datetime", "signed": False, "read_value_transform": "non"},
-    # vito unit: TI
-    "DA": {"description": "Date", "type": "date", "signed": False, "read_value_transform": "non"},  # vito unit:
+    "DA": {"description": "Date", "type": "date", "signed": False, "read_value_transform": "non"},
 }
 
 
@@ -71,7 +60,6 @@ class ViData(bytearray):
     method _create_from_value initializes the object with a typed value
     """
 
-    unit = ""
     length = 1
 
     def __init__(self, value=b"\x00", length=1):
@@ -117,11 +105,10 @@ class ViData(bytearray):
         }
         if datatype in datatype_object:
             return datatype_object[datatype](*args)
-        # if unit type is not implemented
         raise ViDataError(f"Unit {datatype} not known")
 
     def __str__(self):
-        return str(self.value) + self.unit
+        return str(self.value)
 
 
 class ViDataBA(ViData):
@@ -304,9 +291,7 @@ class ViDataIS10(ViData):
 
 
 class ViDataIU10(ViData):
-    """IS10 - signed fixed-point integer, 1 decimal."""
-
-    unit = {"code": "IU10", "description": "INT unsigned 10", "unit": ""}
+    """IS10 - unsigned fixed-point integer, 1 decimal."""
 
     def __init__(self, value=b"\x00\x00"):
         """Sets int representation based on input value."""
@@ -322,9 +307,7 @@ class ViDataIU10(ViData):
 
 
 class ViDataIU3600(ViData):
-    """IU3600 - signed fixed-point integer, 1 decimal."""
-
-    unit = {"code": "IS10", "description": "INT signed 10", "unit": "h"}
+    """IU3600 - Unsigned int 3600 base (hours)."""
 
     def __init__(self, value=b"\x00\x00"):
         """Sets int representation based on input value."""
@@ -336,14 +319,12 @@ class ViDataIU3600(ViData):
 
     @property
     def value(self):
-        """FIXME round to two digits."""
-        return int.from_bytes(self, "little", signed=True) / 3600
+        """TODO: round to two digits."""
+        return int.from_bytes(self, "little", signed=False) / 3600
 
 
 class ViDataIUNON(ViData):
     """IUNON - unsigned int."""
-
-    unit = ({"code": "IUNON", "description": "INT unsigned non", "unit": ""},)  # vito unit: UTI, CO
 
     def __init__(self, value=b"\x00\x00"):
         """Sets int representation based on input value."""
@@ -361,8 +342,6 @@ class ViDataIUNON(ViData):
 class ViDataRT(ViData):
     """Return type."""
 
-    unit = {"code": "RT", "description": "ReturnStatus", "unit": ""}
-    # operating mode codes are hex numbers
     returnstatus = {0x00: "0", 0x01: "1", 0x03: "2", 0xAA: "Not OK"}
 
     def _create_from_value(self, status):
@@ -387,8 +366,6 @@ class ViDataRT(ViData):
 class ViDataOO(ViData):
     """On-Off."""
 
-    unit = {"code": "OO", "description": "OnOff", "unit": ""}
-    # operating mode codes are hex numbers
     OnOff = {
         0x00: "Off",
         0x01: "Manual",
