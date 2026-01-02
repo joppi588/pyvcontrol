@@ -21,7 +21,7 @@
 from unittest.mock import NonCallableMock
 
 from pyvcontrol.vi_command import ViCommand
-from pyvcontrol.vi_control import ViControl, control_set
+from pyvcontrol.vi_control import ViControl
 from pyvcontrol.vi_data import ViData
 
 
@@ -31,8 +31,6 @@ class ViSerialMock(NonCallableMock):
     def __init__(self):
         super().__init__(spec=ViControl)
         self._connected = False
-        self._control_set = control_set
-        self._serial_port = ""
         self._serial = []
         self.sink = bytearray(0)
         self.source = bytearray(0)
