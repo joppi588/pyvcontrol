@@ -23,13 +23,13 @@ from unittest.mock import patch
 
 import pytest
 
-from pyvcontrol.vi_control import ViControl, ViControlError, ctrlcode
+from pyvcontrol.vi_control import CtrlCode, ViControl, ViControlError
 from pyvcontrol.vi_mocks import ViSerialMock
 
 
 @patch("pyvcontrol.vi_control.ViSerial", return_value=ViSerialMock())
 def test_exec_forbidden_write_command(mock_vi_serial):
-    mock_vi_serial.return_value.source = ctrlcode["acknowledge"] + bytes.fromhex("41 07 01 01 01 0d 02 65 00 7e")
+    mock_vi_serial.return_value.source = CtrlCode.ACKNOWLEDGE + bytes.fromhex("41 07 01 01 01 0d 02 65 00 7e")
     vc = ViControl()
     with pytest.raises(ViControlError):
         vc.execute_write_command("Warmwassertemperatur", 5)
@@ -37,14 +37,14 @@ def test_exec_forbidden_write_command(mock_vi_serial):
 
 @patch("pyvcontrol.vi_control.ViSerial", return_value=ViSerialMock())
 def test_exec_write_command(mock_vi_serial):
-    mock_vi_serial.return_value.source = ctrlcode["acknowledge"] + bytes.fromhex("41 07 01 01 01 0d 02 19 00 7e")
+    mock_vi_serial.return_value.source = CtrlCode.ACKNOWLEDGE + bytes.fromhex("41 07 01 01 01 0d 02 19 00 7e")
     vc = ViControl()
     vc.execute_write_command("SolltempWarmwasser", 35)
 
 
 @patch("pyvcontrol.vi_control.ViSerial", return_value=ViSerialMock())
 def test_exec_read_command(mock_vi_serial):
-    mock_vi_serial.return_value.source = ctrlcode["acknowledge"] + bytes.fromhex("41 07 01 01 01 0d 02 65 00 7e")
+    mock_vi_serial.return_value.source = CtrlCode.ACKNOWLEDGE + bytes.fromhex("41 07 01 01 01 0d 02 65 00 7e")
     vc = ViControl()
     data = vc.execute_read_command("Warmwassertemperatur")
     assert data.value == 10.1
@@ -58,7 +58,7 @@ def test_exec_function_call(mock_vi_serial):  # noqa: ARG001
 
 @patch("pyvcontrol.vi_control.ViSerial", return_value=ViSerialMock())
 def test_exec_forbidden_function_call(mock_vi_serial):
-    mock_vi_serial.return_value.source = ctrlcode["acknowledge"] + bytes.fromhex("41 07 01 01 01 0d 02 65 00 7e")
+    mock_vi_serial.return_value.source = CtrlCode.ACKNOWLEDGE + bytes.fromhex("41 07 01 01 01 0d 02 65 00 7e")
     vc = ViControl()
     with pytest.raises(ViControlError):
         vc.execute_function_call("Warmwassertemperatur", 5)
