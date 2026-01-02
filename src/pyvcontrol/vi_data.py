@@ -18,7 +18,7 @@
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
 import logging
-from abc import abstractmethod, abstractproperty
+from abc import ABC, abstractmethod, abstractproperty
 from struct import unpack
 
 logger = logging.getLogger(name="pyvcontrol")
@@ -49,7 +49,7 @@ class ViDataError(Exception):
     """Indicates an Error with ViData."""
 
 
-class ViData(bytearray):
+class ViData(bytearray, ABC):
     """Implements representations of ViControl data types.
 
     erzeugen eines Datentypes über benannte Klasse -> setze code und codiere Parameter als bytes
