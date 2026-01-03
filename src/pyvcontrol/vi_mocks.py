@@ -20,30 +20,37 @@
 
 from unittest.mock import NonCallableMagicMock, NonCallableMock
 
+from serial import Serial
+
 from pyvcontrol.vi_command import ViCommand
 from pyvcontrol.vi_control import ViControl
 from pyvcontrol.vi_data import ViData
 
 
-class ViSerialMock(NonCallableMock):
+class SerialMock(NonCallableMock):
     """Mock for serial interface."""
 
     def __init__(self):
+        super().__init__(spec=Serial)
         self.sink = bytearray(0)
         self.source = bytearray(0)
         self.source_cursor = 0
+        self.open.side_effect = self._open
+        self.close.side_effect = self._close
+        self.write.side_effect = self._write
+        self.read.side_effect = self._read
 
-    def open(self):
+    def _open(self):
         self.sink = bytearray(0)
 
-    def close(self):
+    def _close(self):
         pass
 
-    def write(self, payload):
+    def _write(self, payload):
         self.sink = self.sink + bytearray(payload)
         print(f"received {payload}, in total received {self.sink}")
 
-    def read(self, length):
+    def _read(self, length):
         answer = self.source[self.source_cursor : self.source_cursor + length]
         self.source_cursor += length
         return answer
