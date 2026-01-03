@@ -87,21 +87,21 @@ class ViControl:
         # send Telegram
         vt = ViTelegram(vc, access_mode, payload=payload)
         logger.debug("Send telegram %s", vt.hex())
-        self.vs.send(vt)
+        self._serial.write(vt)
 
         # Check if sending was successful
-        ack = self.vs.read(1)
+        ack = self._serial.read(1)
         logger.debug("Received %s", ack.hex())
         if ack != CtrlCode.ACKNOWLEDGE:
             raise ViCommandError(f"Expected acknowledge byte, received {ack}")
 
         # Receive response and evaluate data
-        vr = self.vs.read(vt.response_length)  # receive response
+        vr = self._serial.read(vt.response_length)
         vt = ViTelegram.from_bytes(vr)
         logger.debug("Requested %s bytes. Received telegram {vr.hex()}", vt.response_length)
         if vt.tType == ViTelegram.tTypes["error"]:
             raise ViCommandError(f"{access_mode} command returned an error")
-        self.vs.send(CtrlCode.ACKNOWLEDGE)  # send acknowledge
+        self._serial.write(CtrlCode.ACKNOWLEDGE)
 
         # return ViData object from payload
         return ViData.create(vt.vicmd.unit, vt.payload)
@@ -128,7 +128,7 @@ class ViControl:
                 # Schnittstelle hat auf den Initialisierungsstring mit OK geantwortet.
                 # Die Abfrage von Werten kann beginnen.
                 logger.debug("Step %s: Initialization successful", ii)
-                return
+                return self
             if read_byte == CtrlCode.NOT_INIT:
                 # Schnittstelle ist zurückgesetzt und wartet auf Daten;
                 # Antwort b'\x05' = Warten auf Initialisierungsstring

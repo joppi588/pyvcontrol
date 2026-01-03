@@ -25,24 +25,24 @@ import pytest
 
 from pyvcontrol.vi_command import ViCommandError
 from pyvcontrol.vi_control import CtrlCode, ViControl
-from pyvcontrol.vi_mocks import SerialMock
+from pyvcontrol.vi_mocks import ViSerialMock
 
 
-@patch("pyvcontrol.vi_control.Serial", return_value=SerialMock())
+@patch("pyvcontrol.vi_control.Serial", return_value=ViSerialMock())
 def test_exec_forbidden_write_command(mock_vi_serial):
     mock_vi_serial.return_value.source = CtrlCode.ACKNOWLEDGE + bytes.fromhex("41 07 01 01 01 0d 02 65 00 7e")
     with pytest.raises(ViCommandError), ViControl() as vc:
         vc.execute_write_command("Warmwassertemperatur", 5)
 
 
-@patch("pyvcontrol.vi_control.Serial", return_value=SerialMock())
+@patch("pyvcontrol.vi_control.Serial", return_value=ViSerialMock())
 def test_exec_write_command(mock_vi_serial):
     mock_vi_serial.return_value.source = CtrlCode.ACKNOWLEDGE + bytes.fromhex("41 07 01 01 01 0d 02 19 00 7e")
     with ViControl() as vc:
         vc.execute_write_command("SolltempWarmwasser", 35)
 
 
-@patch("pyvcontrol.vi_control.Serial", return_value=SerialMock())
+@patch("pyvcontrol.vi_control.Serial", return_value=ViSerialMock())
 def test_exec_read_command(mock_vi_serial):
     mock_vi_serial.return_value.source = CtrlCode.ACKNOWLEDGE + bytes.fromhex("41 07 01 01 01 0d 02 65 00 7e")
     with ViControl() as vc:
@@ -51,12 +51,12 @@ def test_exec_read_command(mock_vi_serial):
 
 
 @pytest.mark.skip("Function calls not implemented.")
-@patch("pyvcontrol.vi_control.Serial", return_value=SerialMock())
+@patch("pyvcontrol.vi_control.Serial", return_value=ViSerialMock())
 def test_exec_function_call(mock_vi_serial):  # noqa: ARG001
     vc = ViControl()  # noqa: F841
 
 
-@patch("pyvcontrol.vi_control.Serial", return_value=SerialMock())
+@patch("pyvcontrol.vi_control.Serial", return_value=ViSerialMock())
 def test_exec_forbidden_function_call(mock_vi_serial):
     mock_vi_serial.return_value.source = CtrlCode.ACKNOWLEDGE + bytes.fromhex("41 07 01 01 01 0d 02 65 00 7e")
     with pytest.raises(ViCommandError), ViControl() as vc:

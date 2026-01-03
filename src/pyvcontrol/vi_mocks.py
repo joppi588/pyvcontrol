@@ -27,8 +27,8 @@ from pyvcontrol.vi_control import ViControl
 from pyvcontrol.vi_data import ViData
 
 
-class SerialMock(NonCallableMock):
-    """Mock for serial interface."""
+class ViSerialMock(NonCallableMock):
+    """Mock for serial interface, simulating the heating device."""
 
     def __init__(self):
         super().__init__(spec=Serial)
