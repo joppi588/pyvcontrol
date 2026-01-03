@@ -68,7 +68,7 @@ class ViControlMock(NonCallableMagicMock):
         self.__exit__.side_effect = self._exit
 
     def _enter(self):
-        return
+        return self
 
     def _exit(self):
         return

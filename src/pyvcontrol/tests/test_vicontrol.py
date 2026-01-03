@@ -19,6 +19,7 @@
 
 """Test cases for class ViControl."""
 
+import re
 from unittest.mock import patch
 
 import pytest
@@ -30,21 +31,24 @@ from pyvcontrol.vi_mocks import ViSerialMock
 
 @patch("pyvcontrol.vi_control.Serial", return_value=ViSerialMock())
 def test_exec_forbidden_write_command(mock_vi_serial):
-    mock_vi_serial.return_value.source = CtrlCode.ACKNOWLEDGE + bytes.fromhex("41 07 01 01 01 0d 02 65 00 7e")
-    with pytest.raises(ViCommandError), ViControl() as vc:
+    mock_vi_serial.return_value.source = CtrlCode.ACKNOWLEDGE
+    with (
+        ViControl() as vc,
+        pytest.raises(ViCommandError, match=re.escape("Command Warmwassertemperatur only allows ['read'] access.")),
+    ):
         vc.execute_write_command("Warmwassertemperatur", 5)
 
 
 @patch("pyvcontrol.vi_control.Serial", return_value=ViSerialMock())
 def test_exec_write_command(mock_vi_serial):
-    mock_vi_serial.return_value.source = CtrlCode.ACKNOWLEDGE + bytes.fromhex("41 07 01 01 01 0d 02 19 00 7e")
+    mock_vi_serial.return_value.source = CtrlCode.ACKNOWLEDGE * 2 + bytes.fromhex("41 07 01 01 01 0d 02 65 00 7e")
     with ViControl() as vc:
         vc.execute_write_command("SolltempWarmwasser", 35)
 
 
 @patch("pyvcontrol.vi_control.Serial", return_value=ViSerialMock())
 def test_exec_read_command(mock_vi_serial):
-    mock_vi_serial.return_value.source = CtrlCode.ACKNOWLEDGE + bytes.fromhex("41 07 01 01 01 0d 02 65 00 7e")
+    mock_vi_serial.return_value.source = CtrlCode.ACKNOWLEDGE * 2 + bytes.fromhex("41 07 01 01 01 0d 02 65 00 7e")
     with ViControl() as vc:
         data = vc.execute_read_command("Warmwassertemperatur")
     assert data.value == 10.1
