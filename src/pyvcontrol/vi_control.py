@@ -152,7 +152,7 @@ class ViControl:
                 logger.debug("Step %s: Send reset", ii)
                 self._serial.write(CtrlCode.RESET_CMD)
             else:
-                logger.debug("Received [%s]. Step {ii}: Send reset", read_byte)
+                logger.debug("Received [%s]. Step %s: Send reset", read_byte, ii)
                 self._serial.write(CtrlCode.RESET_CMD)
 
         raise ViConnectionError("Could not initialize communication.")
