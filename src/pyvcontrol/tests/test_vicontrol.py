@@ -36,13 +36,14 @@ from pyvcontrol.vi_mocks import ViSerialMock
     [(CtrlCode.NOT_INIT, CtrlCode.SYNC_CMD), (CtrlCode.ERROR, CtrlCode.RESET_CMD), (b"\x04", CtrlCode.RESET_CMD)],
 )
 @patch("pyvcontrol.vi_control.Serial", new_callable=ViSerialMock)
-def test_vicontrol_init_behaviour(mock_vi_serial, serial_in, serial_out):
+def test_vicontrol_init_behaviour(serial_in, serial_out):
     # GIVEN Serial interface returning a non-acknowledge code
     # WHEN Communication is initialized
     # THEN An error is raised, control codes are written
     init_retries = 3
-    mock_vi_serial.source = serial_in * init_retries
+    mock_vi_serial = ViSerialMock(source=serial_in * init_retries)
     with (
+        patch("pyvcontrol.vi_control.Serial", return_value=mock_vi_serial),
         pytest.raises(ViConnectionError, match=r"Could not initialize communication\."),
         ViControl(init_retries=init_retries) as vc,
     ):
@@ -50,27 +51,25 @@ def test_vicontrol_init_behaviour(mock_vi_serial, serial_in, serial_out):
     assert mock_vi_serial.sink == serial_out * init_retries
 
 
-@patch("pyvcontrol.vi_control.Serial", new_callable=ViSerialMock)
-def test_exec_forbidden_write_command(mock_vi_serial):
-    mock_vi_serial.source = CtrlCode.ACKNOWLEDGE
+def test_exec_forbidden_write_command():
+    mock_vi_serial = ViSerialMock(source=CtrlCode.ACKNOWLEDGE)
     with (
+        patch("pyvcontrol.vi_control.Serial", return_value=mock_vi_serial),
         ViControl() as vc,
         pytest.raises(ViCommandError, match=re.escape("Command Warmwassertemperatur only allows ['read'] access.")),
     ):
         vc.execute_write_command("Warmwassertemperatur", 5)
 
 
-@patch("pyvcontrol.vi_control.Serial", new_callable=ViSerialMock)
-def test_exec_write_command(mock_vi_serial):
-    mock_vi_serial.source = CtrlCode.ACKNOWLEDGE * 2 + bytes.fromhex("41 07 01 01 01 0d 02 19 00 7e")
-    with ViControl() as vc:
+def test_exec_write_command():
+    mock_vi_serial = ViSerialMock(source=CtrlCode.ACKNOWLEDGE * 2 + bytes.fromhex("41 07 01 01 01 0d 02 19 00 7e"))
+    with patch("pyvcontrol.vi_control.Serial", return_value=mock_vi_serial), ViControl() as vc:
         vc.execute_write_command("SolltempWarmwasser", 35)
 
 
-@patch("pyvcontrol.vi_control.Serial", new_callable=ViSerialMock)
-def test_exec_read_command(mock_vi_serial):
-    mock_vi_serial.source = CtrlCode.ACKNOWLEDGE * 2 + bytes.fromhex("41 07 01 01 01 0d 02 65 00 7e")
-    with ViControl() as vc:
+def test_exec_read_command():
+    mock_vi_serial = ViSerialMock(source=CtrlCode.ACKNOWLEDGE * 2 + bytes.fromhex("41 07 01 01 01 0d 02 65 00 7e"))
+    with patch("pyvcontrol.vi_control.Serial", return_value=mock_vi_serial), ViControl() as vc:
         data = vc.execute_read_command("Warmwassertemperatur")
     assert data.value == 10.1
 
@@ -81,10 +80,9 @@ def test_exec_function_call(mock_vi_serial):  # noqa: ARG001
     vc = ViControl()  # noqa: F841
 
 
-@patch("pyvcontrol.vi_control.Serial", new_callable=ViSerialMock)
-def test_exec_forbidden_function_call(mock_vi_serial):
-    mock_vi_serial.source = CtrlCode.ACKNOWLEDGE + bytes.fromhex("41 07 01 01 01 0d 02 65 00 7e")
-    with pytest.raises(ViCommandError), ViControl() as vc:
+def test_exec_forbidden_function_call():
+    mock_vi_serial = ViSerialMock(source=CtrlCode.ACKNOWLEDGE + bytes.fromhex("41 07 01 01 01 0d 02 65 00 7e"))
+    with patch("pyvcontrol.vi_control.Serial", new=mock_vi_serial), pytest.raises(ViCommandError), ViControl() as vc:
         vc.execute_function_call("Warmwassertemperatur", 5)
 
 
@@ -110,8 +108,8 @@ def test_failed_open_lock_release():
     assert not vc1._viessmann_lock.locked()
 
 
-@patch("pyvcontrol.vi_control.Serial", new_callable=ViSerialMock)
-def test_vi_control_locked(mock_vi_serial):
+@patch("pyvcontrol.vi_control.Serial", new=ViSerialMock())
+def test_vi_control_locked():
     # GIVEN A ViControl object with acquired lock
     # WHEN A second ViControl object tries to init
     # THEN Timeout

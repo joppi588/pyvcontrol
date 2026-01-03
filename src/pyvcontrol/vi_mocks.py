@@ -30,10 +30,10 @@ from pyvcontrol.vi_data import ViData
 class ViSerialMock(Mock):
     """Mock for serial interface, simulating the heating device."""
 
-    def __init__(self, **kwargs):
+    def __init__(self, source=None, **kwargs):
         super().__init__(spec=Serial, autospec=True, **kwargs)
         self.sink = bytearray(0)
-        self.source = bytearray(0)
+        self.source = source or bytearray(0)
         self.source_cursor = 0
         self.is_open = False
         self.open = Mock(side_effect=self._open)
