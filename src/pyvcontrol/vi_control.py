@@ -25,7 +25,7 @@ from threading import Lock
 
 from serial import Serial
 
-from pyvcontrol.vi_command import ViCommand, ViCommandError
+from pyvcontrol.vi_command import ViCommand
 from pyvcontrol.vi_data import ViData
 from pyvcontrol.vi_telegram import ViTelegram
 
@@ -46,6 +46,10 @@ class ViConnectionError(Exception):
     """Indicates a failure setting up the connection."""
 
 
+class ViCommunicationError(Exception):
+    """Indicates a failure during communication."""
+
+
 class ViControl:
     """Class to connect to ViControl heating directly via Optolink.
 
@@ -54,8 +58,8 @@ class ViControl:
 
     _viessmann_lock = Lock()
 
-    def __init__(
-        self, port="/dev/ttyUSB0", baudrate=4800, bytesize=8, parity="E", stopbits=2, timeout=1, retry_init=10
+    def __init__(  # noqa: PLR0913
+        self, port="/dev/ttyUSB0", baudrate=4800, bytesize=8, parity="E", stopbits=2, timeout=1, init_retries=10
     ):
         """Read method will try retry_init times -> retry_init*timeout max waiting time for initialization."""
         self._serial = Serial(
@@ -66,7 +70,8 @@ class ViControl:
             stopbits=stopbits,
             timeout=timeout,
         )
-        self._retry_init = retry_init
+        self._init_retries = init_retries
+        self._is_initialized = False
 
     def execute_read_command(self, command_name) -> ViData:
         """Sends a read command and gets the response."""
@@ -88,6 +93,9 @@ class ViControl:
     def _execute_command(self, vc, access_mode, payload=bytes(0)) -> ViData:
         vc.check_access_mode(access_mode)
 
+        if not self._is_initialized:
+            self._initialize_communication()
+
         # send Telegram
         vt = ViTelegram(vc, access_mode, payload=payload)
         logger.debug("Send telegram %s", vt.hex())
@@ -97,35 +105,26 @@ class ViControl:
         ack = self._serial.read(1)
         logger.debug("Received %s", ack.hex())
         if ack != CtrlCode.ACKNOWLEDGE:
-            raise ViCommandError(f"Expected acknowledge byte, received {ack}")
+            raise ViCommunicationError(f"Expected acknowledge byte, received {ack}")
 
         # Receive response and evaluate data
         vr = self._serial.read(vt.response_length)
         vt = ViTelegram.from_bytes(vr)
         logger.debug("Requested %s bytes. Received telegram {vr.hex()}", vt.response_length)
         if vt.tType == ViTelegram.tTypes["error"]:
-            raise ViCommandError(f"{access_mode} command returned an error")
+            raise ViCommunicationError(f"{access_mode} command returned an error")
         self._serial.write(CtrlCode.ACKNOWLEDGE)
 
         # return ViData object from payload
         return ViData.create(vt.vicmd.unit, vt.payload)
 
-    def __enter__(self):
-        logger.debug("Init Communication to ViControl....")
-        if not self._viessmann_lock.acquire(timeout=10):
-            raise ViConnectionError("Could not acquire lock, aborting.")
-
-        try:
-            self._serial.open()
-        except Exception as error:
-            raise ViConnectionError("Could not open serial port, aborting.") from error
-
+    def _initialize_communication(self):
         # loop cases
         # 1 - ii=0: read timeout -> send reset / ii=1: not_init, send sync / ii=2:  Initialization successful
         # 1 - ii=0: error -> send reset / ii=1: not_init, send sync / ii=2:  Initialization successful
-        # 2 - ... ii=10: exit loop, give up
+        # 2 - ... ii=_retry_init: exit loop, give up
 
-        for ii in range(self._retry_init):
+        for ii in range(self._init_retries):
             # loop until interface is initialized
             read_byte = self._serial.read(1)
             if read_byte == CtrlCode.ACKNOWLEDGE:
@@ -144,14 +143,21 @@ class ViControl:
                 logger.debug("Step %s: Send reset", ii)
                 self._serial.write(CtrlCode.RESET_CMD)
             else:
-                # send reset
                 logger.debug("Received [%s]. Step {ii}: Send reset", read_byte)
                 self._serial.write(CtrlCode.RESET_CMD)
 
-        with contextlib.suppress(Exception):
-            self._serial.close()
-        self._viessmann_lock.release()
         raise ViConnectionError("Could not initialize communication.")
+
+    def __enter__(self):
+        logger.debug("Init Communication to ViControl....")
+        if not self._viessmann_lock.acquire(timeout=10):
+            raise ViConnectionError("Could not acquire lock, aborting.")
+
+        try:
+            self._serial.open()
+        except Exception as error:
+            raise ViConnectionError("Could not open serial port, aborting.") from error
+        return self
 
     def __exit__(self, exc_type, exc_value, traceback):
         if exc_value is not None:

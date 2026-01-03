@@ -30,14 +30,22 @@ from pyvcontrol.vi_mocks import ViSerialMock
 
 
 @pytest.mark.parametrize(
-    "serial_in,serial_out", [(CtrlCode.NOT_INIT, CtrlCode.SYNC_CMD), (CtrlCode.ERROR, CtrlCode.RESET_CMD)]
+    "serial_in,serial_out",
+    [(CtrlCode.NOT_INIT, CtrlCode.SYNC_CMD), (CtrlCode.ERROR, CtrlCode.RESET_CMD), (b"\x04", CtrlCode.RESET_CMD)],
 )
 @patch("pyvcontrol.vi_control.Serial", return_value=ViSerialMock())
 def test_vicontrol_init_behaviour(mock_vi_serial, serial_in, serial_out):
-    mock_vi_serial.return_value.source = serial_in
-    with pytest.raises(ViConnectionError, match=r"Could not initialize communication\."), ViControl(retry_init=1) as vc:
-        pytest.fail("Do not execute context statements if initialization is not successfull.")
-    assert mock_vi_serial.return_value.sink == serial_out
+    # GIVEN Serial interface returning a non-acknowledge code
+    # WHEN Communication is initialized
+    # THEN An error is raised, control codes are written
+    init_retries = 3
+    mock_vi_serial.return_value.source = serial_in * init_retries
+    with (
+        pytest.raises(ViConnectionError, match=r"Could not initialize communication\."),
+        ViControl(init_retries=init_retries) as vc,
+    ):
+        vc._initialize_communication()
+    assert mock_vi_serial.return_value.sink == serial_out * init_retries
 
 
 @patch("pyvcontrol.vi_control.Serial", return_value=ViSerialMock())
