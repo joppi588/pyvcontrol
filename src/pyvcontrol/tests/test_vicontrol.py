@@ -29,6 +29,16 @@ from pyvcontrol.vi_control import CtrlCode, ViControl
 from pyvcontrol.vi_mocks import ViSerialMock
 
 
+@pytest.mark.parametrize("serial_in,serial_out", [(CtrlCode.NOT_INIT * 10, CtrlCode.SYNC_CMD * 10)])
+@patch("pyvcontrol.vi_control.Serial", return_value=ViSerialMock())
+def test_vicontrol_init_behaviour(mock_vi_serial, serial_in, serial_out):
+    mock_vi_serial.return_value.source = serial_in
+    with ViControl() as vc:
+        pytest.fail("Do not execute context statements if initialization is not successfull.")
+    assert vc is None
+    assert mock_vi_serial.return_value.sink == serial_out
+
+
 @patch("pyvcontrol.vi_control.Serial", return_value=ViSerialMock())
 def test_exec_forbidden_write_command(mock_vi_serial):
     mock_vi_serial.return_value.source = CtrlCode.ACKNOWLEDGE

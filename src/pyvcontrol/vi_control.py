@@ -54,7 +54,7 @@ class ViControl:
 
     _viessmann_lock = Lock()
 
-    def __init__(self, port="/dev/ttyUSB0", baudrate=4800, bytesize=8, parity="E", stopbits=2):
+    def __init__(self, port="/dev/ttyUSB0", baudrate=4800, bytesize=8, parity="E", stopbits=2, retry_init=10):
         self._serial = Serial(
             port=port,
             baudrate=baudrate,
@@ -63,6 +63,7 @@ class ViControl:
             stopbits=stopbits,
             timeout=1,  # read method will try 10 times -> 10s max waiting time for initialization
         )
+        self._retry_init = retry_init
 
     def execute_read_command(self, command_name) -> ViData:
         """Sends a read command and gets the response."""
@@ -121,7 +122,7 @@ class ViControl:
         # 1 - ii=0: error -> send reset / ii=1: not_init, send sync / ii=2:  Initialization successful
         # 2 - ... ii=10: exit loop, give up
 
-        for ii in range(10):
+        for ii in range(self._retry_init):
             # loop until interface is initialized
             read_byte = self._serial.read(1)
             if read_byte == CtrlCode.ACKNOWLEDGE:
@@ -147,6 +148,8 @@ class ViControl:
         raise ViConnectionError("Could not initialize communication.")
 
     def __exit__(self, exc_type, exc_value, traceback):
+        if exc_value is not None:
+            logger.exception("Error communicating with device.")
         with contextlib.suppress(Exception):
             self._serial.close()
         self._viessmann_lock.release()
