@@ -41,7 +41,7 @@ def test_exec_forbidden_write_command(mock_vi_serial):
 
 @patch("pyvcontrol.vi_control.Serial", return_value=ViSerialMock())
 def test_exec_write_command(mock_vi_serial):
-    mock_vi_serial.return_value.source = CtrlCode.ACKNOWLEDGE * 2 + bytes.fromhex("41 07 01 01 01 0d 02 65 00 7e")
+    mock_vi_serial.return_value.source = CtrlCode.ACKNOWLEDGE * 2 + bytes.fromhex("41 07 01 01 01 0d 02 19 00 7e")
     with ViControl() as vc:
         vc.execute_write_command("SolltempWarmwasser", 35)
 
