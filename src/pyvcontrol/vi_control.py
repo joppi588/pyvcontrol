@@ -59,7 +59,15 @@ class ViControl:
     _viessmann_lock = Lock()
 
     def __init__(  # noqa: PLR0913
-        self, port="/dev/ttyUSB0", baudrate=4800, bytesize=8, parity="E", stopbits=2, timeout=1, init_retries=10
+        self,
+        port="/dev/ttyUSB0",
+        baudrate=4800,
+        bytesize=8,
+        parity="E",
+        stopbits=2,
+        timeout=1,
+        lock_timeout=10,
+        init_retries=10,
     ):
         """Read method will try init_retries times -> init_retries*timeout max waiting time for initialization."""
         self._serial = Serial(
@@ -70,6 +78,7 @@ class ViControl:
             stopbits=stopbits,
             timeout=timeout,
         )
+        self._lock_timeout = lock_timeout
         self._init_retries = init_retries
         self._is_initialized = False
 
@@ -150,12 +159,13 @@ class ViControl:
 
     def __enter__(self):
         logger.debug("Init Communication to ViControl....")
-        if not self._viessmann_lock.acquire(timeout=10):
+        if not self._viessmann_lock.acquire(timeout=self._lock_timeout):
             raise ViConnectionError("Could not acquire lock, aborting.")
 
         try:
             self._serial.open()
         except Exception as error:
+            self._viessmann_lock.release()
             raise ViConnectionError("Could not open serial port, aborting.") from error
         return self
 

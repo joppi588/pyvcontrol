@@ -19,10 +19,12 @@
 
 """Test cases for class ViControl."""
 
+import contextlib
 import re
 from unittest.mock import patch
 
 import pytest
+from serial import SerialException
 
 from pyvcontrol.vi_command import ViCommandError
 from pyvcontrol.vi_control import CtrlCode, ViConnectionError, ViControl
@@ -84,3 +86,39 @@ def test_exec_forbidden_function_call(mock_vi_serial):
     mock_vi_serial.return_value.source = CtrlCode.ACKNOWLEDGE + bytes.fromhex("41 07 01 01 01 0d 02 65 00 7e")
     with pytest.raises(ViCommandError), ViControl() as vc:
         vc.execute_function_call("Warmwassertemperatur", 5)
+
+
+def test_failed_open_lock_release():
+    # GIVEN A ViControl object, ViControl context
+    # WHEN Serial.open fails
+    # THEN The lock is released
+
+    class SerialMock:
+        def open():
+            raise SerialException
+
+    with patch("pyvcontrol.vi_control.Serial", return_value=ViSerialMock()):
+        vc1 = ViControl()
+
+    with (
+        contextlib.suppress(ViConnectionError),
+        patch("pyvcontrol.vi_control.Serial", return_value=SerialMock()),
+        ViControl(),
+    ):
+        pytest.fail("Context shall not be entered")
+
+    assert not vc1._viessmann_lock.locked()
+
+
+@patch("pyvcontrol.vi_control.Serial", return_value=ViSerialMock())
+def test_vi_control_locked(mock_vi_serial):
+    # GIVEN A ViControl object with acquired lock
+    # WHEN A second ViControl object tries to init
+    # THEN Timeout
+    vc1 = ViControl()
+    vc1._viessmann_lock.acquire()
+
+    with pytest.raises(ViConnectionError, match=r"Could not acquire lock, aborting\."), ViControl(lock_timeout=0.1):
+        pytest.fail("Context shall not be entered")
+
+    assert vc1._viessmann_lock.locked()
