@@ -81,10 +81,7 @@ class ViControl:
         return self._execute_command(vc, "call", payload=payload)
 
     def _execute_command(self, vc, access_mode, payload=bytes(0)) -> ViData:
-        # prepare command
-        allowed_access_mode = {"read": ["read"], "write": ["read", "write"], "call": ["call"]}
-        if access_mode not in allowed_access_mode[vc.access_mode]:
-            raise ViControlError(f"command {vc.command_name} allows only {allowed_access_mode[vc.access_mode]} access")
+        vc.check_access_mode(access_mode)
 
         # send Telegram
         vt = ViTelegram(vc, access_mode, payload=payload)
