@@ -22,7 +22,7 @@ Einschränkungen/known issues:
 
 Beispielcode / Getting started: example.py: 
  - Liest RaumTempSollParty, erhöht den Wert um eins und stellt den Originalwert wieder her
- - Aufruf mit uv run example-pyvcontrol *)
+ - Aufruf mit uv run pyvcontrol-example *)
 
 Installation *)
  - uv add "pyvcontrol @ git+https://github.com/joppi588/pyvcontrol" --tag major.minor.patch
