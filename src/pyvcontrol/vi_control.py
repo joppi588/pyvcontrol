@@ -61,7 +61,7 @@ class ViControl:
     def __init__(  # noqa: PLR0913
         self, port="/dev/ttyUSB0", baudrate=4800, bytesize=8, parity="E", stopbits=2, timeout=1, init_retries=10
     ):
-        """Read method will try retry_init times -> retry_init*timeout max waiting time for initialization."""
+        """Read method will try init_retries times -> init_retries*timeout max waiting time for initialization."""
         self._serial = Serial(
             port=port,
             baudrate=baudrate,
