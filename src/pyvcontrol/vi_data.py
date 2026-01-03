@@ -90,7 +90,7 @@ class ViData(bytearray, ABC):
     def create(cls, datatype, *args):
         """Select data type object based on type."""
         # args are passed as such to the constructor of the function
-        logger.debug("Data factory: request to produce Data type %s with args {args}", datatype)
+        logger.debug("Data factory: request to produce Data type %s with args %s", datatype, args)
         datatype_object = {
             "BA": ViDataBA,
             "DT": ViDataDT,

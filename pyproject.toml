@@ -1,6 +1,6 @@
 [project]
 name = "pyvcontrol"
-version = "1.8.0"
+version = "1.8.1"
 description = "Communication with Viessmann heating via Optolink interface."
 readme = "README.md"
 authors = [
@@ -17,7 +17,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project.scripts]
-test-pyvcontrol = "pyvcontrol.example:write_read"
+pyvcontrol-example = "pyvcontrol.example:write_read"
 
 [dependency-groups]
 dev = [

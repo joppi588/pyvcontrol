@@ -77,6 +77,7 @@ COMMAND_SET = {
             "min_value": 10,
             "max_value": 60,
         },
+        "RaumSollTempParty": {ADDRESS: "2022", LENGTH: 2, UNIT: "IS10", ACCESS_MODE: "write"},
         # --------- Codierebene 2 ---------
         # Hysterese Vorlauf ein: Verdichter schaltet im Heizbetrieb ein
         "Hysterese_Vorlauf_ein": {ADDRESS: "7304", LENGTH: 2, UNIT: "IU10", ACCESS_MODE: "write"},

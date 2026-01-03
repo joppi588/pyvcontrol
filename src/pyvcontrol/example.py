@@ -19,24 +19,32 @@
 
 """Tests the connection to Viessmann. Needs a physical connection."""
 
+import logging
+
 from pyvcontrol.vi_control import ViConnectionError, ViControl
 
 
+def print_bold(s: str):
+    print("\033[1m" + s + "\033[0m")
+
+
 def write_read():
-    """Ändert einen Datensatz und stellt ursprüngl. Wert wieder" her."""
+    """Aendert einen Datensatz und stellt urspruengl. Wert wieder" her."""
+    logging.basicConfig(level=logging.DEBUG)
     try:
         with ViControl() as vc:
-            cmd = "RaumsolltempParty"
+            cmd = "RaumSollTempParty"
             v_orig = vc.execute_read_command(cmd).value
+            print_bold(f"Read {cmd} -> {v_orig}")
 
             vc.execute_write_command(cmd, v_orig + 1)
-            vdr = vc.execute_read_command(cmd)
-            print(f"Read {cmd} : {vdr.value}")
-            assert v_orig + 1 == vdr.value
+            v_updated = vc.execute_read_command(cmd).value
+            print_bold(f"Updated {cmd} -> {v_updated}")
+            assert v_orig + 1 == v_updated
 
             vc.execute_write_command(cmd, v_orig)
-            vdr = vc.execute_read_command(cmd)
-            print(f"Read {cmd} : {vdr.value}")
-            assert v_orig == vdr.value
+            v_restored = vc.execute_read_command(cmd).value
+            print_bold(f"Restored {cmd} -> {v_restored}")
+            assert v_orig == v_restored
     except ViConnectionError:
-        print("Could not connect to Viessmann.")
+        logging.exception("Could not connect to Viessmann.")  # noqa: LOG015

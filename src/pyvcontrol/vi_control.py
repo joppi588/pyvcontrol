@@ -119,7 +119,7 @@ class ViControl:
         # Receive response and evaluate data
         vr = self._serial.read(vt.response_length)
         vt = ViTelegram.from_bytes(vr)
-        logger.debug("Requested %s bytes. Received telegram {vr.hex()}", vt.response_length)
+        logger.debug("Requested %s bytes. Received telegram %s", vt.response_length, vr.hex())
         if vt.tType == ViTelegram.tTypes["error"]:
             raise ViCommunicationError(f"{access_mode} command returned an error")
         self._serial.write(CtrlCode.ACKNOWLEDGE)
@@ -152,7 +152,7 @@ class ViControl:
                 logger.debug("Step %s: Send reset", ii)
                 self._serial.write(CtrlCode.RESET_CMD)
             else:
-                logger.debug("Received [%s]. Step {ii}: Send reset", read_byte)
+                logger.debug("Received [%s]. Step %s: Send reset", read_byte, ii)
                 self._serial.write(CtrlCode.RESET_CMD)
 
         raise ViConnectionError("Could not initialize communication.")
@@ -163,7 +163,8 @@ class ViControl:
             raise ViConnectionError("Could not acquire lock, aborting.")
 
         try:
-            self._serial.open()
+            if not self._serial.is_open:
+                self._serial.open()
         except Exception as error:
             self._viessmann_lock.release()
             raise ViConnectionError("Could not open serial port, aborting.") from error

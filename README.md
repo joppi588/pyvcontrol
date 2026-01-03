@@ -20,11 +20,15 @@ Einschränkungen/known issues:
  - Die Parameter (z.B. Kommandodefinitionen) sind hard coded.
  - nur V200WO1C/P300 implementiert. 
 
-Beispielcode / Getting started: test_viessmann.py: 
- - führt einen Lesezugriff für alle definierten Kommandos aus.
- - führt einen Schreibzugriff aus
+Beispielcode / Getting started: example.py: 
+ - Liest RaumTempSollParty, erhöht den Wert um eins und stellt den Originalwert wieder her
+ - Aufruf mit uv run pyvcontrol-example *)
 
+Installation *)
+ - uv add "pyvcontrol @ git+https://github.com/joppi588/pyvcontrol" --tag major.minor.patch
+ 
 
+Referenzen:
 [vcontrold]: https://github.com/openv (vcontrold)
 [SHNGpyPlugin]: https://github.com/sisamiwe/myplugins/tree/master/viessmann (SmartHomeNG python Plugin)
 [packaging guide]: https://packaging.python.org
@@ -33,3 +37,5 @@ Beispielcode / Getting started: test_viessmann.py:
 [rst]: http://docutils.sourceforge.net/rst.html
 [md]: https://tools.ietf.org/html/rfc7764#section-3.5 "CommonMark variant"
 [md use]: https://packaging.python.org/specifications/core-metadata/#description-content-type-optional
+
+*) Falls uv genutzt wird
