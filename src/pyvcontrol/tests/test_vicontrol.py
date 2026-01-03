@@ -38,15 +38,15 @@ def test_exec_forbidden_write_command(mock_vi_serial):
 @patch("pyvcontrol.vi_control.Serial", return_value=SerialMock())
 def test_exec_write_command(mock_vi_serial):
     mock_vi_serial.return_value.source = CtrlCode.ACKNOWLEDGE + bytes.fromhex("41 07 01 01 01 0d 02 19 00 7e")
-    vc = ViControl()
-    vc.execute_write_command("SolltempWarmwasser", 35)
+    with ViControl() as vc:
+        vc.execute_write_command("SolltempWarmwasser", 35)
 
 
 @patch("pyvcontrol.vi_control.Serial", return_value=SerialMock())
 def test_exec_read_command(mock_vi_serial):
     mock_vi_serial.return_value.source = CtrlCode.ACKNOWLEDGE + bytes.fromhex("41 07 01 01 01 0d 02 65 00 7e")
-    vc = ViControl()
-    data = vc.execute_read_command("Warmwassertemperatur")
+    with ViControl() as vc:
+        data = vc.execute_read_command("Warmwassertemperatur")
     assert data.value == 10.1
 
 
@@ -59,6 +59,5 @@ def test_exec_function_call(mock_vi_serial):  # noqa: ARG001
 @patch("pyvcontrol.vi_control.Serial", return_value=SerialMock())
 def test_exec_forbidden_function_call(mock_vi_serial):
     mock_vi_serial.return_value.source = CtrlCode.ACKNOWLEDGE + bytes.fromhex("41 07 01 01 01 0d 02 65 00 7e")
-    vc = ViControl()
-    with pytest.raises(ViCommandError):
+    with pytest.raises(ViCommandError), ViControl() as vc:
         vc.execute_function_call("Warmwassertemperatur", 5)

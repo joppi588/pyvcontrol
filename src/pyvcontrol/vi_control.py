@@ -55,13 +55,14 @@ class ViControl:
     _viessmann_lock = Lock()
 
     def __init__(self, port="/dev/ttyUSB0", baudrate=4800, bytesize=8, parity="E", stopbits=2):
-        self.port = port
-        self.baudrate = baudrate
-        self.bytesize = bytesize
-        self.parity = parity
-        self.stopbits = stopbits
-
-        self.is_initialized = False
+        self._serial = Serial(
+            port=port,
+            baudrate=baudrate,
+            parity=parity,
+            bytesize=bytesize,
+            stopbits=stopbits,
+            timeout=1,  # read method will try 10 times -> 10s max waiting time for initialization
+        )
 
     def execute_read_command(self, command_name) -> ViData:
         """Sends a read command and gets the response."""
@@ -107,17 +108,9 @@ class ViControl:
 
     def __enter__(self):
         logger.debug("Init Communication to ViControl....")
-        self.is_initialized = False
         if not self._viessmann_lock.acquire(timeout=10):
             raise ViConnectionError("Could not acquire lock, aborting.")
-        self._serial = Serial(
-            port=self.port,
-            baudrate=self.baudrate,
-            parity=self.parity,
-            bytesize=self.bytesize,
-            stopbits=self.stopbits,
-            timeout=0.25,  # read method will try 10 times -> 2.5s max waiting time
-        )
+
         try:
             self._serial.open()
         except Exception as error:
@@ -135,8 +128,7 @@ class ViControl:
                 # Schnittstelle hat auf den Initialisierungsstring mit OK geantwortet.
                 # Die Abfrage von Werten kann beginnen.
                 logger.debug("Step %s: Initialization successful", ii)
-                self.is_initialized = True
-                break
+                return
             if read_byte == CtrlCode.NOT_INIT:
                 # Schnittstelle ist zurückgesetzt und wartet auf Daten;
                 # Antwort b'\x05' = Warten auf Initialisierungsstring
@@ -144,7 +136,7 @@ class ViControl:
                 self._serial.write(CtrlCode.SYNC_CMD)
             elif read_byte == CtrlCode.ERROR:
                 # in case of error try to reset
-                logger.error("The interface has reported an error, loop increment %s", ii)
+                logger.warning("The interface has reported an error, loop increment %s", ii)
                 logger.debug("Step %s: Send reset", ii)
                 self._serial.write(CtrlCode.RESET_CMD)
             else:
@@ -152,10 +144,7 @@ class ViControl:
                 logger.debug("Received [%s]. Step {ii}: Send reset", read_byte)
                 self._serial.write(CtrlCode.RESET_CMD)
 
-        if not self.is_initialized:
-            raise ViConnectionError("Could not initialize communication.")
-
-        logger.debug("Communication initialized")
+        raise ViConnectionError("Could not initialize communication.")
 
     def __exit__(self, exc_type, exc_value, traceback):
         with contextlib.suppress(Exception):
