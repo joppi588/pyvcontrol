@@ -43,7 +43,7 @@ def write_read():
             assert v_orig + 1 == v_updated
 
             vc.execute_write_command(cmd, v_orig)
-            v_restored = vc.execute_read_command(cmd)
+            v_restored = vc.execute_read_command(cmd).value
             print_bold(f"Restored {cmd} -> {v_restored}")
             assert v_orig == v_restored
     except ViConnectionError:
