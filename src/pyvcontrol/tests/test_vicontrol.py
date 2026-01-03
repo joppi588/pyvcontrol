@@ -35,7 +35,6 @@ from pyvcontrol.vi_mocks import ViSerialMock
     "serial_in,serial_out",
     [(CtrlCode.NOT_INIT, CtrlCode.SYNC_CMD), (CtrlCode.ERROR, CtrlCode.RESET_CMD), (b"\x04", CtrlCode.RESET_CMD)],
 )
-@patch("pyvcontrol.vi_control.Serial", new_callable=ViSerialMock)
 def test_vicontrol_init_behaviour(serial_in, serial_out):
     # GIVEN Serial interface returning a non-acknowledge code
     # WHEN Communication is initialized
@@ -75,9 +74,9 @@ def test_exec_read_command():
 
 
 @pytest.mark.skip("Function calls not implemented.")
-@patch("pyvcontrol.vi_control.Serial", new_callable=ViSerialMock)
-def test_exec_function_call(mock_vi_serial):  # noqa: ARG001
-    vc = ViControl()  # noqa: F841
+def test_exec_function_call():
+    with ViControl():
+        pass
 
 
 def test_exec_forbidden_function_call():
@@ -95,7 +94,7 @@ def test_failed_open_lock_release():
         def open():
             raise SerialException
 
-    with patch("pyvcontrol.vi_control.Serial", new_callable=ViSerialMock):
+    with patch("pyvcontrol.vi_control.Serial", return_value=ViSerialMock()):
         vc1 = ViControl()
 
     with (
