@@ -29,7 +29,7 @@ def write_read():
     logging.basicConfig(level=logging.DEBUG)
     try:
         with ViControl() as vc:
-            cmd = "RaumsolltempParty"
+            cmd = "RaumSollTempParty"
             v_orig = vc.execute_read_command(cmd).value
 
             vc.execute_write_command(cmd, v_orig + 1)
