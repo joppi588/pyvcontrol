@@ -22,7 +22,7 @@ import logging
 from enum import Enum
 from threading import Lock
 
-import serial
+from serial import Serial
 
 from pyvcontrol.vi_command import ViCommand
 from pyvcontrol.vi_data import ViData
@@ -156,7 +156,7 @@ class ViSerial:
 
     def __init__(self, port, baudrate, parity, bytesize, stopbits):
         self._connected = False
-        self._serial = serial.Serial(port=port, baudrate=baudrate, parity=parity, bytesize=bytesize, stopbits=stopbits)
+        self._serial = Serial(port=port, baudrate=baudrate, parity=parity, bytesize=bytesize, stopbits=stopbits)
 
     def connect(self):
         """Setup serial connection.
