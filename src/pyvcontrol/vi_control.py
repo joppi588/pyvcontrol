@@ -76,13 +76,13 @@ class ViControl:
     def execute_read_command(self, command_name) -> ViData:
         """Sends a read command and gets the response."""
         vc = ViCommand(command_name)
-        return self.__execute_command(vc, "read")
+        return self._execute_command(vc, "read")
 
     def execute_write_command(self, command_name, value) -> ViData:
         """Sends a write command and gets the response."""
         vc = ViCommand(command_name)
         vd = ViData.create(vc.unit, value)
-        return self.__execute_command(vc, "write", payload=vd)
+        return self._execute_command(vc, "write", payload=vd)
 
     def execute_function_call(self, command_name, *function_args) -> ViData:
         """Sends a function call command and gets response."""
