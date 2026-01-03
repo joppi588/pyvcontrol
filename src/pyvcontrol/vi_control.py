@@ -31,7 +31,6 @@ from pyvcontrol.vi_telegram import ViTelegram
 logger = logging.getLogger(name="pyvcontrol")
 
 
-
 class CtrlCode(bytes, Enum):
     """Control codes for serial communication."""
 
@@ -174,9 +173,9 @@ class ViSerial:
                 self._serial.timeout = 0.25  # read method will try 10 times -> 2.5s max waiting time
                 self._serial.open()
                 self._connected = True
-                logger.debug("Connected to %s", self._serial_port)
+                logger.debug("Connected to %s", self._serial.port)
             except Exception:
-                logger.exception("Could not connect to %s.", self._serial_port)
+                logger.exception("Could not connect to %s.", self._serial.port)
                 self._viessmann_lock.release()
                 self._connected = False
         else:
