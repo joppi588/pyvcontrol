@@ -22,7 +22,7 @@ import logging
 from enum import Enum
 from threading import Lock
 
-import serial
+from serial import Serial
 
 from pyvcontrol.vi_command import ViCommand
 from pyvcontrol.vi_data import ViData
@@ -66,25 +66,22 @@ class ViControl:
     def execute_read_command(self, command_name) -> ViData:
         """Sends a read command and gets the response."""
         vc = ViCommand(command_name)
-        return self.execute_command(vc, "read")
+        return self._execute_command(vc, "read")
 
     def execute_write_command(self, command_name, value) -> ViData:
         """Sends a write command and gets the response."""
         vc = ViCommand(command_name)
         vd = ViData.create(vc.unit, value)
-        return self.execute_command(vc, "write", payload=vd)
+        return self._execute_command(vc, "write", payload=vd)
 
     def execute_function_call(self, command_name, *function_args) -> ViData:
         """Sends a function call command and gets response."""
         payload = bytearray((len(function_args), *function_args))
         vc = ViCommand(command_name)
-        return self.execute_command(vc, "call", payload=payload)
+        return self._execute_command(vc, "call", payload=payload)
 
-    def execute_command(self, vc, access_mode, payload=bytes(0)) -> ViData:
-        # prepare command
-        allowed_access_mode = {"read": ["read"], "write": ["read", "write"], "call": ["call"]}
-        if access_mode not in allowed_access_mode[vc.access_mode]:
-            raise ViControlError(f"command {vc.command_name} allows only {allowed_access_mode[vc.access_mode]} access")
+    def _execute_command(self, vc, access_mode, payload=bytes(0)) -> ViData:
+        vc.check_access_mode(access_mode)
 
         # send Telegram
         vt = ViTelegram(vc, access_mode, payload=payload)
@@ -156,7 +153,7 @@ class ViSerial:
 
     def __init__(self, port, baudrate, parity, bytesize, stopbits):
         self._connected = False
-        self._serial = serial.Serial(port=port, baudrate=baudrate, parity=parity, bytesize=bytesize, stopbits=stopbits)
+        self._serial = Serial(port=port, baudrate=baudrate, parity=parity, bytesize=bytesize, stopbits=stopbits)
 
     def connect(self):
         """Setup serial connection.

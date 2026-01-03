@@ -105,17 +105,19 @@ class ViCommand(bytearray):
         self._command_code = command[ADDRESS]
         self._value_bytes = command[LENGTH]
         self.unit = command[UNIT]
-        self.access_mode = self._get_access_mode(command)
+        self.access_mode = command.get(ACCESS_MODE, "read")
         self.command_name = command_name
 
         # create bytearray representation
         b = bytes.fromhex(self._command_code) + self._value_bytes.to_bytes(1, "big")
         super().__init__(b)
 
-    def _get_access_mode(self, command):
-        if ACCESS_MODE in command:
-            return command[ACCESS_MODE]
-        return "read"
+    def check_access_mode(self, access_mode):
+        allowed_access_mode = {"read": ["read"], "write": ["read", "write"], "call": ["call"]}
+        if access_mode not in allowed_access_mode[self.access_mode]:
+            raise ViCommandError(
+                f"Command {self.command_name} only allows {allowed_access_mode[self.access_mode]} access."
+            )
 
     @classmethod
     def _from_bytes(cls, b: bytearray, heating_system="WO1C"):
