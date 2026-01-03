@@ -163,7 +163,8 @@ class ViControl:
             raise ViConnectionError("Could not acquire lock, aborting.")
 
         try:
-            self._serial.open()
+            if not self._serial.is_open:
+                self._serial.open()
         except Exception as error:
             self._viessmann_lock.release()
             raise ViConnectionError("Could not open serial port, aborting.") from error
