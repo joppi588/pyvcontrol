@@ -25,17 +25,18 @@ from unittest.mock import patch
 import pytest
 
 from pyvcontrol.vi_command import ViCommandError
-from pyvcontrol.vi_control import CtrlCode, ViControl
+from pyvcontrol.vi_control import CtrlCode, ViConnectionError, ViControl
 from pyvcontrol.vi_mocks import ViSerialMock
 
 
-@pytest.mark.parametrize("serial_in,serial_out", [(CtrlCode.NOT_INIT * 10, CtrlCode.SYNC_CMD * 10)])
+@pytest.mark.parametrize(
+    "serial_in,serial_out", [(CtrlCode.NOT_INIT, CtrlCode.SYNC_CMD), (CtrlCode.ERROR, CtrlCode.RESET_CMD)]
+)
 @patch("pyvcontrol.vi_control.Serial", return_value=ViSerialMock())
 def test_vicontrol_init_behaviour(mock_vi_serial, serial_in, serial_out):
     mock_vi_serial.return_value.source = serial_in
-    with ViControl() as vc:
+    with pytest.raises(ViConnectionError, match=r"Could not initialize communication\."), ViControl(retry_init=1) as vc:
         pytest.fail("Do not execute context statements if initialization is not successfull.")
-    assert vc is None
     assert mock_vi_serial.return_value.sink == serial_out
 
 

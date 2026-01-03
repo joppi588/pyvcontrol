@@ -54,14 +54,17 @@ class ViControl:
 
     _viessmann_lock = Lock()
 
-    def __init__(self, port="/dev/ttyUSB0", baudrate=4800, bytesize=8, parity="E", stopbits=2, retry_init=10):
+    def __init__(
+        self, port="/dev/ttyUSB0", baudrate=4800, bytesize=8, parity="E", stopbits=2, timeout=1, retry_init=10
+    ):
+        """Read method will try retry_init times -> retry_init*timeout max waiting time for initialization."""
         self._serial = Serial(
             port=port,
             baudrate=baudrate,
             parity=parity,
             bytesize=bytesize,
             stopbits=stopbits,
-            timeout=1,  # read method will try 10 times -> 10s max waiting time for initialization
+            timeout=timeout,
         )
         self._retry_init = retry_init
 
@@ -145,6 +148,9 @@ class ViControl:
                 logger.debug("Received [%s]. Step {ii}: Send reset", read_byte)
                 self._serial.write(CtrlCode.RESET_CMD)
 
+        with contextlib.suppress(Exception):
+            self._serial.close()
+        self._viessmann_lock.release()
         raise ViConnectionError("Could not initialize communication.")
 
     def __exit__(self, exc_type, exc_value, traceback):
