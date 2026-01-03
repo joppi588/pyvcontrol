@@ -18,7 +18,7 @@
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 """Mocks for pyvcontrol objects."""
 
-from unittest.mock import NonCallableMock
+from unittest.mock import NonCallableMagicMock, NonCallableMock
 
 from pyvcontrol.vi_command import ViCommand
 from pyvcontrol.vi_control import ViControl
@@ -49,18 +49,22 @@ class ViSerialMock(NonCallableMock):
         return answer
 
 
-class ViControlMock(NonCallableMock):
+class ViControlMock(NonCallableMagicMock):
     """Mock ViControl."""
 
     def __init__(self, vi_data=None):
         super().__init__(spec=ViControl)
         self.vi_data = vi_data or {}
-        self.initialize_communication.side_effect = self._initialize_communication
         self.execute_read_command.side_effect = self._execute_read_command
         self.execute_write_command.side_effect = self._execute_write_command
+        self.__enter__.side_effect = self._enter
+        self.__exit__.side_effect = self._exit
 
-    def _initialize_communication(self):
-        return True
+    def _enter(self):
+        return
+
+    def _exit(self):
+        return
 
     def _execute_read_command(self, command: str):
         return self.vi_data[command]

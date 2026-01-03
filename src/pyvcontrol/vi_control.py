@@ -18,6 +18,7 @@
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
 
+import contextlib
 import logging
 from enum import Enum
 from threading import Lock
@@ -65,13 +66,13 @@ class ViControl:
     def execute_read_command(self, command_name) -> ViData:
         """Sends a read command and gets the response."""
         vc = ViCommand(command_name)
-        return self._execute_command(vc, "read")
+        return self.__execute_command(vc, "read")
 
     def execute_write_command(self, command_name, value) -> ViData:
         """Sends a write command and gets the response."""
         vc = ViCommand(command_name)
         vd = ViData.create(vc.unit, value)
-        return self._execute_command(vc, "write", payload=vd)
+        return self.__execute_command(vc, "write", payload=vd)
 
     def execute_function_call(self, command_name, *function_args) -> ViData:
         """Sends a function call command and gets response."""
@@ -157,28 +158,6 @@ class ViControl:
         logger.debug("Communication initialized")
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self._serial.close()
+        with contextlib.suppress(Exception):
+            self._serial.close()
         self._viessmann_lock.release()
-
-
-class ViSerial:
-    """Serial port."""
-
-    def read(self, length):
-        """Read bytes from serial connection."""
-        total_read_bytes = bytearray(0)
-        failed_count = 0
-        # TODO: read length bytes and try ten times if nothing received
-        while failed_count < 10:
-            # try to get one or more bytes
-            read_byte = self._serial.read()
-            total_read_bytes += read_byte
-            if len(total_read_bytes) >= length:
-                # exit loop if all bytes are received
-                break
-            if len(read_byte) == 0:
-                # if nothing received, wait and retry
-                failed_count += 1
-                logger.debug("Serial read: retry (%s)", failed_count)
-        logger.debug("Received %s/{length} bytes", len(total_read_bytes))
-        return bytes(total_read_bytes)
