@@ -17,7 +17,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project.scripts]
-test-pyvcontrol = "pyvcontrol.example:write_read"
+pyvcontrol-example = "pyvcontrol.example:write_read"
 
 [dependency-groups]
 dev = [
