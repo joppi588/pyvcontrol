@@ -38,7 +38,7 @@ def viscancommands(addressrange):
     for addr in addressrange:
         for kk in range(1, 5):
             # TODO: Inneren Teil ausschneiden und in separate Funktion? ("low level read command")
-            logger.debug("---%s-{kk}------------------", hex(addr))
+            logger.debug("---%s-%s------------------", hex(addr), kk)
             vc = addr.to_bytes(2, "big") + kk.to_bytes(1, "big")
             vt = ViTelegram(vc, "read")  # create read Telegram
             vo.vs.send(vt)  # send Telegram
@@ -56,7 +56,7 @@ def viscancommands(addressrange):
                 vr1 = vo.vs.read(2)  # receive response
                 vr2 = vo.vs.read(vr1[1] + 1)  # read rest of telegram
                 # TODO: create Telegram instead of low-level access (for better readability)
-                logger.debug("received telegram %s {vr2.hex()}", vr1.hex())
+                logger.debug("received telegram %s %s", vr1.hex(), vr2.hex())
 
                 if vr2[0].to_bytes(1, "little") == ViTelegram.tTypes["response"]:
                     v = int.from_bytes(vr2[-1 - kk : -1], "little")

@@ -119,7 +119,7 @@ class ViControl:
         # Receive response and evaluate data
         vr = self._serial.read(vt.response_length)
         vt = ViTelegram.from_bytes(vr)
-        logger.debug("Requested %s bytes. Received telegram {vr.hex()}", vt.response_length)
+        logger.debug("Requested %s bytes. Received telegram %s", vt.response_length, vr.hex())
         if vt.tType == ViTelegram.tTypes["error"]:
             raise ViCommunicationError(f"{access_mode} command returned an error")
         self._serial.write(CtrlCode.ACKNOWLEDGE)
