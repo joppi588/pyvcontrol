@@ -117,7 +117,7 @@ class ViTelegram(bytearray):
         vc: ViCommand,
         access_mode: AccessMode | bytes = AccessMode.READ,
         tType="Request",
-        payload=bytearray(0),
+        payload=None,
     ):
         """Creates a telegram for sending as a combination of header, ViCommand, payload and checksum.
 
@@ -130,11 +130,12 @@ class ViTelegram(bytearray):
             self.tTypes[tType.lower()] if isinstance(tType, str) else tType
         )  # translate to byte or use raw value
         self.access_mode = access_mode if isinstance(access_mode, AccessMode) else AccessMode(access_mode)
-        self.payload = payload  # TODO: payload length not validated against expected length by command unit
+        self.payload = payload or bytearray(0)
+        # TODO: payload length not validated against expected length by command unit
         # TODO: no payload for read commands
 
         # -- create bytearray representation
-        b = self._header() + self.vicmd + self.payload
+        b = self._header() + self.vicmd.as_bytearray() + self.payload
         super().__init__(b + self._checksum_byte(b))
 
     def _header(self):

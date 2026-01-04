@@ -19,79 +19,13 @@
 
 
 import logging
+from typing import Any
 
-from attrs import define
+from attrs import define, field
 
 from pyvcontrol.vi_access_mode import AccessMode
 
 logger = logging.getLogger(name="pyvcontrol")
-
-
-ACCESS_MODE = "access_mode"
-UNIT = "unit"
-LENGTH = "length"
-ADDRESS = "address"
-
-COMMAND_SET = {
-    "WO1C": {
-        # All Parameters are tested and working on Vitocal 200S WO1C (Baujahr 2019)
-        # ------ Statusinfos (read only) ------
-        # Warmwasser: Warmwassertemperatur oben (0..95)
-        "Warmwassertemperatur": {ADDRESS: "010d", LENGTH: 2, UNIT: "IS10"},
-        # Aussentemperatur (-40..70)
-        "Aussentemperatur": {ADDRESS: "0101", LENGTH: 2, UNIT: "IS10"},
-        # Heizkreis HK1: Vorlauftemperatur Sekundaer 1 (0..95)
-        "VorlauftempSek": {ADDRESS: "0105", LENGTH: 2, UNIT: "IS10"},
-        # Ruecklauftemperatur Sekundaer 1 (0..95)
-        "RuecklauftempSek": {ADDRESS: "0106", LENGTH: 2, UNIT: "IS10"},
-        # Sekundaerpumpe [%] (including one status byte)
-        "Sekundaerpumpe": {ADDRESS: "B421", LENGTH: 2, UNIT: "IUNON"},
-        # Faktor Energiebilanz(1 = 0.1kWh, 10 = 1kWh, 100 = 10kWh)
-        "FaktorEnergiebilanz": {ADDRESS: "163F", LENGTH: 1, UNIT: "IUNON"},
-        # Heizwärme  "Heizbetrieb", Verdichter 1
-        "Heizwaerme": {ADDRESS: "1640", LENGTH: 4, UNIT: "IUNON"},
-        # Elektroenergie "Heizbetrieb", Verdichter 1
-        "Heizenergie": {ADDRESS: "1660", LENGTH: 4, UNIT: "IUNON"},
-        # Heizwärme  "WW-Betrieb", Verdichter 1
-        "WWwaerme": {ADDRESS: "1650", LENGTH: 4, UNIT: "IUNON"},
-        # Elektroenergie "WW-Betrieb", Verdichter 1
-        "WWenergie": {ADDRESS: "1670", LENGTH: 4, UNIT: "IUNON"},
-        # Verdichter [%] (including one status byte)
-        "Verdichter": {ADDRESS: "B423", LENGTH: 4, UNIT: "IUNON"},
-        # Druck Sauggas [bar] (including one status byte) - Kühlmittel
-        "DruckSauggas": {ADDRESS: "B410", LENGTH: 3, UNIT: "IS10"},
-        # Druck Heissgas [bar] (including one status byte)- Kühlmittel
-        "DruckHeissgas": {ADDRESS: "B411", LENGTH: 3, UNIT: "IS10"},
-        # Temperatur Sauggas [bar] (including one status byte)- Kühlmittel
-        "TempSauggas": {ADDRESS: "B409", LENGTH: 3, UNIT: "IS10"},
-        # Temperatur Heissgas [bar] (including one status byte)- Kühlmittel
-        "TempHeissgas": {ADDRESS: "B40A", LENGTH: 3, UNIT: "IS10"},
-        # Anlagentyp (muss 204D sein)
-        "Anlagentyp": {ADDRESS: "00F8", LENGTH: 4, UNIT: "DT"},
-        # --------- Menüebene -------
-        # Betriebsmodus
-        "Betriebsmodus": {ADDRESS: "B000", LENGTH: 1, UNIT: "BA", ACCESS_MODE: AccessMode.WRITE},
-        # getManuell / setManuell -- 0 = normal, 1 = manueller Heizbetrieb, 2 = 1x Warmwasser auf Temp2
-        "WWeinmal": {ADDRESS: "B020", LENGTH: 1, UNIT: "OO", ACCESS_MODE: AccessMode.WRITE},
-        # Warmwassersolltemperatur (10..60 (95))
-        "SolltempWarmwasser": {
-            ADDRESS: "6000",
-            LENGTH: 2,
-            UNIT: "IS10",
-            ACCESS_MODE: AccessMode.WRITE,
-            "min_value": 10,
-            "max_value": 60,
-        },
-        "RaumSollTempParty": {ADDRESS: "2022", LENGTH: 2, UNIT: "IS10", ACCESS_MODE: AccessMode.WRITE},
-        # --------- Codierebene 2 ---------
-        # Hysterese Vorlauf ein: Verdichter schaltet im Heizbetrieb ein
-        "Hysterese_Vorlauf_ein": {ADDRESS: "7304", LENGTH: 2, UNIT: "IU10", ACCESS_MODE: AccessMode.WRITE},
-        # Hysterese Vorlauf aus: Verdichter schaltet im Heizbetrieb ab
-        "Hysterese_Vorlauf_aus": {ADDRESS: "7313", LENGTH: 2, UNIT: "IU10", ACCESS_MODE: AccessMode.WRITE},
-        # --------- Function Call --------
-        "Energiebilanz": {ADDRESS: "B800", LENGTH: 16, UNIT: "F_E", ACCESS_MODE: AccessMode.CALL},
-    }
-}
 
 
 class ViCommandError(Exception):
@@ -99,30 +33,21 @@ class ViCommandError(Exception):
 
 
 @define
-class ViCommand(bytearray):
+class ViCommand:
     """Representation of a command. Object value is a bytearray of address and length."""
 
-    address: str
-    length: int
+    address: bytes = field(converter=lambda a: bytes.fromhex(a) if isinstance(a, str) else a)
     unit: str
-    access_mode: AccessMode
+    value_bytes: int
 
-    def __init__(self, command_name, heating_system="WO1C"):
-        """Initialize object using the attributes of the chosen command."""
-        self.command_set = COMMAND_SET[heating_system]
-        try:
-            command = self.command_set[command_name]
-        except Exception as error:
-            raise ViCommandError(f"Unknown command {command_name}") from error
-        self._command_code = command[ADDRESS]
-        self._value_bytes = command[LENGTH]
-        self.unit = command[UNIT]
-        self.access_mode = command.get(ACCESS_MODE, AccessMode.READ)
-        self.command_name = command_name
+    access_mode: AccessMode = AccessMode.READ
+    command_name: str = ""
+    min_value: Any = None
+    max_value: Any = None
 
-        # create bytearray representation
-        b = bytes.fromhex(self._command_code) + self._value_bytes.to_bytes(1, "big")
-        super().__init__(b)
+    def as_bytearray(self) -> bytearray:
+        """Bytearray representation."""
+        return self.address + self.value_bytes.to_bytes(1, "big")
 
     def check_access_mode(self, access_mode):
         if not self.access_mode.allows(access_mode):
@@ -131,7 +56,13 @@ class ViCommand(bytearray):
     @classmethod
     def from_name(cls, command_name, heating_system="WO1C"):
         """Create command from name."""
-        return COMMAND_SET[heating_system][command_name]
+        try:
+            cmd = COMMAND_SET[heating_system][command_name]
+            cmd.command_name = command_name
+        except KeyError as error:
+            raise ViCommandError(f"Unknown system {heating_system} or command {command_name}") from error
+        else:
+            return cmd
 
     @classmethod
     def from_bytes(cls, b: bytearray, heating_system="WO1C"):
@@ -142,7 +73,7 @@ class ViCommand(bytearray):
         try:
             logger.debug("Convert %s to command.", b.hex())
             command_set = COMMAND_SET[heating_system]
-            command_name = next(key for key, value in command_set.items() if value[ADDRESS].lower() == b[0:2].hex())
+            command_name = next(key for key, cmd in command_set.items() if cmd.address == b[0:2])
         except Exception as error:
             raise ViCommandError(f"No Command matching {b[0:2].hex()}") from error
         return ViCommand.from_name(command_name, heating_system=heating_system)
@@ -156,8 +87,71 @@ class ViCommand(bytearray):
         x 'Wert'.
         """
         if access_mode == AccessMode.READ:
-            return 3 + self._value_bytes
+            return 3 + self.value_bytes
         if access_mode == AccessMode.WRITE:
             # in write mode the written values are not returned
             return 3
-        return 3 + self._value_bytes
+        return 3 + self.value_bytes
+
+    def __len__(self):
+        return len(self.as_bytearray())
+
+    def hex(self):
+        return self.as_bytearray().hex()
+
+
+COMMAND_SET = {
+    "WO1C": {
+        # All Parameters are tested and working on Vitocal 200S WO1C (Baujahr 2019)
+        # ------ Statusinfos (read only) ------
+        # Warmwasser: Warmwassertemperatur oben (0..95)
+        "Warmwassertemperatur": ViCommand(address="010d", value_bytes=2, unit="IS10"),
+        # Aussentemperatur (-40..70)
+        "Aussentemperatur": ViCommand(address="0101", value_bytes=2, unit="IS10"),
+        # Heizkreis HK1: Vorlauftemperatur Sekundaer 1 (0..95)
+        "VorlauftempSek": ViCommand(address="0105", value_bytes=2, unit="IS10"),
+        # Ruecklauftemperatur Sekundaer 1 (0..95)
+        "RuecklauftempSek": ViCommand(address="0106", value_bytes=2, unit="IS10"),
+        # Sekundaerpumpe [%] (including one status byte)
+        "Sekundaerpumpe": ViCommand(address="B421", value_bytes=2, unit="IUNON"),
+        # Faktor Energiebilanz(1 = 0.1kWh, 10 = 1kWh, 100 = 10kWh)
+        "FaktorEnergiebilanz": ViCommand(address="163F", value_bytes=1, unit="IUNON"),
+        # Heizwärme  "Heizbetrieb", Verdichter 1
+        "Heizwaerme": ViCommand(address="1640", value_bytes=4, unit="IUNON"),
+        # Elektroenergie "Heizbetrieb", Verdichter 1
+        "Heizenergie": ViCommand(address="1660", value_bytes=4, unit="IUNON"),
+        # Heizwärme  "WW-Betrieb", Verdichter 1
+        "WWwaerme": ViCommand(address="1650", value_bytes=4, unit="IUNON"),
+        # Elektroenergie "WW-Betrieb", Verdichter 1
+        "WWenergie": ViCommand(address="1670", value_bytes=4, unit="IUNON"),
+        # Verdichter [%] (including one status byte)
+        "Verdichter": ViCommand(address="B423", value_bytes=4, unit="IUNON"),
+        # Druck Sauggas [bar] (including one status byte) - Kühlmittel
+        "DruckSauggas": ViCommand(address="B410", value_bytes=3, unit="IS10"),
+        # Druck Heissgas [bar] (including one status byte)- Kühlmittel
+        "DruckHeissgas": ViCommand(address="B411", value_bytes=3, unit="IS10"),
+        # Temperatur Sauggas [bar] (including one status byte)- Kühlmittel
+        "TempSauggas": ViCommand(address="B409", value_bytes=3, unit="IS10"),
+        # Temperatur Heissgas [bar] (including one status byte)- Kühlmittel
+        "TempHeissgas": ViCommand(address="B40A", value_bytes=3, unit="IS10"),
+        # Anlagentyp (muss 204D sein)
+        "Anlagentyp": ViCommand(address="00F8", value_bytes=4, unit="DT"),
+        # --------- Menüebene -------
+        # Betriebsmodus
+        "Betriebsmodus": ViCommand(address="B000", value_bytes=1, unit="BA", access_mode=AccessMode.WRITE),
+        # getManuell / setManuell -- 0 = normal, 1 = manueller Heizbetrieb, 2 = 1x Warmwasser auf Temp2
+        "WWeinmal": ViCommand(address="B020", value_bytes=1, unit="OO", access_mode=AccessMode.WRITE),
+        # Warmwassersolltemperatur (10..60 (95))
+        "SolltempWarmwasser": ViCommand(
+            address="6000", value_bytes=2, unit="IS10", access_mode=AccessMode.WRITE, min_value=10, max_value=60
+        ),
+        "RaumSollTempParty": ViCommand(address="2022", value_bytes=2, unit="IS10", access_mode=AccessMode.WRITE),
+        # --------- Codierebene 2 ---------
+        # Hysterese Vorlauf ein: Verdichter schaltet im Heizbetrieb ein
+        "Hysterese_Vorlauf_ein": ViCommand(address="7304", value_bytes=2, unit="IU10", access_mode=AccessMode.WRITE),
+        # Hysterese Vorlauf aus: Verdichter schaltet im Heizbetrieb ab
+        "Hysterese_Vorlauf_aus": ViCommand(address="7313", value_bytes=2, unit="IU10", access_mode=AccessMode.WRITE),
+        # --------- Function Call --------
+        "Energiebilanz": ViCommand(address="B800", value_bytes=16, unit="F_E", access_mode=AccessMode.CALL),
+    }
+}

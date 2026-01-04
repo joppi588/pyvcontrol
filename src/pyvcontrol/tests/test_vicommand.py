@@ -31,6 +31,12 @@ def test_vicommand_nomatch():
         _ = ViCommand.from_name("foo")
 
 
+def test_vicommand_raw():
+    """Create a raw command with default values."""
+    vc = ViCommand(address="00F8", value_bytes=2, unit="IUNON")
+    assert vc.address == b"\x00\xf8"
+
+
 def test_vicommand_frombytes():
     """Create command from raw bytes."""
     vc = ViCommand.from_bytes(b"\x00\xf8")
