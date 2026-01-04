@@ -22,7 +22,7 @@ from __future__ import annotations
 import logging
 
 from pyvcontrol.vi_access_mode import AccessMode
-from pyvcontrol.vi_command import ViCommand
+from pyvcontrol.vi_command import ViCommand, ViCommandSet
 
 logger = logging.getLogger(name="pyvcontrol")
 
@@ -168,7 +168,7 @@ class ViTelegram(bytearray):
         return next(key for key, value in self.tTypes.items() if value == self.tType)
 
     @classmethod
-    def from_bytes(cls, b: bytearray):
+    def from_bytes(cls, b: bytearray, command_set: ViCommandSet):
         """Parses a byte array and returns the corresponding telegram with properties vicmd etc.
 
         when parsing a response telegram, the first byte (ACK Acknowledge) must be stripped first
@@ -192,7 +192,7 @@ class ViTelegram(bytearray):
             header[3:4].hex(),
             b[7:-1].hex(),
         )
-        vicmd = ViCommand.from_bytes(b[4:6])
+        vicmd = command_set[b[4:6]]
         vt = ViTelegram(vicmd, tType=header[2:3], access_mode=AccessMode(header[3:4]), payload=b[7:-1])
         return vt
 
