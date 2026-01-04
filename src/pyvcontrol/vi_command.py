@@ -20,6 +20,8 @@
 
 import logging
 
+from attrs import define
+
 from pyvcontrol.vi_access_mode import AccessMode
 
 logger = logging.getLogger(name="pyvcontrol")
@@ -96,8 +98,14 @@ class ViCommandError(Exception):
     """Indicates an error during command execution."""
 
 
-class ViCommand.from_name(bytearray):
+@define
+class ViCommand(bytearray):
     """Representation of a command. Object value is a bytearray of address and length."""
+
+    address: str
+    length: int
+    unit: str
+    access_mode: AccessMode
 
     def __init__(self, command_name, heating_system="WO1C"):
         """Initialize object using the attributes of the chosen command."""
@@ -121,8 +129,16 @@ class ViCommand.from_name(bytearray):
             raise ViCommandError(f"Command {self.command_name} only allows {str(self.access_mode)} access.")
 
     @classmethod
-    def _from_bytes(cls, b: bytearray, heating_system="WO1C"):
-        """Create command from address b given as byte, only the first two bytes of b are evaluated."""
+    def from_name(cls, command_name, heating_system="WO1C"):
+        """Create command from name."""
+        return COMMAND_SET[heating_system][command_name]
+
+    @classmethod
+    def from_bytes(cls, b: bytearray, heating_system="WO1C"):
+        """Create command from address b given as byte.
+
+        Only the first two bytes of b are evaluated.
+        """
         try:
             logger.debug("Convert %s to command.", b.hex())
             command_set = COMMAND_SET[heating_system]

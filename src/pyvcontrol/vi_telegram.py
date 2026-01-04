@@ -191,7 +191,7 @@ class ViTelegram(bytearray):
             header[3:4].hex(),
             b[7:-1].hex(),
         )
-        vicmd = ViCommand._from_bytes(b[4:6])
+        vicmd = ViCommand.from_bytes(b[4:6])
         vt = ViTelegram(vicmd, tType=header[2:3], access_mode=AccessMode(header[3:4]), payload=b[7:-1])
         return vt
 

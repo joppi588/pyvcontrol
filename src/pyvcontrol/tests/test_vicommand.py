@@ -26,14 +26,14 @@ from pyvcontrol.vi_command import ViCommand, ViCommandError
 def test_vicommand_nomatch():
     """Command not existing."""
     with pytest.raises(ViCommandError):
-        _ = ViCommand._from_bytes(b"\xf1\x00")
+        _ = ViCommand.from_bytes(b"\xf1\x00")
     with pytest.raises(ViCommandError):
         _ = ViCommand.from_name("foo")
 
 
 def test_vicommand_frombytes():
     """Create command from raw bytes."""
-    vc = ViCommand._from_bytes(b"\x00\xf8")
+    vc = ViCommand.from_bytes(b"\x00\xf8")
     assert vc.command_name == "Anlagentyp"
 
 
