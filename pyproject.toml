@@ -1,6 +1,6 @@
 [project]
 name = "pyvcontrol"
-version = "1.9.0"
+version = "1.9.1"
 description = "Communication with Viessmann heating via Optolink interface."
 readme = "README.md"
 authors = [
