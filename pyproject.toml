@@ -1,13 +1,14 @@
 [project]
 name = "pyvcontrol"
-version = "1.8.3"
+version = "1.9.0"
 description = "Communication with Viessmann heating via Optolink interface."
 readme = "README.md"
 authors = [
     { name = "Jochen Schmähling", email = "j_ochen_573@freenet.de" }
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.9.2"
 dependencies = [
+    "attrs>=25.4.0",
     "pyserial>=3.5",
     "pyyaml>=6.0.3",
 ]
