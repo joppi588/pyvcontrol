@@ -20,6 +20,7 @@
 
 import pytest
 
+from pyvcontrol.vi_access_mode import AccessMode
 from pyvcontrol.vi_command import ViCommand
 from pyvcontrol.vi_data import ViData
 from pyvcontrol.vi_telegram import ViTelegram, ViTelegramError
@@ -27,10 +28,10 @@ from pyvcontrol.vi_telegram import ViTelegram, ViTelegramError
 
 def test_read_telegram():
     vc = ViCommand("Anlagentyp")
-    vt = ViTelegram(vc, "read")
+    vt = ViTelegram(vc, AccessMode.READ)
     assert vt.hex() == "4105000100f80402"
     vc = ViCommand("Warmwassertemperatur")
-    vt = ViTelegram(vc, "read")
+    vt = ViTelegram(vc, AccessMode.READ)
     assert vt.hex() == "41050001010d0216"
 
 
@@ -53,18 +54,18 @@ def test_wrongchecksum():
         _ = ViTelegram.from_bytes(b)
 
 
-def test_telegram_mode():
+def test_access_mode():
     b = bytes.fromhex("41 05 00 01 01 0d 02 00 00 16")
     vt = ViTelegram.from_bytes(b)
-    assert vt.telegram_mode == "read"
+    assert vt.access_mode == AccessMode.READ
 
     b = bytes.fromhex("41 05 00 02 01 0d 02 00 00 17")
     vt = ViTelegram.from_bytes(b)
-    assert vt.telegram_mode == "write"
+    assert vt.access_mode == AccessMode.WRITE
 
     b = bytes.fromhex("41 05 00 07 01 0d 02 00 00 1c")
     vt = ViTelegram.from_bytes(b)
-    assert vt.telegram_mode == "call"
+    assert vt.access_mode == AccessMode.CALL
 
 
 def test_telegram_type():
@@ -94,7 +95,7 @@ def test_telegramdata2():
     b = bytes.fromhex("41 09 01 01 16 50 04 e4 29 00 00 82")
     vt = ViTelegram.from_bytes(b)
     vd = ViData.create(vt.vicmd.unit, vt.payload)
-    assert vt.telegram_mode == "read"
+    assert vt.access_mode == AccessMode.READ
     assert vt.response_length == 12
     assert vt.vicmd.command_name == "WWwaerme"
     assert vt.vicmd.unit == "IUNON"
@@ -106,7 +107,7 @@ def test_telegramdata3():
     b = bytes.fromhex("41 09 01 02 16 50 04 76")
     vt = ViTelegram.from_bytes(b)
     _ = ViData.create(vt.vicmd.unit, vt.payload)
-    assert vt.telegram_mode == "write"
+    assert vt.access_mode == AccessMode.WRITE
     assert vt.response_length == 8
     assert vt.vicmd.command_name == "WWwaerme"
     assert vt.vicmd.unit == "IUNON"

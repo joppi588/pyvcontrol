@@ -20,7 +20,10 @@
 
 import logging
 
+from pyvcontrol.vi_access_mode import AccessMode
+
 logger = logging.getLogger(name="pyvcontrol")
+
 
 ACCESS_MODE = "access_mode"
 UNIT = "unit"
@@ -65,26 +68,26 @@ COMMAND_SET = {
         "Anlagentyp": {ADDRESS: "00F8", LENGTH: 4, UNIT: "DT"},
         # --------- Menüebene -------
         # Betriebsmodus
-        "Betriebsmodus": {ADDRESS: "B000", LENGTH: 1, UNIT: "BA", ACCESS_MODE: "write"},
+        "Betriebsmodus": {ADDRESS: "B000", LENGTH: 1, UNIT: "BA", ACCESS_MODE: AccessMode.WRITE},
         # getManuell / setManuell -- 0 = normal, 1 = manueller Heizbetrieb, 2 = 1x Warmwasser auf Temp2
-        "WWeinmal": {ADDRESS: "B020", LENGTH: 1, UNIT: "OO", ACCESS_MODE: "write"},
+        "WWeinmal": {ADDRESS: "B020", LENGTH: 1, UNIT: "OO", ACCESS_MODE: AccessMode.WRITE},
         # Warmwassersolltemperatur (10..60 (95))
         "SolltempWarmwasser": {
             ADDRESS: "6000",
             LENGTH: 2,
             UNIT: "IS10",
-            ACCESS_MODE: "write",
+            ACCESS_MODE: AccessMode.WRITE,
             "min_value": 10,
             "max_value": 60,
         },
-        "RaumSollTempParty": {ADDRESS: "2022", LENGTH: 2, UNIT: "IS10", ACCESS_MODE: "write"},
+        "RaumSollTempParty": {ADDRESS: "2022", LENGTH: 2, UNIT: "IS10", ACCESS_MODE: AccessMode.WRITE},
         # --------- Codierebene 2 ---------
         # Hysterese Vorlauf ein: Verdichter schaltet im Heizbetrieb ein
-        "Hysterese_Vorlauf_ein": {ADDRESS: "7304", LENGTH: 2, UNIT: "IU10", ACCESS_MODE: "write"},
+        "Hysterese_Vorlauf_ein": {ADDRESS: "7304", LENGTH: 2, UNIT: "IU10", ACCESS_MODE: AccessMode.WRITE},
         # Hysterese Vorlauf aus: Verdichter schaltet im Heizbetrieb ab
-        "Hysterese_Vorlauf_aus": {ADDRESS: "7313", LENGTH: 2, UNIT: "IU10", ACCESS_MODE: "write"},
+        "Hysterese_Vorlauf_aus": {ADDRESS: "7313", LENGTH: 2, UNIT: "IU10", ACCESS_MODE: AccessMode.WRITE},
         # --------- Function Call --------
-        "Energiebilanz": {ADDRESS: "B800", LENGTH: 16, UNIT: "F_E", ACCESS_MODE: "call"},
+        "Energiebilanz": {ADDRESS: "B800", LENGTH: 16, UNIT: "F_E", ACCESS_MODE: AccessMode.CALL},
     }
 }
 
@@ -106,7 +109,7 @@ class ViCommand(bytearray):
         self._command_code = command[ADDRESS]
         self._value_bytes = command[LENGTH]
         self.unit = command[UNIT]
-        self.access_mode = command.get(ACCESS_MODE, "read")
+        self.access_mode = command.get(ACCESS_MODE, AccessMode.READ)
         self.command_name = command_name
 
         # create bytearray representation
@@ -114,11 +117,8 @@ class ViCommand(bytearray):
         super().__init__(b)
 
     def check_access_mode(self, access_mode):
-        allowed_access_mode = {"read": ["read"], "write": ["read", "write"], "call": ["call"]}
-        if access_mode not in allowed_access_mode[self.access_mode]:
-            raise ViCommandError(
-                f"Command {self.command_name} only allows {allowed_access_mode[self.access_mode]} access."
-            )
+        if not self.access_mode.allows(access_mode):
+            raise ViCommandError(f"Command {self.command_name} only allows {str(self.access_mode)} access.")
 
     @classmethod
     def _from_bytes(cls, b: bytearray, heating_system="WO1C"):
@@ -131,7 +131,7 @@ class ViCommand(bytearray):
             raise ViCommandError(f"No Command matching {b[0:2].hex()}") from error
         return ViCommand(command_name, heating_system=heating_system)
 
-    def response_length(self, access_mode="read"):
+    def response_length(self, access_mode: AccessMode = AccessMode.READ):
         """Returns the number of bytes in the response.
 
         request_response:
@@ -139,9 +139,9 @@ class ViCommand(bytearray):
         1 'Anzahl der Bytes des Wertes'
         x 'Wert'.
         """
-        if access_mode.lower() == "read":
+        if access_mode == AccessMode.READ:
             return 3 + self._value_bytes
-        if access_mode.lower() == "write":
+        if access_mode == AccessMode.WRITE:
             # in write mode the written values are not returned
             return 3
         return 3 + self._value_bytes
