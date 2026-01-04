@@ -94,7 +94,7 @@ class ViData(bytes, ABC):
         }
         if datatype in datatype_object:
             if isinstance(value, (bytes, bytearray)):
-                return datatype_object[datatype].from_raw(value)
+                return datatype_object[datatype].from_raw(bytes(value))
             return datatype_object[datatype].from_value(value)
         raise ViDataError(f"Unit {datatype} not known")
 
