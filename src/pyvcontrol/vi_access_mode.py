@@ -38,8 +38,8 @@ class AccessMode(bytes, Enum):
         return self == other
 
     def __str__(self):
-        if self.value == 1:
+        if self == self.READ:
             return "read"
-        if self.value == 2:
+        if self == self.WRITE:
             return "read/write"
         return "call"
