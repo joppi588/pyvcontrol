@@ -22,7 +22,7 @@ from __future__ import annotations
 import logging
 
 from pyvcontrol.vi_access_mode import AccessMode
-from pyvcontrol.vi_command import ViCommand
+from pyvcontrol.vi_command import ViCommand, ViCommandSet
 
 logger = logging.getLogger(name="pyvcontrol")
 
@@ -117,7 +117,7 @@ class ViTelegram(bytearray):
         vc: ViCommand,
         access_mode: AccessMode | bytes = AccessMode.READ,
         tType="Request",
-        payload=bytearray(0),
+        payload=None,
     ):
         """Creates a telegram for sending as a combination of header, ViCommand, payload and checksum.
 
@@ -130,11 +130,12 @@ class ViTelegram(bytearray):
             self.tTypes[tType.lower()] if isinstance(tType, str) else tType
         )  # translate to byte or use raw value
         self.access_mode = access_mode if isinstance(access_mode, AccessMode) else AccessMode(access_mode)
-        self.payload = payload  # TODO: payload length not validated against expected length by command unit
+        self.payload = payload or bytearray(0)
+        # TODO: payload length not validated against expected length by command unit
         # TODO: no payload for read commands
 
         # -- create bytearray representation
-        b = self._header() + self.vicmd + self.payload
+        b = self._header() + self.vicmd.as_bytearray() + self.payload
         super().__init__(b + self._checksum_byte(b))
 
     def _header(self):
@@ -167,7 +168,7 @@ class ViTelegram(bytearray):
         return next(key for key, value in self.tTypes.items() if value == self.tType)
 
     @classmethod
-    def from_bytes(cls, b: bytearray):
+    def from_bytes(cls, b: bytearray, command_set: ViCommandSet):
         """Parses a byte array and returns the corresponding telegram with properties vicmd etc.
 
         when parsing a response telegram, the first byte (ACK Acknowledge) must be stripped first
@@ -191,7 +192,7 @@ class ViTelegram(bytearray):
             header[3:4].hex(),
             b[7:-1].hex(),
         )
-        vicmd = ViCommand._from_bytes(b[4:6])
+        vicmd = command_set[b[4:6]]
         vt = ViTelegram(vicmd, tType=header[2:3], access_mode=AccessMode(header[3:4]), payload=b[7:-1])
         return vt
 

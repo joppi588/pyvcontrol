@@ -25,7 +25,7 @@ from threading import Lock
 
 from serial import Serial
 
-from pyvcontrol.vi_command import AccessMode, ViCommand
+from pyvcontrol.vi_command import COMMAND_SETS, AccessMode
 from pyvcontrol.vi_data import ViData
 from pyvcontrol.vi_telegram import ViTelegram
 
@@ -68,6 +68,7 @@ class ViControl:
         timeout=1,
         lock_timeout=10,
         init_retries=10,
+        heating_system="WO1C",
     ):
         """Read method will try init_retries times -> init_retries*timeout max waiting time for initialization."""
         self._serial = Serial(
@@ -81,22 +82,23 @@ class ViControl:
         self._lock_timeout = lock_timeout
         self._init_retries = init_retries
         self._is_initialized = False
+        self._command_set = COMMAND_SETS[heating_system]
 
     def execute_read_command(self, command_name) -> ViData:
         """Sends a read command and gets the response."""
-        vc = ViCommand(command_name)
+        vc = self._command_set[command_name]
         return self._execute_command(vc, AccessMode.READ)
 
     def execute_write_command(self, command_name, value) -> ViData:
         """Sends a write command and gets the response."""
-        vc = ViCommand(command_name)
+        vc = self._command_set[command_name]
         vd = ViData.create(vc.unit, value)
         return self._execute_command(vc, AccessMode.WRITE, payload=vd)
 
     def execute_function_call(self, command_name, *function_args) -> ViData:
         """Sends a function call command and gets response."""
         payload = bytearray((len(function_args), *function_args))
-        vc = ViCommand(command_name)
+        vc = self._command_set[command_name]
         return self._execute_command(vc, AccessMode.CALL, payload=payload)
 
     def _execute_command(self, vc, access_mode, payload=bytes(0)) -> ViData:
@@ -118,7 +120,7 @@ class ViControl:
 
         # Receive response and evaluate data
         vr = self._serial.read(vt.response_length)
-        vt = ViTelegram.from_bytes(vr)
+        vt = ViTelegram.from_bytes(vr, self._command_set)
         logger.debug("Requested %s bytes. Received telegram %s", vt.response_length, vr.hex())
         if vt.tType == ViTelegram.tTypes["error"]:
             raise ViCommunicationError(f"{access_mode} command returned an error")
