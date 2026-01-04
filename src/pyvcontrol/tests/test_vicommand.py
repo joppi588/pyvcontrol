@@ -28,7 +28,7 @@ def test_vicommand_nomatch():
     with pytest.raises(ViCommandError):
         _ = ViCommand._from_bytes(b"\xf1\x00")
     with pytest.raises(ViCommandError):
-        _ = ViCommand("foo")
+        _ = ViCommand.from_name("foo")
 
 
 def test_vicommand_frombytes():
@@ -39,29 +39,29 @@ def test_vicommand_frombytes():
 
 def test_vicommand_anlagentyp():
     """Create command from string."""
-    vc = ViCommand("Anlagentyp")
+    vc = ViCommand.from_name("Anlagentyp")
     assert vc.hex() == "00f804"
 
 
 def test_vicommand_wweinmal():
     """Create command from string."""
-    vc = ViCommand("WWeinmal")
+    vc = ViCommand.from_name("WWeinmal")
     assert vc.hex() == "b02001"
 
 
 def test_vicommand_aussentemperatur():
     """Create command from string."""
-    vc = ViCommand("Aussentemperatur")
+    vc = ViCommand.from_name("Aussentemperatur")
     assert vc.hex() == "010102"
 
 
 def test_vicommand_warmwassertemperatur():
     """Create command from string."""
-    vc = ViCommand("Warmwassertemperatur")
+    vc = ViCommand.from_name("Warmwassertemperatur")
     assert vc.hex() == "010d02"
 
 
 def test_vicommand_betriebsmodus():
     """Given: When: Then: Correct ViData is returned."""
-    vc = ViCommand("Betriebsmodus")
+    vc = ViCommand.from_name("Betriebsmodus")
     assert vc.unit == "BA"

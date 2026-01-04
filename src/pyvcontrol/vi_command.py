@@ -96,7 +96,7 @@ class ViCommandError(Exception):
     """Indicates an error during command execution."""
 
 
-class ViCommand(bytearray):
+class ViCommand.from_name(bytearray):
     """Representation of a command. Object value is a bytearray of address and length."""
 
     def __init__(self, command_name, heating_system="WO1C"):
@@ -129,7 +129,7 @@ class ViCommand(bytearray):
             command_name = next(key for key, value in command_set.items() if value[ADDRESS].lower() == b[0:2].hex())
         except Exception as error:
             raise ViCommandError(f"No Command matching {b[0:2].hex()}") from error
-        return ViCommand(command_name, heating_system=heating_system)
+        return ViCommand.from_name(command_name, heating_system=heating_system)
 
     def response_length(self, access_mode: AccessMode = AccessMode.READ):
         """Returns the number of bytes in the response.

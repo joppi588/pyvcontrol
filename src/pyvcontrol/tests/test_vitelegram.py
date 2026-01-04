@@ -27,10 +27,10 @@ from pyvcontrol.vi_telegram import ViTelegram, ViTelegramError
 
 
 def test_read_telegram():
-    vc = ViCommand("Anlagentyp")
+    vc = ViCommand.from_name("Anlagentyp")
     vt = ViTelegram(vc, AccessMode.READ)
     assert vt.hex() == "4105000100f80402"
-    vc = ViCommand("Warmwassertemperatur")
+    vc = ViCommand.from_name("Warmwassertemperatur")
     vt = ViTelegram(vc, AccessMode.READ)
     assert vt.hex() == "41050001010d0216"
 

@@ -79,5 +79,5 @@ class ViControlMock(MagicMock):
         return self.vi_data[command]
 
     def _execute_write_command(self, command: str, value):
-        vc = ViCommand(command)
+        vc = ViCommand.from_name(command)
         self.vi_data[command] = ViData.create(vc.unit, value)
