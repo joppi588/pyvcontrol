@@ -28,11 +28,6 @@ from pyvcontrol.vi_data import ViData, ViDataError
 class Test_ViDataBA:
     """Group tests for data type BA."""
 
-    def test_BAEmpty(self):
-        """Create empty class and check mode."""
-        dBA = ViData.create("BA")
-        assert dBA.value == "OFF"  # defaults to mode 'OFF'
-
     def test_BA02raw(self):
         """Create class with defined operation mode from raw byte."""
         dBA = ViData.create("BA", b"\x02")
@@ -56,11 +51,6 @@ class Test_ViDataBA:
 
 class Test_ViDataDT:
     """Group tests for data type DT."""
-
-    def test_DTempty(self):
-        """Initialize empty device type (standard)."""
-        dDT = ViData.create("DT")
-        assert dDT.value == "unknown"
 
     def test_DTraw(self):
         """Initialize from raw data."""
@@ -123,25 +113,9 @@ class Test_ViDataOO:
         with pytest.raises(ViDataError):
             dOO = ViData.create("OO", "foo")  # noqa: F841
 
-    def test_OO_default_value(self):
-        dOO = ViData.create("OO")
-        assert dOO.value == "Off"
-
 
 class Test_ViDataEnergy:
     """Group tests for data type Energy."""
-
-    def test_default(self):
-        data_energy = ViData.create("F_E")
-        assert data_energy.day == 0
-        assert data_energy.week == 0
-        assert data_energy.year == 2000
-        assert data_energy.water_energy == 0
-        assert data_energy.heating_energy == 0
-        assert data_energy.cooling_energy == 0
-        assert data_energy.water_electrical_energy == 0
-        assert data_energy.heating_electrical_energy == 0
-        assert data_energy.cooling_electrical_energy == 0
 
     def test_typical_values(self):
         example_data = bytes.fromhex("02 02 16 09 92 03 aa 00 99 00 2d 00 00 00 00 00")

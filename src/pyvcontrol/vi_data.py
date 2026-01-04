@@ -49,37 +49,27 @@ class ViDataError(Exception):
     """Indicates an Error with ViData."""
 
 
-class ViData(bytearray, ABC):
+class ViData(bytes, ABC):
     """Implements representations of ViControl data types.
 
     erzeugen eines Datentypes über benannte Klasse -> setze code und codiere Parameter als bytes
 
     constructor __init__ accepts byte-encoded input or real data
     property value returns the decoded value (str,int,fixed-point,...)
-    method _create_from_raw initializes the object with raw byte data
-    method _create_from_value initializes the object with a typed value
+    method from_raw initializes the object with raw byte data
+    method from_value initializes the object with a typed value
     """
 
-    length = 1
+    length: int = 1
 
-    def __init__(self, value=b"\x00", length=1):
-        """Create ViData.
-
-        To set a different default value, override subclass constructors.
-        """
-        super().__init__()
-        self.length = length
-        if isinstance(value, (bytes, bytearray)):
-            self._create_from_raw(value)
-        else:
-            self._create_from_value(value)
-
-    def _create_from_raw(self, value):
+    @classmethod
+    def from_raw(cls, value):
         """Fill using byte values."""
-        super().extend(value)
+        return cls(value)
 
+    @classmethod
     @abstractmethod
-    def _create_from_value(self, value):
+    def from_value(cls, value):
         """Fill using type and value."""
 
     @abstractproperty
@@ -87,10 +77,9 @@ class ViData(bytearray, ABC):
         """Empty declaration, must be overriden by subclass."""
 
     @classmethod
-    def create(cls, datatype, *args):
+    def create(cls, datatype, value):
         """Select data type object based on type."""
-        # args are passed as such to the constructor of the function
-        logger.debug("Data factory: request to produce Data type %s with args %s", datatype, args)
+        logger.debug("Data factory: request to produce Data type %s with value %s", datatype, value)
         datatype_object = {
             "BA": ViDataBA,
             "DT": ViDataDT,
@@ -104,7 +93,9 @@ class ViData(bytearray, ABC):
             "F_E": ViDataEnergy,
         }
         if datatype in datatype_object:
-            return datatype_object[datatype](*args)
+            if isinstance(value, (bytes, bytearray)):
+                return datatype_object[datatype].from_raw(value)
+            return datatype_object[datatype].from_value(value)
         raise ViDataError(f"Unit {datatype} not known")
 
     def __str__(self):
@@ -120,19 +111,19 @@ class ViDataBA(ViData):
         0x02: "HEATING_WW",
     }
 
-    def _create_from_value(self, opmode: str):
-        if opmode in self.operating_modes.values():
-            opcode = next(key for key, value in self.operating_modes.items() if value == opmode)
-            super().extend(opcode.to_bytes(1, "little"))
-        else:
-            raise ViDataError(f"Unknown operating mode {opmode}. Options are {self.operating_modes.values()}")
+    @classmethod
+    def from_value(cls, opmode: str):
+        if opmode in cls.operating_modes.values():
+            opcode = next(key for key, value in cls.operating_modes.items() if value == opmode)
+            return cls(opcode.to_bytes(cls.length, "little"))
+        raise ViDataError(f"Unknown operating mode {opmode}. Options are {cls.operating_modes.values()}")
 
-    def _create_from_raw(self, value):
+    @classmethod
+    def from_raw(cls, value):
         """Set raw value directly."""
-        if int.from_bytes(value, "little") in self.operating_modes:
-            super().extend(value)
-        else:
-            raise ViDataError(f"Unknown operating mode {value.hex()}")
+        if int.from_bytes(value, "little") in cls.operating_modes:
+            return cls(value)
+        raise ViDataError(f"Unknown operating mode {value.hex()}")
 
     @property
     def value(self):
@@ -211,16 +202,12 @@ class ViDataES(ViData):
         0xFF: "Starkes Stoerfeld (EMV) in der Naehe oder interner Fehler",
     }
 
-    def __fromtype__(self, errstr):
-        """Only created by the heating system."""
-        raise NotImplementedError
-
-    def _create_from_raw(self, value):
+    @classmethod
+    def from_raw(cls, value):
         """Set raw value directly."""
-        if int.from_bytes(value, "big") in self.errorset:
-            super().extend(value)
-        else:
-            raise ViDataError(f"Unknown error code {value.hex()}")
+        if int.from_bytes(value, "big") in cls.errorset:
+            return cls(value)
+        raise ViDataError(f"Unknown error code {value.hex()}")
 
     @property
     def value(self):
@@ -230,6 +217,8 @@ class ViDataES(ViData):
 
 class ViDataDT(ViData):
     """Device types."""
+
+    length = 2
 
     device_types = {
         0x2098: "V200KW2, Protokoll: KW2",
@@ -252,20 +241,20 @@ class ViDataDT(ViData):
         0x0000: "unknown",
     }
 
-    def _create_from_raw(self, value):
+    @classmethod
+    def from_raw(cls, value):
         """Set raw value directly."""
-        if int.from_bytes(value, "big") in self.device_types:
-            super().extend(value)
-        else:
-            raise ViDataError(f"Unknown device code {value.hex()}")
+        if int.from_bytes(value, "big") in cls.device_types:
+            return cls(value)
+        raise ViDataError(f"Unknown device code {value.hex()}")
 
-    def _create_from_value(self, device_name):
+    @classmethod
+    def from_value(cls, device_name):
         """Devicename given as string."""
-        if device_name in self.device_types.values():
-            devcode = next(key for key, value in self.device_types.items() if value == device_name)
-            super().extend(devcode.to_bytes(2, "big"))
-        else:
-            raise ViDataError(f"Unknown device name {device_name}")
+        if device_name in cls.device_types.values():
+            devcode = next(key for key, value in cls.device_types.items() if value == device_name)
+            return cls(devcode.to_bytes(cls.length, "big"))
+        raise ViDataError(f"Unknown device name {device_name}")
 
     @property
     def value(self):
@@ -276,14 +265,12 @@ class ViDataDT(ViData):
 class ViDataIS10(ViData):
     """IS10 - signed fixed-point integer, 1 decimal."""
 
-    def __init__(self, value=b"\x00\x00"):
-        """Sets int representation based on input value."""
-        super().__init__(value, length=2)
+    length = 2
 
-    def _create_from_value(self, value):
+    @classmethod
+    def from_value(cls, value):
         """fixed-point number given."""
-        # TODO: Is it ok to overwrite its own value or should a new object be returned?
-        super().extend(int(value * 10).to_bytes(self.length, "little", signed=True))
+        return cls(int(value * 10).to_bytes(cls.length, "little", signed=True))
 
     @property
     def value(self):
@@ -293,13 +280,12 @@ class ViDataIS10(ViData):
 class ViDataIU10(ViData):
     """IS10 - unsigned fixed-point integer, 1 decimal."""
 
-    def __init__(self, value=b"\x00\x00"):
-        """Sets int representation based on input value."""
-        super().__init__(value, length=2)
+    length = 2
 
-    def _create_from_value(self, value):
+    @classmethod
+    def from_value(cls, value):
         """fixed-point number given."""
-        super().extend(int(value * 10).to_bytes(self.length, "little", signed=False))
+        return cls(int(value * 10).to_bytes(cls.length, "little", signed=False))
 
     @property
     def value(self):
@@ -309,13 +295,12 @@ class ViDataIU10(ViData):
 class ViDataIU3600(ViData):
     """IU3600 - Unsigned int 3600 base (hours)."""
 
-    def __init__(self, value=b"\x00\x00"):
-        """Sets int representation based on input value."""
-        super().__init__(value, length=2)
+    length = 2
 
-    def _create_from_value(self, value):
+    @classmethod
+    def from_value(cls, value):
         """fixed-point number given."""
-        super().extend(int(value * 3600).to_bytes(self.length, "little", signed=False))
+        return cls(int(value * 3600).to_bytes(cls.length, "little", signed=False))
 
     @property
     def value(self):
@@ -326,13 +311,12 @@ class ViDataIU3600(ViData):
 class ViDataIUNON(ViData):
     """IUNON - unsigned int."""
 
-    def __init__(self, value=b"\x00\x00"):
-        """Sets int representation based on input value."""
-        super().__init__(value, length=2)
+    length = 2
 
-    def _create_from_value(self, value):
+    @classmethod
+    def from_value(cls, value):
         """fixed-point number given."""
-        super().extend(int(value).to_bytes(self.length, "little", signed=False))
+        return cls(int(value).to_bytes(cls.length, "little", signed=False))
 
     @property
     def value(self):
@@ -344,19 +328,19 @@ class ViDataRT(ViData):
 
     returnstatus = {0x00: "0", 0x01: "1", 0x03: "2", 0xAA: "Not OK"}
 
-    def _create_from_value(self, status):
-        if status in self.returnstatus.values():
-            opcode = next(key for key, value in self.returnstatus.items() if value == status)
-            super().extend(opcode.to_bytes(1, "big"))
-        else:
-            raise ViDataError(f"Unknown return status {status}. Options are {self.returnstatus.values()}")
+    @classmethod
+    def from_value(cls, status):
+        if status in cls.returnstatus.values():
+            opcode = next(key for key, value in cls.returnstatus.items() if value == status)
+            return cls(opcode.to_bytes(cls.length, "big"))
+        raise ViDataError(f"Unknown return status {status}. Options are {cls.returnstatus.values()}")
 
-    def _create_from_raw(self, value):
-        """set raw value directly."""  # noqa: D403
-        if int.from_bytes(value, "big") in self.returnstatus:
-            super().extend(value)
-        else:
-            raise ViDataError(f"Unknown return status {value.hex()}")
+    @classmethod
+    def from_raw(cls, value):
+        """Set raw value directly."""
+        if int.from_bytes(value, "big") in cls.returnstatus:
+            return cls(value)
+        raise ViDataError(f"Unknown return status {value.hex()}")
 
     @property
     def value(self):
@@ -372,19 +356,19 @@ class ViDataOO(ViData):
         0x02: "On",
     }
 
-    def _create_from_value(self, onoff):
-        if onoff in self.OnOff.values():
-            opcode = next(key for key, value in self.OnOff.items() if value == onoff)
-            super().extend(opcode.to_bytes(1, "big"))
-        else:
-            raise ViDataError(f"Unknown value {onoff}. Options are {self.OnOff.values()}")
+    @classmethod
+    def from_value(cls, onoff):
+        if onoff in cls.OnOff.values():
+            opcode = next(key for key, value in cls.OnOff.items() if value == onoff)
+            return cls(opcode.to_bytes(cls.length, "big"))
+        raise ViDataError(f"Unknown value {onoff}. Options are {cls.OnOff.values()}")
 
-    def _create_from_raw(self, value):
-        """set raw value directly."""  # noqa: D403
-        if int.from_bytes(value, "big") in self.OnOff:
-            super().extend(value)
-        else:
-            raise ViDataError(f"Unknown value {value.hex()}")
+    @classmethod
+    def from_raw(cls, value):
+        """Set raw value directly."""
+        if int.from_bytes(value, "big") in cls.OnOff:
+            return cls(value)
+        raise ViDataError(f"Unknown value {value.hex()}")
 
     @property
     def value(self):
@@ -399,23 +383,25 @@ HEATING_ENERGY_FACTOR = 0.1
 class ViDataEnergy(ViData):
     """Energy-Type ... Return from Function-Call B800."""
 
-    def __init__(self, value=bytes(16)):
-        super().__init__(value, length=16)
+    length = 16
 
-    def _create_from_raw(self, value):
-        super().extend(value)
+    @classmethod
+    def from_raw(cls, value):
+        vi_data_energy = cls(value or bytes(16))
         raw_data = unpack(LITTLE_ENDIAN_4_CHAR_6_SHORT, value)
-        self.day = raw_data[1]
-        self.year = MILLENIUM + raw_data[2]
-        self.week = raw_data[3]
-        self.heating_energy = raw_data[4] * HEATING_ENERGY_FACTOR
-        self.heating_electrical_energy = raw_data[5] * HEATING_ENERGY_FACTOR
-        self.water_energy = raw_data[6] * HEATING_ENERGY_FACTOR
-        self.water_electrical_energy = raw_data[7] * HEATING_ENERGY_FACTOR
-        self.cooling_energy = raw_data[4] * HEATING_ENERGY_FACTOR
-        self.cooling_electrical_energy = raw_data[5] * HEATING_ENERGY_FACTOR
+        vi_data_energy.day = raw_data[1]
+        vi_data_energy.year = MILLENIUM + raw_data[2]
+        vi_data_energy.week = raw_data[3]
+        vi_data_energy.heating_energy = raw_data[4] * HEATING_ENERGY_FACTOR
+        vi_data_energy.heating_electrical_energy = raw_data[5] * HEATING_ENERGY_FACTOR
+        vi_data_energy.water_energy = raw_data[6] * HEATING_ENERGY_FACTOR
+        vi_data_energy.water_electrical_energy = raw_data[7] * HEATING_ENERGY_FACTOR
+        vi_data_energy.cooling_energy = raw_data[4] * HEATING_ENERGY_FACTOR
+        vi_data_energy.cooling_electrical_energy = raw_data[5] * HEATING_ENERGY_FACTOR
+        return vi_data_energy
 
-    def _create_from_value(self, value):  # noqa: ARG002
+    @classmethod
+    def from_value(cls, value):
         raise ViDataError("ViDataEnergy can only be created from bytes.")
 
     @property
