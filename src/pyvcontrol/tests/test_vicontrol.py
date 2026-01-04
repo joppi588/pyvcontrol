@@ -1,7 +1,7 @@
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 # Copyright 2022-2025 Jochen Schmähling
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
-#  Python Module for communication with ViControl heatings using the serial Optolink interface
+#  Python package for communication with Viessmann heatings using the serial Optolink interface
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
