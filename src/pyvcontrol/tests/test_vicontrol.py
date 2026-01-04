@@ -50,14 +50,15 @@ def test_vicontrol_init_behaviour(serial_in, serial_out):
     assert mock_vi_serial.sink == serial_out * init_retries
 
 
-def test_exec_forbidden_write_command():
+@pytest.mark.parametrize("command_name,allowed_access", [("Warmwassertemperatur", "read")])
+def test_exec_forbidden_write_command(command_name, allowed_access):
     mock_vi_serial = ViSerialMock(source=CtrlCode.ACKNOWLEDGE)
     with (
         patch("pyvcontrol.vi_control.Serial", return_value=mock_vi_serial),
         ViControl() as vc,
-        pytest.raises(ViCommandError, match=re.escape("Command Warmwassertemperatur only allows ['read'] access.")),
+        pytest.raises(ViCommandError, match=re.escape(f"Command {command_name} only allows {allowed_access} access.")),
     ):
-        vc.execute_write_command("Warmwassertemperatur", 5)
+        vc.execute_write_command(command_name, 5)
 
 
 def test_exec_write_command():

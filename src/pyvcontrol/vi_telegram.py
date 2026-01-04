@@ -17,9 +17,11 @@
 #  along with this program. If not, see <http://www.gnu.org/licenses/>.
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
+from __future__ import annotations
 
 import logging
 
+from pyvcontrol.vi_access_mode import AccessMode
 from pyvcontrol.vi_command import ViCommand
 
 logger = logging.getLogger(name="pyvcontrol")
@@ -108,24 +110,26 @@ class ViTelegram(bytearray):
         "response": b"\x01",
         "error": b"\x03",
     }
-    # Telegram mode
-    tModes = {"read": b"\x01", "write": b"\x02", "call": b"\x07"}
     tStartByte = b"\x41"
 
-    def __init__(self, vc: ViCommand, tMode="Read", tType="Request", payload=bytearray(0)):
+    def __init__(
+        self,
+        vc: ViCommand,
+        access_mode: AccessMode | bytes = AccessMode.READ,
+        tType="Request",
+        payload=bytearray(0),
+    ):
         """Creates a telegram for sending as a combination of header, ViCommand, payload and checksum.
 
         payload is optional, usually of type ViData
-        tType and tMode must be strings or bytes.
+        tType must be string or bytes.
         Be careful when extracting from bytearray b - b[x] will be int not byte!
         """
         self.vicmd = vc
         self.tType = (
             self.tTypes[tType.lower()] if isinstance(tType, str) else tType
         )  # translate to byte or use raw value
-        self.tMode = (
-            self.tModes[tMode.lower()] if isinstance(tMode, str) else tMode
-        )  # translate to byte or use raw value
+        self.access_mode = access_mode if isinstance(access_mode, AccessMode) else AccessMode(access_mode)
         self.payload = payload  # TODO: payload length not validated against expected length by command unit
         # TODO: no payload for read commands
 
@@ -142,7 +146,7 @@ class ViTelegram(bytearray):
         Data length (bytes): type (1), mode (1), command code (x), payload ViData (x).
         """
         data_length = 2 + len(self.vicmd) + len(self.payload)
-        return self.tStartByte + data_length.to_bytes(1, "big") + self.tType + self.tMode
+        return self.tStartByte + data_length.to_bytes(1, "big") + self.tType + self.access_mode.value
 
     @property
     def response_length(self):
@@ -155,12 +159,7 @@ class ViTelegram(bytearray):
         x - command
         1 - checksum.
         """
-        return 4 + self.vicmd.response_length(self.telegram_mode) + 1
-
-    @property
-    def telegram_mode(self):
-        """Returns mode (read, write, function call)."""
-        return next(key for key, value in self.tModes.items() if value == self.tMode)
+        return 4 + self.vicmd.response_length(self.access_mode.value) + 1
 
     @property
     def telegram_type(self):
@@ -186,14 +185,14 @@ class ViTelegram(bytearray):
 
         header = b[0:4]
         logger.debug(
-            "Header: %s, tType=%s, tMode=%s, payload=%s",
+            "Header: %s, tType=%s, access_mode=%s, payload=%s",
             header.hex(),
             header[2:3].hex(),
             header[3:4].hex(),
             b[7:-1].hex(),
         )
         vicmd = ViCommand._from_bytes(b[4:6])
-        vt = ViTelegram(vicmd, tType=header[2:3], tMode=header[3:4], payload=b[7:-1])
+        vt = ViTelegram(vicmd, tType=header[2:3], access_mode=AccessMode(header[3:4]), payload=b[7:-1])
         return vt
 
     @classmethod
