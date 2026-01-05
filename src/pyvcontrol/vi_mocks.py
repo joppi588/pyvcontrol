@@ -46,12 +46,7 @@ def vi_serial_mock(source=None, **kwargs):
         mock.source_cursor += length
         return answer
 
-    mock = Mock(spec=Serial, **kwargs)
-
-    mock.sink = bytearray(0)
-    mock.source = source or bytearray(0)
-    mock.source_cursor = 0
-    mock.is_open = False
+    mock = Mock(spec=Serial, sink=bytearray(0), source=source or bytearray(0), source_cursor=0, is_open=False, **kwargs)
     mock.open.side_effect = lambda: _open(mock)
     mock.close.side_effect = lambda: _close(mock)
     mock.write.side_effect = lambda payload: _write(mock, payload)
@@ -76,8 +71,7 @@ def vi_control_mock(vi_data=None, **kwargs):
         vc = ViCommand.from_name(command)
         mock.vi_data[command] = ViData.create(vc.unit, value)
 
-    mock = Mock(spec=ViControl, **kwargs)
-    mock.vi_data = vi_data or {}
+    mock = Mock(spec=ViControl, vi_data=vi_data or {}, **kwargs)
     mock.execute_read_command.side_effect = lambda command: _execute_read_command(mock, command)
     mock.execute_write_command.side_effect = lambda command, value: _execute_write_command(mock, command, value)
     mock.__enter__.side_effect = lambda: _enter(mock)
