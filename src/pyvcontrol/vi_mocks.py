@@ -78,7 +78,7 @@ def vi_control_mock(vi_data=None, **kwargs):
 
     mock = Mock(spec=ViControl, **kwargs)
     mock.vi_data = vi_data or {}
-    mock.execute_read_command.side_effect = _execute_read_command
-    mock.execute_write_command.side_effect = _execute_write_command
-    mock.__enter__.side_effect = _enter
-    mock.__exit__.side_effect = _exit
+    mock.execute_read_command.side_effect = lambda command: _execute_read_command(mock, command)
+    mock.execute_write_command.side_effect = lambda command, value: _execute_write_command(mock, command, value)
+    mock.__enter__.side_effect = lambda: _enter(mock)
+    mock.__exit__.side_effect = lambda: _exit(mock)
