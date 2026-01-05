@@ -108,8 +108,8 @@ def test_failed_open_lock_release():
     assert not vc1._viessmann_lock.locked()
 
 
-@patch("pyvcontrol.vi_control.Serial")
-def test_vi_control_locked(mock_serial):  # noqa: ARG001
+@patch("pyvcontrol.vi_control.Serial", new=vi_serial_mock())
+def test_vi_control_locked():
     # GIVEN A ViControl object with acquired lock
     # WHEN A second ViControl object tries to init
     # THEN Abort due to timeout. Still locked.
