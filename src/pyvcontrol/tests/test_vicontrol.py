@@ -28,7 +28,7 @@ from serial import SerialException
 
 from pyvcontrol.vi_command import ViCommandError
 from pyvcontrol.vi_control import CtrlCode, ViConnectionError, ViControl
-from pyvcontrol.vi_mocks import ViSerialMock
+from pyvcontrol.vi_mocks import vi_serial_mock
 
 
 @pytest.mark.parametrize(
@@ -40,21 +40,21 @@ def test_vicontrol_init_behaviour(serial_in, serial_out):
     # WHEN Communication is initialized
     # THEN An error is raised, control codes are written
     init_retries = 3
-    mock_vi_serial = ViSerialMock(source=serial_in * init_retries)
+    mock = vi_serial_mock(source=serial_in * init_retries)
     with (
-        patch("pyvcontrol.vi_control.Serial", return_value=mock_vi_serial),
+        patch("pyvcontrol.vi_control.Serial", return_value=mock),
         pytest.raises(ViConnectionError, match=r"Could not initialize communication\."),
         ViControl(init_retries=init_retries) as vc,
     ):
         vc._initialize_communication()
-    assert mock_vi_serial.sink == serial_out * init_retries
+    assert mock.sink == serial_out * init_retries
 
 
 @pytest.mark.parametrize("command_name,allowed_access", [("Warmwassertemperatur", "read")])
 def test_exec_forbidden_write_command(command_name, allowed_access):
-    mock_vi_serial = ViSerialMock(source=CtrlCode.ACKNOWLEDGE)
+    mock = vi_serial_mock(source=CtrlCode.ACKNOWLEDGE)
     with (
-        patch("pyvcontrol.vi_control.Serial", return_value=mock_vi_serial),
+        patch("pyvcontrol.vi_control.Serial", return_value=mock),
         ViControl() as vc,
         pytest.raises(ViCommandError, match=re.escape(f"Command {command_name} only allows {allowed_access} access.")),
     ):
@@ -62,14 +62,14 @@ def test_exec_forbidden_write_command(command_name, allowed_access):
 
 
 def test_exec_write_command():
-    mock_vi_serial = ViSerialMock(source=CtrlCode.ACKNOWLEDGE * 2 + bytes.fromhex("41 07 01 01 01 0d 02 19 00 7e"))
-    with patch("pyvcontrol.vi_control.Serial", return_value=mock_vi_serial), ViControl() as vc:
+    mock = vi_serial_mock(source=CtrlCode.ACKNOWLEDGE * 2 + bytes.fromhex("41 07 01 01 01 0d 02 19 00 7e"))
+    with patch("pyvcontrol.vi_control.Serial", return_value=mock), ViControl() as vc:
         vc.execute_write_command("SolltempWarmwasser", 35)
 
 
 def test_exec_read_command():
-    mock_vi_serial = ViSerialMock(source=CtrlCode.ACKNOWLEDGE * 2 + bytes.fromhex("41 07 01 01 01 0d 02 65 00 7e"))
-    with patch("pyvcontrol.vi_control.Serial", return_value=mock_vi_serial), ViControl() as vc:
+    mock = vi_serial_mock(source=CtrlCode.ACKNOWLEDGE * 2 + bytes.fromhex("41 07 01 01 01 0d 02 65 00 7e"))
+    with patch("pyvcontrol.vi_control.Serial", return_value=mock), ViControl() as vc:
         data = vc.execute_read_command("Warmwassertemperatur")
     assert data.value == 10.1
 
@@ -81,8 +81,8 @@ def test_exec_function_call():
 
 
 def test_exec_forbidden_function_call():
-    mock_vi_serial = ViSerialMock(source=CtrlCode.ACKNOWLEDGE + bytes.fromhex("41 07 01 01 01 0d 02 65 00 7e"))
-    with patch("pyvcontrol.vi_control.Serial", new=mock_vi_serial), pytest.raises(ViCommandError), ViControl() as vc:
+    mock = vi_serial_mock(source=CtrlCode.ACKNOWLEDGE + bytes.fromhex("41 07 01 01 01 0d 02 65 00 7e"))
+    with patch("pyvcontrol.vi_control.Serial", return_value=mock), pytest.raises(ViCommandError), ViControl() as vc:
         vc.execute_function_call("Warmwassertemperatur", 5)
 
 
@@ -95,7 +95,7 @@ def test_failed_open_lock_release():
         def open():
             raise SerialException
 
-    with patch("pyvcontrol.vi_control.Serial", return_value=ViSerialMock()):
+    with patch("pyvcontrol.vi_control.Serial", return_value=vi_serial_mock()):
         vc1 = ViControl()
 
     with (
@@ -108,15 +108,14 @@ def test_failed_open_lock_release():
     assert not vc1._viessmann_lock.locked()
 
 
-@patch("pyvcontrol.vi_control.Serial", new=ViSerialMock())
+@patch("pyvcontrol.vi_control.Serial", new=vi_serial_mock())
 def test_vi_control_locked():
     # GIVEN A ViControl object with acquired lock
     # WHEN A second ViControl object tries to init
-    # THEN Timeout
+    # THEN Abort due to timeout. Still locked.
     vc1 = ViControl()
     vc1._viessmann_lock.acquire()
 
     with pytest.raises(ViConnectionError, match=r"Could not acquire lock, aborting\."), ViControl(lock_timeout=0.1):
         pytest.fail("Context shall not be entered")
-
     assert vc1._viessmann_lock.locked()

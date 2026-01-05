@@ -18,7 +18,7 @@
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 """Mocks for pyvcontrol objects."""
 
-from unittest.mock import MagicMock, Mock
+from unittest.mock import Mock
 
 from serial import Serial
 
@@ -27,57 +27,52 @@ from pyvcontrol.vi_control import ViControl
 from pyvcontrol.vi_data import ViData
 
 
-class ViSerialMock(Mock):
-    """Mock for serial interface, simulating the heating device."""
+def vi_serial_mock(source=None, **kwargs):
+    """Create mock for serial interface, simulating the heating device."""
 
-    def __init__(self, source=None, **kwargs):
-        super().__init__(spec=Serial, autospec=True, **kwargs)
-        self.sink = bytearray(0)
-        self.source = source or bytearray(0)
-        self.source_cursor = 0
-        self.is_open = False
-        self.open = Mock(side_effect=self._open)
-        self.close = Mock(side_effect=self._close)
-        self.write = Mock(side_effect=self._write)
-        self.read = Mock(side_effect=self._read)
+    def _open(mock):
+        mock.sink = bytearray(0)
+        mock.is_open = True
 
-    def _open(self):
-        self.sink = bytearray(0)
-        self.is_open = True
+    def _close(mock):
+        mock.is_open = False
 
-    def _close(self):
-        self.is_open = False
+    def _write(mock, payload):
+        mock.sink = mock.sink + bytearray(payload)
+        print(f"received {payload}, in total received {mock.sink}")
 
-    def _write(self, payload):
-        self.sink = self.sink + bytearray(payload)
-        print(f"received {payload}, in total received {self.sink}")
-
-    def _read(self, length):
-        answer = self.source[self.source_cursor : self.source_cursor + length]
-        self.source_cursor += length
+    def _read(mock, length):
+        answer = mock.source[mock.source_cursor : mock.source_cursor + length]
+        mock.source_cursor += length
         return answer
 
+    mock = Mock(spec=Serial, sink=bytearray(0), source=source or bytearray(0), source_cursor=0, is_open=False, **kwargs)
+    mock.open.side_effect = lambda: _open(mock)
+    mock.close.side_effect = lambda: _close(mock)
+    mock.write.side_effect = lambda payload: _write(mock, payload)
+    mock.read.side_effect = lambda length: _read(mock, length)
 
-class ViControlMock(MagicMock):
+    return mock
+
+
+def vi_control_mock(vi_data=None, **kwargs):
     """Mock ViControl."""
 
-    def __init__(self, vi_data=None):
-        super().__init__(spec=ViControl)
-        self.vi_data = vi_data or {}
-        self.execute_read_command = Mock(side_effect=self._execute_read_command)
-        self.execute_write_command = Mock(side_effect=self._execute_write_command)
-        self.__enter__.side_effect = self._enter
-        self.__exit__.side_effect = self._exit
+    def _enter(mock):
+        return mock
 
-    def _enter(self):
-        return self
-
-    def _exit(self):
+    def _exit(mock):  # noqa: ARG001
         return
 
-    def _execute_read_command(self, command: str):
-        return self.vi_data[command]
+    def _execute_read_command(mock, command: str):
+        return mock.vi_data[command]
 
-    def _execute_write_command(self, command: str, value):
+    def _execute_write_command(mock, command: str, value):
         vc = ViCommand.from_name(command)
-        self.vi_data[command] = ViData.create(vc.unit, value)
+        mock.vi_data[command] = ViData.create(vc.unit, value)
+
+    mock = Mock(spec=ViControl, vi_data=vi_data or {}, **kwargs)
+    mock.execute_read_command.side_effect = lambda command: _execute_read_command(mock, command)
+    mock.execute_write_command.side_effect = lambda command, value: _execute_write_command(mock, command, value)
+    mock.__enter__.side_effect = lambda: _enter(mock)
+    mock.__exit__.side_effect = lambda: _exit(mock)
