@@ -108,15 +108,14 @@ def test_failed_open_lock_release():
     assert not vc1._viessmann_lock.locked()
 
 
-@patch("pyvcontrol.vi_control.Serial", return_value=vi_serial_mock())
-def test_vi_control_locked():
+@patch("pyvcontrol.vi_control.Serial")
+def test_vi_control_locked(mock_serial):  # noqa: ARG001
     # GIVEN A ViControl object with acquired lock
     # WHEN A second ViControl object tries to init
-    # THEN Timeout
+    # THEN Abort due to timeout. Still locked.
     vc1 = ViControl()
     vc1._viessmann_lock.acquire()
 
     with pytest.raises(ViConnectionError, match=r"Could not acquire lock, aborting\."), ViControl(lock_timeout=0.1):
         pytest.fail("Context shall not be entered")
-
     assert vc1._viessmann_lock.locked()
