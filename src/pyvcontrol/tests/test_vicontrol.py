@@ -129,5 +129,12 @@ def test_vi_control_mock():
     with vi_control_mock() as vc:
         vc.execute_write_command("Warmwassertemperatur", 35)
         temp_ww = vc.execute_read_command("Warmwassertemperatur")
-
     assert temp_ww.value == 35
+
+
+def test_vi_control_mock_unknown_command():
+    # GIVEN A ViControl mock
+    # WHEN The mock is used as a context manager
+    # THEN Read and Write operations ar possible
+    with vi_control_mock() as vc, pytest.raises(KeyError):
+        vc.execute_read_command("Somecommand")
