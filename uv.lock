@@ -140,7 +140,7 @@ wheels = [
 
 [[package]]
 name = "pyvcontrol"
-version = "1.9.4"
+version = "1.9.3"
 source = { editable = "." }
 dependencies = [
     { name = "attrs" },
