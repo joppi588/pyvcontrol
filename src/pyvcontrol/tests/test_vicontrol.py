@@ -28,7 +28,7 @@ from serial import SerialException
 
 from pyvcontrol.vi_command import ViCommandError
 from pyvcontrol.vi_control import CtrlCode, ViConnectionError, ViControl
-from pyvcontrol.vi_mocks import vi_serial_mock
+from pyvcontrol.vi_mocks import vi_control_mock, vi_serial_mock
 
 
 @pytest.mark.parametrize(
@@ -119,3 +119,15 @@ def test_vi_control_locked():
     with pytest.raises(ViConnectionError, match=r"Could not acquire lock, aborting\."), ViControl(lock_timeout=0.1):
         pytest.fail("Context shall not be entered")
     assert vc1._viessmann_lock.locked()
+
+
+def test_vi_control_mock():
+    # GIVEN A ViControl mock
+    # WHEN The mock is used as a context manager
+    # THEN Read and Write operations ar possible
+
+    with vi_control_mock() as vc:
+        vc.execute_write_command("Warmwassertemperatur", 35)
+        temp_ww = vc.execute_read_command("Warmwassertemperatur")
+
+    assert temp_ww.value == 35
