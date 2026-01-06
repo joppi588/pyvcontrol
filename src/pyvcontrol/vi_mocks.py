@@ -18,11 +18,13 @@
 # ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 """Mocks for pyvcontrol objects."""
 
-from unittest.mock import Mock
+from __future__ import annotations
+
+from unittest.mock import MagicMock, Mock
 
 from serial import Serial
 
-from pyvcontrol.vi_command import ViCommand
+from pyvcontrol.vi_command import COMMAND_SETS
 from pyvcontrol.vi_control import ViControl
 from pyvcontrol.vi_data import ViData
 
@@ -55,24 +57,29 @@ def vi_serial_mock(source=None, **kwargs):
     return mock
 
 
-def vi_control_mock(vi_data=None, **kwargs):
+def vi_control_mock(vi_command_data: dict[str, ViData] | None = None, **kwargs):
     """Mock ViControl."""
 
     def _enter(mock):
         return mock
 
-    def _exit(mock):  # noqa: ARG001
-        return
+    def _exit(mock, exc_type, exc_value, exc_traceback):  # noqa: ARG001
+        if exc_type is not None:
+            raise exc_type(exc_value)
 
     def _execute_read_command(mock, command: str):
-        return mock.vi_data[command]
+        return mock.vi_command_data[command]
 
     def _execute_write_command(mock, command: str, value):
-        vc = ViCommand.from_name(command)
-        mock.vi_data[command] = ViData.create(vc.unit, value)
+        vc = COMMAND_SETS["WO1C"][command]
+        mock.vi_command_data[command] = ViData.create(vc.unit, value)
 
-    mock = Mock(spec=ViControl, vi_data=vi_data or {}, **kwargs)
+    mock = MagicMock(spec=ViControl, vi_command_data=vi_command_data or {}, **kwargs)
     mock.execute_read_command.side_effect = lambda command: _execute_read_command(mock, command)
     mock.execute_write_command.side_effect = lambda command, value: _execute_write_command(mock, command, value)
     mock.__enter__.side_effect = lambda: _enter(mock)
-    mock.__exit__.side_effect = lambda: _exit(mock)
+    mock.__exit__.side_effect = lambda exc_type, exc_value, exc_traceback: _exit(
+        mock, exc_type, exc_value, exc_traceback
+    )
+
+    return mock
