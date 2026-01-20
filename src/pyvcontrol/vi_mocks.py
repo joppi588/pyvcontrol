@@ -58,7 +58,10 @@ def vi_serial_mock(source=None, **kwargs):
 
 
 def vi_control_mock(vi_command_data: dict[str, ViData] | None = None, **kwargs):
-    """Mock ViControl."""
+    """Setup Mock replacing ViControl.
+
+    vi_command_data is used as source for read commands and sink for write commands.
+    """
 
     def _enter(mock):
         return mock
