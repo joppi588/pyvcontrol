@@ -105,11 +105,7 @@ class ViData(bytes, ABC):
 class ViDataBA(ViData):
     """Betriebsart."""
 
-    operating_modes = {
-        0x00: "OFF",
-        0x01: "WW",
-        0x02: "HEATING_WW",
-    }
+    operating_modes = {0x00: "OFF", 0x01: "WW", 0x02: "HEATING_WW", 0x42: "PARTY"}
 
     @classmethod
     def from_value(cls, opmode: str):
