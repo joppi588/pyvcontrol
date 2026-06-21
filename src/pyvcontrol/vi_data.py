@@ -109,6 +109,9 @@ class ViDataBA(ViData):
         0x00: "OFF",
         0x01: "WW",
         0x02: "HEATING_WW",
+        0x40: "PARTY_OFF",
+        0x41: "PARTY_WW",
+        0x42: "PARTY_HWW",
     }
 
     @classmethod
